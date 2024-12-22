@@ -567,7 +567,7 @@ int main(const int argc, const char **argv) {
     char directory[4096];
     snprintf(directory, 4096, "%.*s", n, program);
     char shaders[4096];
-    snprintf(shaders, 4096, "%s/../shaders", directory);
+    snprintf(shaders, 4096, "%.4040s/../shaders", directory);
 
     //printf("%zu\n", sizeof(ImageLoadThreadQueue));
     //return 0;
@@ -595,7 +595,6 @@ int main(const int argc, const char **argv) {
     state.zoom = 1.0;
     state.filter = FILTER_NEAREST;
 
-    int ok = 0;
     pthread_mutex_t mutex_image;
     pthread_mutex_init(&mutex_image, 0);
     state.loader.files = files;
@@ -670,8 +669,6 @@ int main(const int argc, const char **argv) {
     Shader sh_text = shader_load(shaders, "text.vert", shaders, "text.frag");
     Shader sh_box = shader_load(shaders, "box.vert", shaders, "box.frag");
     int loc_text_projection = get_uniform(sh_text, "projection");
-    int loc_box_transform = get_uniform(sh_box, "transform");
-    int loc_box_projection = get_uniform(sh_box, "projection");
     glm_ortho(0.0f, s_state.wwidth, 0.0f, s_state.wheight, -1.0f, 1.0f, s_state.image_projection);
 
     glm_mat4_identity(s_state.image_view);
@@ -685,7 +682,6 @@ int main(const int argc, const char **argv) {
     font_load(&font, 0, 256);
 
     char str_info[1024] = {0};
-    double t_wait = 0;
     bool run_timer = true;
 
     while(!glfwWindowShouldClose(window)) {
