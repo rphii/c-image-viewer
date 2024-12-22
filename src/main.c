@@ -105,7 +105,7 @@ typedef struct Image {
 #endif
 
 #define ThreadQueue(X) \
-    typedef struct Queue { \
+    typedef struct X##ThreadQueue { \
         pthread_t id; \
         pthread_attr_t attr; \
         pthread_mutex_t mutex; \
