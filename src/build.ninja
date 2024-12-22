@@ -5,9 +5,7 @@ root     = .
 builddir = build
 cflags   = -Wall -pipe -fdiagnostics-color=always $
     -I/usr/include/freetype2 $
-    -march=native -O3 -funroll-loops $
-    -fdevirtualize-at-ltrans -fipa-pta -fno-semantic-interposition -flto=auto $
-    -fgraphite-identity -floop-nest-optimize -fuse-linker-plugin $
+    -march=native -O2
 
 
 
