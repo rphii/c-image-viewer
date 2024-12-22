@@ -143,7 +143,7 @@ void send_texture_to_gpu(Image *image, FilterList filter) {
     if(!image->data) return;
 
     if(filter == FILTER_NONE) return;
-    if(filter == FILTER__COUNT) return;
+    if(filter >= FILTER__COUNT) return;
     if(image->sent == filter) return;
 
     if(!image->sent) {
