@@ -14,13 +14,17 @@ dependencies:
 - (glad - in src)
 - (glfw - in src)
 
+clone:
+
+    git clone https://github.com/rphii/c-image-viewer/
+
 build with ninja:
     
     cd src && ninja
 
 build with compiler:
 
-    cd src && gcc -I/usr/include/freetype2 *.c -lglfw -lm -lfreetype
+    cd src && gcc -o civ.out -I/usr/include/freetype2 *.c -lglfw -lm -lfreetype
 
 clean with ninja
 
