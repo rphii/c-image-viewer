@@ -146,7 +146,7 @@ void send_texture_to_gpu(Image *image, FilterList filter) {
     if(filter >= FILTER__COUNT) return;
     if(image->sent == filter) return;
 
-    if(!image->sent) {
+    if(!image->sent && image->data) {
         GLenum format;
         if(image->channels == 1) format = GL_RED;
         else if(image->channels == 2) format = GL_RG;
@@ -177,8 +177,10 @@ void send_texture_to_gpu(Image *image, FilterList filter) {
         } break;
         default: break;
     }
-    image->sent = filter;
-    s_action.gl_update = true;
+    if(image->data) {
+        image->sent = filter;
+        s_action.gl_update = true;
+    }
 }
 
 void *image_load_thread(void *args) {
