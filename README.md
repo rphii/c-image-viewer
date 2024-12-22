@@ -16,15 +16,15 @@ dependencies:
 
 clone:
 
-    git clone https://github.com/rphii/c-image-viewer/
+    git clone https://github.com/rphii/c-image-viewer/ && cd c-image-viewer/src
 
 build with ninja:
     
-    cd src && ninja
+    ninja
 
 build with compiler:
 
-    cd src && gcc -o civ.out -I/usr/include/freetype2 *.c -lglfw -lm -lfreetype
+    gcc -o civ.out -I/usr/include/freetype2 *.c -lglfw -lm -lfreetype
 
 clean with ninja
 
