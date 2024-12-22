@@ -1,0 +1,10 @@
+*.o
+*.d
+*.txt
+*.vim
+*.swp
+src/callgrind.out.*
+temp
+src/civ.out
+src/build
+
