@@ -65,7 +65,7 @@ controls:
     - text color
     - font size
     - font path
-- fix font
+- fix font - fontconfig ...
 - load font symbols for filename
 - first time pan with kb -> why lag ?
 - help
