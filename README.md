@@ -26,10 +26,6 @@ build with compiler:
 
     gcc -o civ.out -I/usr/include/freetype2 *.c -lglfw -lm -lfreetype
 
-clean with ninja
-
-    ninja -t clean
-
 launch program:
 
     ./civ.out IMAGE-FILES-HERE
@@ -50,6 +46,10 @@ controls:
     I | LEFT_SHIFT + AROW_KEY_UP      : zoom in
     O | LEFT_SHIFT + AROW_KEY_UP      : zoom out
     Q | ESCAPE                        : quit
+
+clean with ninja:
+
+    ninja -t clean
 
 
 ##### TODO so I won't forget
