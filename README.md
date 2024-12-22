@@ -74,4 +74,5 @@ controls:
 - don't crash if no font loaded ...
 - better error handling
 - info / verbose
+- make pthreads optional (single core)
 
