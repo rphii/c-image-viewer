@@ -75,4 +75,5 @@ controls:
 - better error handling
 - info / verbose
 - make pthreads optional (single core)
+- select_next / select_prev -> make int and do ++ or --
 
