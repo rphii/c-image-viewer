@@ -51,16 +51,18 @@ void send_texture_to_gpu(Image *image, FilterList filter, bool *render) {
 
 void *image_load_thread(void *args) {
     ImageLoad *image_load = args;
+    if(!vimage_length(*image_load->images)) goto exit;
 
     pthread_mutex_lock(image_load->mutex);
     Image *image = vimage_get_at(image_load->images, image_load->index);
     pthread_mutex_unlock(image_load->mutex);
 
-    if(image->data) return 0; /* already loaded */
+    if(image->data) goto exit;
 
     image->data = stbi_load(image->filename, &image->width, &image->height, &image->channels, 0);
     glfwPostEmptyEvent();
 
+exit:
     /* finished this thread .. make space for next thread */
     pthread_mutex_lock(&image_load->queue->mutex);
     image_load->queue->q[(image_load->queue->i0 + image_load->queue->len) % PROC_COUNT] = image_load;
