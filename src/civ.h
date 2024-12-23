@@ -1,0 +1,89 @@
+#include "vec.h"
+#include "glad.h"
+#include <cglm/cglm.h>
+#include <stdbool.h>
+#include <pthread.h>
+#include <GLFW/glfw3.h>
+
+#ifndef PROC_COUNT
+#define PROC_COUNT  16
+#endif
+
+typedef enum {
+    FILTER_NONE,
+    FILTER_LINEAR,
+    FILTER_NEAREST,
+    /* above */
+    FILTER__COUNT,
+} FilterList;
+
+typedef enum {
+    FIT_XY,
+    FIT_X,
+    FIT_Y,
+    FIT_FILL_XY,
+    FIT_PAN,
+    /* above */
+    FIT__COUNT
+} FitList;
+
+typedef struct Image {
+    const char *filename;
+    unsigned char *data;
+    int width;
+    int height;
+    int channels;
+    unsigned int texture;
+    FilterList sent;
+} Image;
+
+void image_free(Image *image);
+
+VEC_INCLUDE(VImage, vimage, Image, BY_REF, BASE);
+
+#define ThreadQueue(X) \
+    typedef struct X##ThreadQueue { \
+        pthread_t id; \
+        pthread_attr_t attr; \
+        pthread_mutex_t mutex; \
+        size_t i0; \
+        long len; \
+        struct X *q[PROC_COUNT]; \
+    } X##ThreadQueue;
+
+typedef struct VImage VImage;
+
+ThreadQueue(ImageLoad);
+typedef struct ImageLoad {
+    size_t index;
+    VImage *images;
+    pthread_mutex_t *mutex;
+  ImageLoadThreadQueue *queue;
+} ImageLoad;
+
+typedef struct ImageLoadArgs {
+    VImage *images;
+    const char **files;
+    long n;
+    pthread_mutex_t *mutex;
+    bool *cancel;
+    pthread_t thread;
+    long jobs;
+} ImageLoadArgs;
+
+typedef struct Civ {
+    VImage images;
+    Image *active;
+    FilterList filter;
+    size_t selected;
+    float zoom;
+    FitList stretch;
+    vec2 pan;
+    ImageLoadArgs loader;
+    bool show_description;
+} Civ;
+
+void send_texture_to_gpu(Image *image, FilterList filter, bool *render);
+const char *fit_cstr(FitList id);
+void images_load_async(ImageLoadArgs *args);
+void civ_free(Civ *state);
