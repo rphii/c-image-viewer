@@ -548,9 +548,9 @@ int main(const int argc, const char **argv) {
 
                 vec4 text_dim;
                 if(state.pan[0] || state.pan[1]) {
-                    snprintf(str_info, sizeof(str_info), "[%zu/%zu] %s (%ux%ux%u) [%s @ %i/%i]", state.selected, vimage_length(state.images) ? vimage_length(state.images) - 1 : 0, state.active->filename, state.active->width, state.active->height, state.active->channels, fit_cstr(state.stretch), -(int)state.pan[0], -(int)state.pan[1]);
+                    snprintf(str_info, sizeof(str_info), "[%zu/%zu] %s (%ux%ux%u) [%s %.1f%% @ %i/%i]", state.selected + 1, vimage_length(state.images), state.active->filename, state.active->width, state.active->height, state.active->channels, fit_cstr(state.stretch), 100.0f * state.zoom, -(int)state.pan[0], -(int)state.pan[1]);
                 } else {
-                    snprintf(str_info, sizeof(str_info), "[%zu/%zu] %s (%ux%ux%u) [%s]", state.selected, vimage_length(state.images) ? vimage_length(state.images) - 1 : 0, state.active->filename, state.active->width, state.active->height, state.active->channels, fit_cstr(state.stretch));
+                    snprintf(str_info, sizeof(str_info), "[%zu/%zu] %s (%ux%ux%u) [%s %.1f%%]", state.selected + 1, vimage_length(state.images), state.active->filename, state.active->width, state.active->height, state.active->channels, fit_cstr(state.stretch), 100.0f * state.zoom);
                 }
 
                 font_render(font, sh_text, str_info, text_pos[0], text_pos[1], 1.0, 1.0, (vec3){1.0f, 1.0f, 1.0f}, text_dim, false);
