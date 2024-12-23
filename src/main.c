@@ -630,14 +630,14 @@ int main(const int argc, const char **argv) {
 
     /* normalized device coordinates -- NDC */
     /* 0,1 top / -1,0 left */
-    float vertices[] = {
+    float vertices[4*5] = {
         // positions          // texture coords
          1.0f,  1.0f,  0.0f,  0.0f,  0.0f, // top right
          1.0f, -1.0f,  0.0f,  0.0f,  1.0f, // bottom right
         -1.0f, -1.0f,  0.0f, -1.0f,  1.0f, // bottom left
         -1.0f,  1.0f,  0.0f, -1.0f,  0.0f, // top left
     };
-    unsigned int indices[] = { // note that we start from 0!
+    unsigned int indices[6] = { // note that we start from 0!
         0, 1, 3, // first triangle
         1, 2, 3 // second triangle
     };

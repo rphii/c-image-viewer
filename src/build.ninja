@@ -17,7 +17,7 @@ cc = gcc
 
 #command = $cc -MMD -MT $out -MF $out.d $cflags -c $in -o $out
 rule cc
-    command = $cc -MMD -MT $out -MF $out.d $cflags -c $in -o $out
+    command = $cc -o $out -MMD -MF $out.d $cflags $in -c
     depfile = $out.d
 
 rule link
