@@ -187,7 +187,7 @@ void process_action_map(GLFWwindow *window, Civ *state) {
         if(vimage_length(state->images)) {
             state->selected %= vimage_length(state->images);
         }
-        if(state->stretch == FIT_PAN) state->stretch = FIT_XY;
+        if(state->stretch == FIT_PAN && state->zoom != 1.0f) state->stretch = FIT_XY;
     }
     if(s_action.select_previous) {
         s_action.select_previous = false;
@@ -199,7 +199,7 @@ void process_action_map(GLFWwindow *window, Civ *state) {
         } else if(vimage_length(state->images)) {
             state->selected = vimage_length(state->images) - 1;
         }
-        if(state->stretch == FIT_PAN) state->stretch = FIT_XY;
+        if(state->stretch == FIT_PAN && state->zoom != 1.0f) state->stretch = FIT_XY;
     }
 
     if(s_action.quit) {
