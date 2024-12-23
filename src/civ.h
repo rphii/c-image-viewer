@@ -5,10 +5,6 @@
 #include <pthread.h>
 #include <GLFW/glfw3.h>
 
-#ifndef PROC_COUNT
-#define PROC_COUNT  16
-#endif
-
 typedef enum {
     FILTER_NONE,
     FILTER_LINEAR,
@@ -48,7 +44,8 @@ VEC_INCLUDE(VImage, vimage, Image, BY_REF, BASE);
         pthread_mutex_t mutex; \
         size_t i0; \
         long len; \
-        struct X *q[PROC_COUNT]; \
+        struct X **q; \
+        long jobs; \
     } X##ThreadQueue;
 
 typedef struct VImage VImage;
