@@ -65,7 +65,7 @@ void *image_load_thread(void *args) {
 exit:
     /* finished this thread .. make space for next thread */
     pthread_mutex_lock(&image_load->queue->mutex);
-    image_load->queue->q[(image_load->queue->i0 + image_load->queue->len) % PROC_COUNT] = image_load;
+    image_load->queue->q[(image_load->queue->i0 + image_load->queue->len) % image_load->queue->jobs] = image_load;
     ++image_load->queue->len;
     pthread_mutex_unlock(&image_load->queue->mutex);
 
@@ -77,6 +77,9 @@ void images_load(VImage *images, const char **files, long n, pthread_mutex_t *mu
     ImageLoad *image_load = malloc(sizeof(ImageLoad) * jobs);
     if(!image_load) return;
     ImageLoadThreadQueue queue = {0};
+    queue.q = malloc(sizeof(ImageLoad *) * jobs);
+    queue.jobs = jobs;
+    assert(queue.q);
 
     /* push images to load */
     pthread_mutex_lock(mutex);
@@ -136,6 +139,7 @@ void images_load(VImage *images, const char **files, long n, pthread_mutex_t *mu
         }
     }
     free(image_load);
+    free(queue.q);
 }
 
 void *images_load_voidptr(void *argp) {
