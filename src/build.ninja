@@ -7,9 +7,12 @@ cflags   = -Wall -Wextra -pipe -Wno-unused-parameter -fdiagnostics-color=always 
     -I/usr/include/freetype2 -fstack-protector-strong $
     -march=native -O2
 
+#-Og -rdynamic -ggdb3
+
 
 
 #-Og -fsanitize=address -rdynamic -ggdb3
+#-Og -rdynamic -ggdb3
 ldflags  = -lglfw -lm -lcglm -lfreetype $
 
 #-Og -fsanitize=address -rdynamic -ggdb3

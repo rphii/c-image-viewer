@@ -12,7 +12,7 @@ static char *static_file_read(const char *filename) {
     char *str = malloc(len + 1);
     assert(str && "failed allocation!");
     size_t read = fread(str, 1, len, fp);
-    printf("read %zu len %zu\n", read, len);
+    fclose(fp);
     assert(read == len);
     str[len] = 0;
     return str;
