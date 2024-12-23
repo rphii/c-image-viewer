@@ -246,6 +246,7 @@ void font_render(Font font, Shader shader, const char *text, float x, float y, f
 
 void font_free(Font *font) {
     FT_Done_Face(font->face);
+    tcharacter_free(&font->characters);
     //memset(font, 0, sizeof(*font));
     glDeleteTextures(1, &font->texture_array);
 }

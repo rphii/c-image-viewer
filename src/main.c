@@ -72,6 +72,7 @@ typedef enum {
     FIT_XY,
     FIT_X,
     FIT_Y,
+    FIT_FILL_XY,
     FIT_PAN,
     /* above */
     FIT__COUNT
@@ -82,6 +83,7 @@ static const char *fit_cstr(FitList id) {
         case FIT_XY: return "XY";
         case FIT_X: return "X";
         case FIT_Y: return "Y";
+        case FIT_FILL_XY: return "FILL XY";
         case FIT_PAN: return "PAN";
         default: return "";
     }
@@ -435,6 +437,7 @@ void process_action_map(GLFWwindow *window, Civ *state) {
         if(vimage_length(state->images)) {
             state->selected %= vimage_length(state->images);
         }
+        if(state->stretch == FIT_PAN) state->stretch = FIT_XY;
     }
     if(s_action.select_previous) {
         s_action.select_previous = false;
@@ -446,6 +449,7 @@ void process_action_map(GLFWwindow *window, Civ *state) {
         } else if(vimage_length(state->images)) {
             state->selected = vimage_length(state->images) - 1;
         }
+        if(state->stretch == FIT_PAN) state->stretch = FIT_XY;
     }
 
     if(s_action.quit) {
@@ -584,6 +588,7 @@ int main(const int argc, const char **argv) {
 
 
     GLFWwindow* window = glfwCreateWindow(800, 600, "LearnOpenGL", NULL, NULL);
+    printf("window %p\n", window);
     if (window == NULL) {
         printf("Failed to create GLFW window\n");
         glfwTerminate();
@@ -728,6 +733,8 @@ int main(const int argc, const char **argv) {
                 /* fit */
                 glm_scale(s_state.image_transform, (vec3){ s_state.wwidth, s_state.wheight, 0 });
 
+                float s = (float)s_state.wwidth / (float)s_state.wheight;
+                float r = (float)state.active->width / (float)state.active->height;
                 float x = (float)s_state.wwidth / (float)state.active->width;
                 float y = (float)s_state.wheight / (float)state.active->height;
                 switch(state.stretch) {
@@ -735,10 +742,12 @@ int main(const int argc, const char **argv) {
                     case FIT_STRETCH_XY: { /* identity is ok */ } break;
 #endif
                     case FIT_XY: {
-                        float s = (float)s_state.wwidth / (float)s_state.wheight;
-                        float r = (float)state.active->width / (float)state.active->height;
                         if(s > r) goto FIT_Y;
                         else goto FIT_X;
+                    } break;
+                    case FIT_FILL_XY: {
+                        if(s > r) goto FIT_X;
+                        else goto FIT_Y;
                     } break;
                     case FIT_X: FIT_X: {
                         state.zoom = x;
@@ -818,7 +827,7 @@ int main(const int argc, const char **argv) {
 
     /* we can free stuff when it's hidden :) */
     glfwHideWindow(window);
-    glfwSwapBuffers(window);
+    //glfwSwapBuffers(window);
 
     s_action.quit = true;
 
@@ -828,7 +837,9 @@ int main(const int argc, const char **argv) {
 
     civ_free(&state);
 
+    glfwDestroyWindow(window);
     glfwTerminate();
+    printf("done\n");
 
     return 0;
 }
