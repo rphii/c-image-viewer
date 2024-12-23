@@ -3,8 +3,8 @@
 
 root     = .
 builddir = build
-cflags   = -Wall -pipe -fdiagnostics-color=always $
-    -I/usr/include/freetype2 $
+cflags   = -Wall -Wextra -pipe -Wno-unused-parameter -fdiagnostics-color=always $
+    -I/usr/include/freetype2 -fstack-protector-strong $
     -march=native -O2
 
 

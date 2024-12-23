@@ -110,7 +110,7 @@ typedef struct Image {
         pthread_attr_t attr; \
         pthread_mutex_t mutex; \
         size_t i0; \
-        size_t len; \
+        long len; \
         struct X *q[PROC_COUNT]; \
     } X##ThreadQueue;
 
@@ -207,14 +207,14 @@ void *image_load_thread(void *args) {
 typedef struct ImageLoadArgs {
     VImage *images;
     const char **files;
-    size_t n;
+    long n;
     pthread_mutex_t *mutex;
     bool *cancel;
     pthread_t thread;
     long jobs;
 } ImageLoadArgs;
 
-void images_load(VImage *images, const char **files, size_t n, pthread_mutex_t *mutex, bool *cancel, long jobs) {
+void images_load(VImage *images, const char **files, long n, pthread_mutex_t *mutex, bool *cancel, long jobs) {
 
     ImageLoad *image_load = malloc(sizeof(ImageLoad) * jobs);
     if(!image_load) return;
@@ -222,7 +222,7 @@ void images_load(VImage *images, const char **files, size_t n, pthread_mutex_t *
 
     /* push images to load */
     pthread_mutex_lock(mutex);
-    for(size_t i = 0; i < n; ++i) {
+    for(long i = 0; i < n; ++i) {
         Image push = { .filename = files[i] };
         vimage_push_back(images, &push);
     }
@@ -244,7 +244,7 @@ void images_load(VImage *images, const char **files, size_t n, pthread_mutex_t *
     assert(queue.len <= jobs);
 
     /* load images */
-    for(int i = 0; i < n && !*cancel; ++i) {
+    for(long i = 0; i < n && !*cancel; ++i) {
         /* this section is responsible for starting the thread */
         pthread_mutex_lock(&queue.mutex);
         if(queue.len) {
@@ -271,7 +271,7 @@ void images_load(VImage *images, const char **files, size_t n, pthread_mutex_t *
         pthread_mutex_unlock(&queue.mutex);
     }
     /* now free since we *know* all threads finished, we can ignore usage of the lock */
-    for(size_t i = 0; i < jobs; ++i) {
+    for(long i = 0; i < jobs; ++i) {
         if(image_load[i].queue->id) {
             //str_free(&thr_search[i].content);
             //str_free(&thr_search[i].cmd);
