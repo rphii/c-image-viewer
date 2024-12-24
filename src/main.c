@@ -150,12 +150,12 @@ void key_callback(GLFWwindow* window, int key, int scancode, int act, int mods)
             } break;
             case GLFW_KEY_K: {
                 if(glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) != GLFW_PRESS) {
-                    ++s_action.select_image;
+                    --s_action.select_image;
                 }
             } break;
             case GLFW_KEY_J: {
                 if(glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) != GLFW_PRESS) {
-                    --s_action.select_image;
+                    ++s_action.select_image;
                 }
             } break;
         }
