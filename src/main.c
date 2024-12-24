@@ -224,7 +224,7 @@ void process_action_map(GLFWwindow *window, Civ *state) {
             state->zoom *= (+1.1);
         }
         //printf("SCROLLED: %f zoom %f\n", scroll, state->zoom);
-        ////////state->stretch = FIT_PAN;
+        state->fit = FIT_PAN;
         s_action.gl_update = true;
     }
 
@@ -236,7 +236,7 @@ void process_action_map(GLFWwindow *window, Civ *state) {
         }
         //printf("ZOOM : %f\n", state->zoom);
         s_action.zoom = 0;
-        //////////state->stretch = FIT_PAN;
+        state->fit = FIT_PAN;
         s_action.gl_update = true;
     }
 
