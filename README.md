@@ -57,7 +57,7 @@ clean with ninja:
 - don't load EVERYTHING, but keep some images around the currently active one loaded
 - specify directory, check mime types (magic.h)
 - config file / arguments
-    - pan speen
+    - pan speed
     - zoom speed
     - show / hide description
     - filter mode
@@ -75,5 +75,4 @@ clean with ninja:
 - better error handling
 - info / verbose
 - make pthreads optional (single core)
-- select_next / select_prev -> make int and do ++ or --
 

@@ -29,14 +29,13 @@
 
 typedef struct ActionMap {
     bool gl_update;
-    bool select_next;
-    bool select_previous;
     bool stretch_next;
     bool resized;
     bool filter_next;
     bool toggle_fullscreen;
     bool toggle_description;
     bool quit;
+    int select_image;
     double scroll_y;
     double zoom;
     double pan_x;
@@ -151,12 +150,12 @@ void key_callback(GLFWwindow* window, int key, int scancode, int act, int mods)
             } break;
             case GLFW_KEY_K: {
                 if(glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) != GLFW_PRESS) {
-                    s_action.select_previous = true;
+                    ++s_action.select_image;
                 }
             } break;
             case GLFW_KEY_J: {
                 if(glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) != GLFW_PRESS) {
-                    s_action.select_next = true;
+                    --s_action.select_image;
                 }
             } break;
         }
@@ -178,28 +177,22 @@ void key_callback(GLFWwindow* window, int key, int scancode, int act, int mods)
 }
 
 void process_action_map(GLFWwindow *window, Civ *state) {
-    if(s_action.select_next) {
-        s_action.select_next = false;
+    if(s_action.select_image) {
         s_action.gl_update = true;
         glm_vec2_zero(state->pan);
         state->zoom = 1.0f;
-        ++state->selected;
-        if(vimage_length(state->images)) {
-            state->selected %= vimage_length(state->images);
+        size_t n_img = vimage_length(state->images);
+        if(n_img) {
+            if(s_action.select_image < 0) {
+                size_t sel = (-s_action.select_image) % n_img;
+                state->selected += n_img - sel;
+            } else {
+                state->selected += s_action.select_image;
+            }
+            state->selected %= n_img;
         }
         if(state->stretch == FIT_PAN && state->zoom != 1.0f) state->stretch = FIT_XY;
-    }
-    if(s_action.select_previous) {
-        s_action.select_previous = false;
-        s_action.gl_update = true;
-        glm_vec2_zero(state->pan);
-        state->zoom = 1.0f;
-        if(state->selected) {
-            --state->selected;
-        } else if(vimage_length(state->images)) {
-            state->selected = vimage_length(state->images) - 1;
-        }
-        if(state->stretch == FIT_PAN && state->zoom != 1.0f) state->stretch = FIT_XY;
+        s_action.select_image = 0;
     }
 
     if(s_action.quit) {
