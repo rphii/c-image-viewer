@@ -48,7 +48,6 @@ void send_texture_to_gpu(Image *image, FilterList filter, bool *render) {
     }
 }
 
-
 void *image_load_thread(void *args) {
     ImageLoad *image_load = args;
     if(!vimage_length(*image_load->images)) goto exit;
@@ -61,6 +60,7 @@ void *image_load_thread(void *args) {
 
     image->data = stbi_load(image->filename, &image->width, &image->height, &image->channels, 0);
     glfwPostEmptyEvent();
+    //if(image->data) printf("LOADED '%s'\n", image->filename);
 
 exit:
     /* finished this thread .. make space for next thread */

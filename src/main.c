@@ -311,6 +311,9 @@ int main(const int argc, const char **argv) {
 
     if(argc < 1) return -1;
 
+    s_state.wwidth = 800;
+    s_state.wheight = 600;
+
     /* get directory */
     const char *program = argv[0];
     unsigned int n = strlen(program);
@@ -321,7 +324,7 @@ int main(const int argc, const char **argv) {
         --n;
     }
     char directory[4096];
-    snprintf(directory, 4096, "%.*s", n, program);
+snprintf(directory, 4096, "%.*s", n, program);
     char shaders[4096];
     snprintf(shaders, 4096, "%.4040s/../shaders", directory);
 
@@ -338,7 +341,7 @@ int main(const int argc, const char **argv) {
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_SAMPLES, 4);
 
-    GLFWwindow* window = glfwCreateWindow(800, 600, "civ", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(s_state.wwidth, s_state.wheight, "civ", NULL, NULL);
     printf("window %p\n", window);
     if (window == NULL) {
         printf("Failed to create GLFW window\n");
@@ -363,16 +366,18 @@ int main(const int argc, const char **argv) {
     state.loader.jobs = sysconf(_SC_NPROCESSORS_ONLN);
     images_load_async(&state.loader);
 
+    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
+        printf("Failed to initialize GLAD\n");
+        return -1;
+    }
+
+    framebuffer_size_callback(window, s_state.wwidth, s_state.wheight);
+
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
     glfwSetKeyCallback(window, key_callback);
     glfwSetCursorPosCallback(window, mouse_callback);
     glfwSetMouseButtonCallback(window, mouse_button_callback);
     glfwSetScrollCallback(window, scroll_callback);
-
-    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
-        printf("Failed to initialize GLAD\n");
-        return -1;
-    }
 
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     //glEnable(GL_MULTISAMPLE);
