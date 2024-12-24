@@ -74,7 +74,10 @@ typedef struct Civ {
     FilterList filter;
     size_t selected;
     float zoom;
-    FitList fit;
+    struct {
+        FitList initial;
+        FitList current;
+    } fit;
     vec2 pan;
     ImageLoadArgs loader;
     bool show_description;
