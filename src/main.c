@@ -320,7 +320,7 @@ int main(const int argc, const char **argv) {
         --n;
     }
     char directory[4096];
-snprintf(directory, 4096, "%.*s", n, program);
+    snprintf(directory, 4096, "%.*s", n, program);
     char shaders[4096];
     snprintf(shaders, 4096, "%.4040s/../shaders", directory);
 
