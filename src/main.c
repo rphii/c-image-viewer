@@ -37,7 +37,6 @@ typedef struct ActionMap {
     bool toggle_description;
     bool quit;
     int select_image;
-    double scroll_y;
     double zoom;
     double pan_x;
     double pan_y;
@@ -218,19 +217,6 @@ void process_action_map(GLFWwindow *window, Civ *state) {
         s_action.gl_update = true;
     }
 
-    if(s_action.scroll_y) {
-        double scroll = s_action.scroll_y;
-        s_action.scroll_y = 0;
-        if(scroll < 0) {
-            state->zoom /= (+1.1);
-        } else if(scroll > 0) {
-            state->zoom *= (+1.1);
-        }
-        //printf("SCROLLED: %f zoom %f\n", scroll, state->zoom);
-        state->fit.current = FIT_PAN;
-        s_action.gl_update = true;
-    }
-
     if(s_action.zoom) {
         if(s_action.zoom < 0) {
             state->zoom *= (1.0 + s_action.zoom);
@@ -301,7 +287,7 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 
 void scroll_callback(GLFWwindow *window, double xoffset, double yoffset)
 {
-    s_action.scroll_y = yoffset;
+    s_action.zoom += yoffset < 0 ? -0.1 : 0.1;
 }
 
 int main(const int argc, const char **argv) {
