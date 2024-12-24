@@ -190,8 +190,9 @@ void process_action_map(GLFWwindow *window, Civ *state) {
                 state->selected += s_action.select_image;
             }
             state->selected %= n_img;
+            state->fit.current = state->fit.initial;
         }
-        ///////if(state->stretch == FIT_PAN && state->zoom != 1.0f) state->stretch = FIT_XY;
+        //if(state->fit. == FIT_PAN && state->zoom != 1.0f) state->stretch = FIT_XY;
         s_action.select_image = 0;
     }
 
@@ -208,8 +209,9 @@ void process_action_map(GLFWwindow *window, Civ *state) {
 
     if(s_action.stretch_next) {
         s_action.stretch_next = false;
-        ++state->fit;
-        state->fit %= FIT__COUNT;
+        ++state->fit.initial;
+        state->fit.initial %= FIT__COUNT;
+        state->fit.current = state->fit.initial;
         state->zoom = 1.0;
         glm_vec2_zero(state->pan);
         s_action.gl_update = true;
@@ -224,7 +226,7 @@ void process_action_map(GLFWwindow *window, Civ *state) {
             state->zoom *= (+1.1);
         }
         //printf("SCROLLED: %f zoom %f\n", scroll, state->zoom);
-        state->fit = FIT_PAN;
+        state->fit.current = FIT_PAN;
         s_action.gl_update = true;
     }
 
@@ -236,7 +238,7 @@ void process_action_map(GLFWwindow *window, Civ *state) {
         }
         //printf("ZOOM : %f\n", state->zoom);
         s_action.zoom = 0;
-        state->fit = FIT_PAN;
+        state->fit.current = FIT_PAN;
         s_action.gl_update = true;
     }
 
@@ -264,6 +266,7 @@ void process_action_map(GLFWwindow *window, Civ *state) {
     if(s_action.pan_x || s_action.pan_y) {
         state->pan[0] += s_action.pan_x / state->zoom; //s_action.pan_x / s_state.wwidth * state->zoom;
         state->pan[1] -= s_action.pan_y / state->zoom; //s_action.pan_y / s_state.wheight * state->zoom;
+        state->fit.current = FIT_PAN;
         /* done */
         s_action.pan_x = 0;
         s_action.pan_y = 0;
@@ -484,7 +487,7 @@ snprintf(directory, 4096, "%.*s", n, program);
                 float r = (float)state.active->width / (float)state.active->height;
                 float x = (float)s_state.wwidth / (float)state.active->width;
                 float y = (float)s_state.wheight / (float)state.active->height;
-                switch(state.fit) {
+                switch(state.fit.current) {
 #if 0
                     case FIT_STRETCH_XY: { /* identity is ok */ } break;
 #endif
@@ -544,7 +547,7 @@ snprintf(directory, 4096, "%.*s", n, program);
                 vec2 text_pos = { 5, s_state.theight - font.height * 1.25 };
 
                 vec4 text_dim;
-                FitList fit = state.pan[0] == 0 && state.pan[1] == 0 ? state.fit : FIT_PAN;
+                FitList fit = state.fit.current;
                 if(state.pan[0] || state.pan[1]) {
                     snprintf(str_info, sizeof(str_info), "[%zu/%zu] %s (%ux%ux%u) [%.1f%% %s @ %i/%i]", state.selected + 1, vimage_length(state.images), state.active->filename, state.active->width, state.active->height, state.active->channels, 100.0f * state.zoom, fit_cstr(fit), -(int)state.pan[0], -(int)state.pan[1]);
                 } else {
