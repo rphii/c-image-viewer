@@ -75,4 +75,5 @@ clean with ninja:
 - better error handling
 - info / verbose
 - make pthreads optional (single core)
+- show short hint when changing anything (S,jk)
 
