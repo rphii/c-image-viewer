@@ -191,7 +191,7 @@ void process_action_map(GLFWwindow *window, Civ *state) {
             }
             state->selected %= n_img;
         }
-        if(state->stretch == FIT_PAN && state->zoom != 1.0f) state->stretch = FIT_XY;
+        ///////if(state->stretch == FIT_PAN && state->zoom != 1.0f) state->stretch = FIT_XY;
         s_action.select_image = 0;
     }
 
@@ -208,8 +208,8 @@ void process_action_map(GLFWwindow *window, Civ *state) {
 
     if(s_action.stretch_next) {
         s_action.stretch_next = false;
-        ++state->stretch;
-        state->stretch %= FIT__COUNT;
+        ++state->fit;
+        state->fit %= FIT__COUNT;
         state->zoom = 1.0;
         glm_vec2_zero(state->pan);
         s_action.gl_update = true;
@@ -224,7 +224,7 @@ void process_action_map(GLFWwindow *window, Civ *state) {
             state->zoom *= (+1.1);
         }
         //printf("SCROLLED: %f zoom %f\n", scroll, state->zoom);
-        state->stretch = FIT_PAN;
+        ////////state->stretch = FIT_PAN;
         s_action.gl_update = true;
     }
 
@@ -236,7 +236,7 @@ void process_action_map(GLFWwindow *window, Civ *state) {
         }
         //printf("ZOOM : %f\n", state->zoom);
         s_action.zoom = 0;
-        state->stretch = FIT_PAN;
+        //////////state->stretch = FIT_PAN;
         s_action.gl_update = true;
     }
 
@@ -335,8 +335,7 @@ snprintf(directory, 4096, "%.*s", n, program);
     glfwWindowHint(GLFW_SAMPLES, 4);
 
     GLFWwindow* window = glfwCreateWindow(s_state.wwidth, s_state.wheight, "civ", NULL, NULL);
-    printf("window %p\n", window);
-    if (window == NULL) {
+    if(window == NULL) {
         printf("Failed to create GLFW window\n");
         glfwTerminate();
         return -1;
@@ -485,7 +484,7 @@ snprintf(directory, 4096, "%.*s", n, program);
                 float r = (float)state.active->width / (float)state.active->height;
                 float x = (float)s_state.wwidth / (float)state.active->width;
                 float y = (float)s_state.wheight / (float)state.active->height;
-                switch(state.stretch) {
+                switch(state.fit) {
 #if 0
                     case FIT_STRETCH_XY: { /* identity is ok */ } break;
 #endif
@@ -545,10 +544,11 @@ snprintf(directory, 4096, "%.*s", n, program);
                 vec2 text_pos = { 5, s_state.theight - font.height * 1.25 };
 
                 vec4 text_dim;
+                FitList fit = state.pan[0] == 0 && state.pan[1] == 0 ? state.fit : FIT_PAN;
                 if(state.pan[0] || state.pan[1]) {
-                    snprintf(str_info, sizeof(str_info), "[%zu/%zu] %s (%ux%ux%u) [%.1f%% %s @ %i/%i]", state.selected + 1, vimage_length(state.images), state.active->filename, state.active->width, state.active->height, state.active->channels, 100.0f * state.zoom, fit_cstr(state.stretch), -(int)state.pan[0], -(int)state.pan[1]);
+                    snprintf(str_info, sizeof(str_info), "[%zu/%zu] %s (%ux%ux%u) [%.1f%% %s @ %i/%i]", state.selected + 1, vimage_length(state.images), state.active->filename, state.active->width, state.active->height, state.active->channels, 100.0f * state.zoom, fit_cstr(fit), -(int)state.pan[0], -(int)state.pan[1]);
                 } else {
-                    snprintf(str_info, sizeof(str_info), "[%zu/%zu] %s (%ux%ux%u) [%.1f%% %s]", state.selected + 1, vimage_length(state.images), state.active->filename, state.active->width, state.active->height, state.active->channels, 100.0f * state.zoom, fit_cstr(state.stretch));
+                    snprintf(str_info, sizeof(str_info), "[%zu/%zu] %s (%ux%ux%u) [%.1f%% %s]", state.selected + 1, vimage_length(state.images), state.active->filename, state.active->width, state.active->height, state.active->channels, 100.0f * state.zoom, fit_cstr(fit));
                 }
 
                 font_render(font, sh_text, str_info, text_pos[0], text_pos[1], 1.0, 1.0, (vec3){1.0f, 1.0f, 1.0f}, text_dim, false);
