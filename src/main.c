@@ -23,6 +23,7 @@
 #include <pthread.h>
 #include <GLFW/glfw3.h>
 #include <stdbool.h>
+#include <time.h>
 
 #include <unistd.h>
 //#include <magic.h>
@@ -441,15 +442,24 @@ int main(const int argc, const char **argv) {
     char str_info[1024] = {0};
     bool run_timer = true;
 
+    //clock_gettime(CLOCK_REALTIME, &s_state.t_now);
+    glfwSetTime(0); /* set time to 0 right before the rendering loop */
     while(!glfwWindowShouldClose(window)) {
         bool rendered = false;
 
         /* done, timer */
         if(run_timer) {
+#if 0
+            memcpy(&s_state.t_prev, &s_state.t_now, sizeof(s_state.t_now));
+            clock_gettime(CLOCK_REALTIME, &s_state.t_now);
+            s_state.t_delta = (double)(s_state.t_now.tv_sec - s_state.t_prev.tv_sec) + (double)(s_state.t_now.tv_nsec - s_state.t_prev.tv_nsec) / 1e9;
+            printf("delta %f\n", s_state.t_delta);
+#else
             s_state.t_prev = s_state.t_now;
             s_state.t_delta = glfwGetTime();
             s_state.t_now += s_state.t_delta;
             //printf("t delta %f\n", s_state.t_delta);
+#endif
         }
         glfwSetTime(0);
 
@@ -572,6 +582,7 @@ int main(const int argc, const char **argv) {
             glfwWaitEvents();
         }
         if(!run_timer) {
+            //clock_gettime(CLOCK_REALTIME, &s_state.t_now);
             glfwSetTime(0);
         }
     }
