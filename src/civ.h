@@ -46,6 +46,7 @@ VEC_INCLUDE(VImage, vimage, Image, BY_REF, BASE);
         long len; \
         struct X **q; \
         long jobs; \
+        long *done; \
     } X##ThreadQueue;
 
 typedef struct VImage VImage;
@@ -66,6 +67,7 @@ typedef struct ImageLoadArgs {
     bool *cancel;
     pthread_t thread;
     long jobs;
+    long done;
 } ImageLoadArgs;
 
 typedef struct Civ {

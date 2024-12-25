@@ -4,9 +4,8 @@
 #include <stdbool.h>
 #include "shader.h"
 #include "glad.h"
-#include "uniform.h"
 
-void box_render(Shader shader, mat4 projection, vec4 dim, vec4 color);
+void box_render(Shader shader, mat4 projection, vec4 dim, vec4 color, float border);
 
 #define BOX_H
 #endif

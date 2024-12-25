@@ -36,7 +36,7 @@ void box_init(void) {
 void box_shader(Shader shader) {
 }
 
-void box_render(Shader shader, mat4 projection, vec4 dim, vec4 color) {
+void box_render(Shader shader, mat4 projection, vec4 dim, vec4 color, float border) {
 
     if(!box_initialized) box_init();
 
@@ -60,7 +60,6 @@ void box_render(Shader shader, mat4 projection, vec4 dim, vec4 color) {
     float tx = dim[0];
     float ty = dim[1];
 
-    float border = 6;
     glm_scale(m_scale, (vec3){ sx + border, sy + border });
     glm_translate(m_transform, (vec3){ tx - border / 2, ty - border / 2 });
     glm_mat4_mul(m_transform, m_scale, m_transform);
