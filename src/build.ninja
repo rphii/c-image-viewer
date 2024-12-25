@@ -34,6 +34,7 @@ build $builddir/text.o: cc $root/text.c
 build $builddir/box.o: cc $root/box.c
 build $builddir/utf8.o: cc $root/utf8.c
 build $builddir/civ.o: cc $root/civ.c
+build $builddir/image.o: cc $root/image.c
 
 build civ.out: link $
     $builddir/main.o $
@@ -44,4 +45,5 @@ build civ.out: link $
     $builddir/box.o $
     $builddir/utf8.o $
     $builddir/civ.o $
+    $builddir/image.o $
 

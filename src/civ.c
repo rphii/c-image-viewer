@@ -67,18 +67,20 @@ exit:
     pthread_mutex_lock(&image_load->queue->mutex);
     image_load->queue->q[(image_load->queue->i0 + image_load->queue->len) % image_load->queue->jobs] = image_load;
     ++image_load->queue->len;
+    ++(*image_load->queue->done);
     pthread_mutex_unlock(&image_load->queue->mutex);
 
     return 0;
 }
 
-void images_load(VImage *images, const char **files, long n, pthread_mutex_t *mutex, bool *cancel, long jobs) {
+void images_load(VImage *images, const char **files, long n, pthread_mutex_t *mutex, bool *cancel, long jobs, long *done) {
 
     ImageLoad *image_load = malloc(sizeof(ImageLoad) * jobs);
     if(!image_load) return;
     ImageLoadThreadQueue queue = {0};
     queue.q = malloc(sizeof(ImageLoad *) * jobs);
     queue.jobs = jobs;
+    queue.done = done;
     assert(queue.q);
 
     /* push images to load */
@@ -144,7 +146,7 @@ void images_load(VImage *images, const char **files, long n, pthread_mutex_t *mu
 
 void *images_load_voidptr(void *argp) {
     ImageLoadArgs *args = argp;
-    images_load(args->images, args->files, args->n, args->mutex, args->cancel, args->jobs);
+    images_load(args->images, args->files, args->n, args->mutex, args->cancel, args->jobs, &args->done);
     return 0;
 }
 

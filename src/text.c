@@ -189,8 +189,10 @@ void font_render(Font font, Shader shader, const char *text, float x, float y, f
 
         float xmax = x + (float)(ch->size[0] + ch->bearing[0]) * scale;
         float xmin = x + ch->bearing[0] * scale;
-        float ymin = y - (float)(font.height - ch->bearing[1]) * scale;
-        float ymax = ymin + (float)(ch->size[1]);
+        //float ymin = y - (float)(font.height - ch->bearing[1]) * scale;
+        //float ymax = ymin + (float)(ch->size[1]);
+        float ymax = y + (float)(font.height + ch->bearing[1]) * scale;
+        float ymin = ymax - (float)(ch->size[1]);
 
         if(i == 0 || xpos < min_x) min_x = xmin;
         if(i == 0 || ypos < min_y) min_y = ymin;
