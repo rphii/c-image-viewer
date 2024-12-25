@@ -25,6 +25,7 @@
 #include <GLFW/glfw3.h>
 #include <stdbool.h>
 #include <time.h>
+#include "timer.h"
 
 #include <unistd.h>
 //#include <magic.h>
@@ -56,9 +57,7 @@ typedef struct StateMap {
     double mouse_down_y;
     double mouse_x;
     double mouse_y;
-    double t_now;
-    double t_prev;
-    double t_delta;
+    Timer t_global;
 } StateMap;
 
 static ActionMap s_action;
@@ -97,39 +96,39 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
     s_action.gl_update = true;
 }
 
-void process_input(GLFWwindow *window, bool *run_timer) {
+void process_input(GLFWwindow *window, double t_delta, bool *run_timer) {
     bool t_run = false;
     if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
         s_action.quit = true;
     }
     if((glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS /*&& glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) != GLFW_PRESS*/) ||
        (glfwGetKey(window, GLFW_KEY_H) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)) {
-        s_action.pan_x += s_state.t_delta * 500;
+        s_action.pan_x += t_delta * 500;
         t_run = true;
     };
     if((glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) != GLFW_PRESS) ||
        (glfwGetKey(window, GLFW_KEY_J) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)) {
-        s_action.pan_y -= s_state.t_delta * 500;
+        s_action.pan_y -= t_delta * 500;
         t_run = true;
     };
     if((glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) != GLFW_PRESS) ||
        (glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)) {
-        s_action.pan_y += s_state.t_delta * 500;
+        s_action.pan_y += t_delta * 500;
         t_run = true;
     };
     if((glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS /*&& glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) != GLFW_PRESS*/) ||
        (glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)) {
-        s_action.pan_x -= s_state.t_delta * 500;
+        s_action.pan_x -= t_delta * 500;
         t_run = true;
     };
     if((glfwGetKey(window, GLFW_KEY_I) == GLFW_PRESS) ||
        (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)) {
-        s_action.zoom += s_state.t_delta;
+        s_action.zoom += t_delta;
         t_run = true;
     };
     if((glfwGetKey(window, GLFW_KEY_O) == GLFW_PRESS) ||
        (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)) {
-        s_action.zoom -= s_state.t_delta;
+        s_action.zoom -= t_delta;
         t_run = true;
     };
     *run_timer = t_run;
@@ -381,7 +380,6 @@ int main(const int argc, const char **argv) {
     s_action.gl_update = true;
 
     //text_init();
-    int loc_text_projection = get_uniform(sh_text, "projection");
     glm_ortho(0.0f, s_state.wwidth, 0.0f, s_state.wheight, -1.0f, 1.0f, s_state.image_projection);
 
     glm_mat4_identity(s_state.image_view);
@@ -401,28 +399,18 @@ int main(const int argc, const char **argv) {
 
     //clock_gettime(CLOCK_REALTIME, &s_state.t_now);
     glBindVertexArray(0);
-    glfwSetTime(0); /* set time to 0 right before the rendering loop */
+    timer_start(&s_state.t_global, CLOCK_REALTIME, 0);
     while(!glfwWindowShouldClose(window)) {
         bool rendered = false;
 
         /* done, timer */
         if(run_timer) {
-#if 0
-            memcpy(&s_state.t_prev, &s_state.t_now, sizeof(s_state.t_now));
-            clock_gettime(CLOCK_REALTIME, &s_state.t_now);
-            s_state.t_delta = (double)(s_state.t_now.tv_sec - s_state.t_prev.tv_sec) + (double)(s_state.t_now.tv_nsec - s_state.t_prev.tv_nsec) / 1e9;
-            printf("delta %f\n", s_state.t_delta);
-#else
-            s_state.t_prev = s_state.t_now;
-            s_state.t_delta = glfwGetTime();
-            s_state.t_now += s_state.t_delta;
-            //printf("t delta %f\n", s_state.t_delta);
-#endif
+            timer_stop(&s_state.t_global);
+            timer_continue(&s_state.t_global);
         }
-        glfwSetTime(0);
 
         /* input */
-        process_input(window, &run_timer);
+        process_input(window, s_state.t_global.delta, &run_timer);
 
         /* process */
         process_action_map(window, &state);
@@ -545,8 +533,7 @@ int main(const int argc, const char **argv) {
             glfwWaitEvents();
         }
         if(!run_timer) {
-            //clock_gettime(CLOCK_REALTIME, &s_state.t_now);
-            glfwSetTime(0);
+            timer_restart(&s_state.t_global);
         }
     }
 
