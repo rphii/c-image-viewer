@@ -1,16 +1,12 @@
 #include <stdbool.h>
 
-#include "image.h"
+#include "gl_image.h"
 #include "uniform.h"
 
-static bool image_initialized;
+static bool gl_image_initialized;
 static unsigned int VAO, VBO, EBO;
 
-static int loc_projection;
-static int loc_view;
-static int loc_transform;
-
-void image_initialize(void) {
+void gl_image_initialize(void) {
 
     float vertices[4*5] = {
         // positions          // texture coords
@@ -40,24 +36,24 @@ void image_initialize(void) {
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 5, (void *)(sizeof(float) * 3));
 
     glBindVertexArray(0);
-    image_initialized = true;
+    gl_image_initialized = true;
 }
 
-void image_shader(Shader shader) {
-    if(!image_initialized) image_initialize();
+void gl_image_shader(GlImage *image, Shader shader) {
+    if(!gl_image_initialized) gl_image_initialize();
 
-    loc_projection = get_uniform(shader, "projection");
-    loc_view = get_uniform(shader, "view");
-    loc_transform = get_uniform(shader, "transform");
+    image->loc_projection = get_uniform(shader, "projection");
+    image->loc_view = get_uniform(shader, "view");
+    image->loc_transform = get_uniform(shader, "transform");
 }
 
-void image_render(unsigned int texture, mat4 projection, mat4 view, mat4 transform) {
-    if(!image_initialized) image_initialize();
+void gl_image_render(GlImage *image, unsigned int texture, mat4 projection, mat4 view, mat4 transform) {
+    if(!gl_image_initialized) gl_image_initialize();
 
     glBindVertexArray(VAO);
-    glUniformMatrix4fv(loc_view, 1, GL_FALSE, (float *)view);
-    glUniformMatrix4fv(loc_projection, 1, GL_FALSE, (float *)projection);
-    glUniformMatrix4fv(loc_transform, 1, GL_FALSE, (float *)transform);
+    glUniformMatrix4fv(image->loc_view, 1, GL_FALSE, (float *)view);
+    glUniformMatrix4fv(image->loc_projection, 1, GL_FALSE, (float *)projection);
+    glUniformMatrix4fv(image->loc_transform, 1, GL_FALSE, (float *)transform);
 
     glDisable(GL_BLEND);
     glActiveTexture(GL_TEXTURE0);

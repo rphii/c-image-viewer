@@ -20,7 +20,7 @@
 #include "uniform.h"
 #include "box.h"
 #include "glad.h"
-#include "image.h"
+#include "gl_image.h"
 #include <pthread.h>
 #include <GLFW/glfw3.h>
 #include <stdbool.h>
@@ -373,8 +373,8 @@ int main(const int argc, const char **argv) {
     int loc_view = get_uniform(sh_rect, "view");
     int loc_transform = get_uniform(sh_rect, "transform");
 
-    Image image = {0};
-    image_shader(sh_rect);
+    GlImage image = {0};
+    gl_image_shader(&image, sh_rect);
 
     //glEnable(GL_DEPTH_TEST);
 
@@ -392,6 +392,7 @@ int main(const int argc, const char **argv) {
     //Font font = font_init("/usr/share/fonts/mikachan-font-ttf/mikachan.ttf", font_size, 1.0, 1.5, 1024);
     //Font font = font_init("/usr/share/fonts/lato/Lato-Regular.ttf", font_size, 1.0, 1.5, 1024);
     Font font = font_init("/usr/share/fonts/MonoLisa/ttf/MonoLisa-Regular.ttf", font_size, 1.0, 1.5, 1024);
+    font_shader(&font, sh_text);
     font_load(&font, 0, 256);
 
     char str_info[1024] = {0};
@@ -433,7 +434,7 @@ int main(const int argc, const char **argv) {
             pthread_mutex_unlock(state.loader.mutex);
         }
 
-        if(state.loader.jobs && state.loader.done < vimage_length(state.images)) {
+        if(state.loader.done < vimage_length(state.images)) {
             s_action.gl_update = true;
         }
 
@@ -498,13 +499,10 @@ int main(const int argc, const char **argv) {
 
                 /* scale back */
                 glm_scale(s_state.image_projection, (vec3){ 1.0f/s_state.wwidth, 1.0f/s_state.wheight, 0 });
-                image_render(state.active->texture, s_state.image_projection, s_state.image_view, s_state.image_transform);
+                gl_image_render(&image, state.active->texture, s_state.image_projection, s_state.image_view, s_state.image_transform);
             }
 
             if(state.active && state.show_description) {
-                glUseProgram(sh_text);
-                glUniformMatrix4fv(loc_text_projection, 1, GL_FALSE, (float *)s_state.text_projection);
-
                 vec2 text_pos = { 5, s_state.theight - font.height * 1.25 };
 
                 vec4 text_dim;
@@ -515,26 +513,26 @@ int main(const int argc, const char **argv) {
                     snprintf(str_info, sizeof(str_info), "[%zu/%zu] %s (%ux%ux%u) [%.1f%% %s]", state.selected + 1, vimage_length(state.images), state.active->filename, state.active->width, state.active->height, state.active->channels, 100.0f * state.zoom, fit_cstr(fit));
                 }
 
-                font_render(font, sh_text, str_info, text_pos[0], text_pos[1], 1.0, 1.0, (vec3){1.0f, 1.0f, 1.0f}, text_dim, false);
+                font_render(font, str_info, s_state.text_projection, text_pos[0], text_pos[1], 1.0, 1.0, (vec3){1.0f, 1.0f, 1.0f}, text_dim, false);
 
                 glEnable(GL_BLEND);
                 glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
                 box_render(sh_box, s_state.text_projection, text_dim, (vec4){0.0f, 0.0f, 0.0f, 0.7f}, 6);
-                font_render(font, sh_text, str_info, text_pos[0], text_pos[1], 1.0, 1.0, (vec3){1.0f, 1.0f, 1.0f}, text_dim, true);
+                font_render(font, str_info, s_state.text_projection, text_pos[0], text_pos[1], 1.0, 1.0, (vec3){1.0f, 1.0f, 1.0f}, text_dim, true);
             }
 
-            if(state.loader.jobs) {
+            if(state.loader.done < vimage_length(state.images)) {
                 snprintf(str_load, sizeof(str_load), "Loaded %zu/%zu", state.loader.done, vimage_length(state.images));
 
                 vec2 text_pos = { 5, s_state.theight - font.height * 1.25 * 4 };
                 vec4 text_dim;
 
-                font_render(font, sh_text, str_load, text_pos[0], text_pos[1], 1.0, 1.0, (vec3){1.0f, 1.0f, 1.0f}, text_dim, false);
+                font_render(font, str_load, s_state.text_projection, text_pos[0], text_pos[1], 1.0, 1.0, (vec3){1.0f, 1.0f, 1.0f}, text_dim, false);
 
                 glEnable(GL_BLEND);
                 glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
                 box_render(sh_box, s_state.text_projection, text_dim, (vec4){0.0f, 0.0f, 0.0f, 0.7f}, 6);
-                font_render(font, sh_text, str_load, text_pos[0], text_pos[1], 1.0, 1.0, (vec3){1.0f, 1.0f, 1.0f}, text_dim, true);
+                font_render(font, str_load, s_state.text_projection, text_pos[0], text_pos[1], 1.0, 1.0, (vec3){1.0f, 1.0f, 1.0f}, text_dim, true);
             }
 
             glBindVertexArray(0);

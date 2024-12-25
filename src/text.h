@@ -26,6 +26,13 @@ typedef struct Font {
     const FT_Face face;
     const int height;
     const int width;
+    struct {
+        int loc_projection;
+        int loc_transforms;
+        int loc_map;
+        int loc_color;
+        Shader id;
+    } shader;
     float hspace;
     float vspace;
     TCharacter characters;
@@ -40,7 +47,8 @@ typedef struct Font {
 void text_init(void);
 [[nodiscard("memory leak")]] Font font_init(const char *path, int height, float hspace, float vspace, unsigned int glyphs);
 void font_load(Font *font, unsigned long i0, unsigned long iE);
-void font_render(Font font, Shader shader, const char *text, float x, float y, float scale, float expand, vec3 color, vec4 dimensions, bool render);
+void font_shader(Font *font, Shader shader);
+void font_render(Font font, const char *text, mat4 projection, float x, float y, float scale, float expand, vec3 color, vec4 dimensions, bool render);
 void font_free(Font *font);
 void text_free(void);
 
