@@ -134,17 +134,26 @@ void font_load(Font *font, unsigned long i0, unsigned long iE) {
     fprintf(stderr, "[FONT] Internal Lookup Length: %zu, Alloced %zu\n", font->characters.used, LUT_CAP(font->characters.width));
 }
 
-void font_render(Font font, Shader shader, const char *text, float x, float y, float scale, float expand, vec3 color, vec4 dimensions, bool render) {
-    glUseProgram(shader);
+void font_shader(Font *font, Shader shader) {
+    font->shader.loc_transforms = glGetUniformLocation(shader, "transforms");
+    font->shader.loc_projection = glGetUniformLocation(shader, "projection");
+    font->shader.loc_map = glGetUniformLocation(shader, "letter_map");
+    font->shader.loc_color = glGetUniformLocation(shader, "text_color");
+    font->shader.id = shader;
+    assert(font->shader.loc_map >= 0);
+    assert(font->shader.loc_color >= 0);
+    assert(font->shader.loc_transforms >= 0);
+    assert(font->shader.loc_projection >= 0);
+}
+
+
+void font_render(Font font, const char *text, mat4 projection, float x, float y, float scale, float expand, vec3 color, vec4 dimensions, bool render) {
+    glUseProgram(font.shader.id);
     //scale = scale * font.height / 256.0f; /* re-adjust scale to original size of font */
-    int loc_transforms = glGetUniformLocation(shader, "transforms");
-    int loc_map = glGetUniformLocation(shader, "letter_map");
-    int loc_color = glGetUniformLocation(shader, "text_color");
-    assert(loc_color >= 0);
-    assert(loc_transforms >= 0);
     
     if(render) {
-        glUniform3f(loc_color, color[0], color[1], color[2]);
+        glUniformMatrix4fv(font.shader.loc_projection, 1, GL_FALSE, (float *)projection);
+        glUniform3f(font.shader.loc_color, color[0], color[1], color[2]);
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D_ARRAY, font.texture_array);
         glBindVertexArray(VAO);
@@ -218,8 +227,8 @@ void font_render(Font font, Shader shader, const char *text, float x, float y, f
         i += (u8p.bytes - 1);
 
         if(i_instance >= TEXT_INSTANCE_LIMIT && render) {
-            glUniformMatrix4fv(loc_transforms, i_instance, GL_FALSE, (float *)transforms);
-            glUniform1iv(loc_map, i_instance, (int *)maps);
+            glUniformMatrix4fv(font.shader.loc_transforms, i_instance, GL_FALSE, (float *)transforms);
+            glUniform1iv(font.shader.loc_map, i_instance, (int *)maps);
             glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, i_instance);
             i_instance = 0;
         }
@@ -227,8 +236,8 @@ void font_render(Font font, Shader shader, const char *text, float x, float y, f
     }
 
     if(i_instance && render) {
-        glUniformMatrix4fv(loc_transforms, i_instance, GL_FALSE, (float *)transforms);
-        glUniform1iv(loc_map, i_instance, (int *)maps);
+        glUniformMatrix4fv(font.shader.loc_transforms, i_instance, GL_FALSE, (float *)transforms);
+        glUniform1iv(font.shader.loc_map, i_instance, (int *)maps);
         glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, i_instance);
     }
 
