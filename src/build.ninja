@@ -4,11 +4,10 @@
 root     = .
 builddir = build
 cflags   = -Wall -Wextra -pipe -Wno-unused-parameter -fdiagnostics-color=always $
-    -I/usr/include/freetype2 -fstack-protector-strong $
+    -I/usr/include/freetype2 $
     -march=native -O2
 
 #-Og -rdynamic -ggdb3
-
 
 
 #-Og -fsanitize=address -rdynamic -ggdb3
@@ -21,6 +20,10 @@ cc = gcc
 #command = $cc -MMD -MT $out -MF $out.d $cflags -c $in -o $out
 rule cc
     command = $cc -o $out -MMD -MF $out.d $cflags $in -c
+    depfile = $out.d
+
+rule cce
+    command = $cc -o $out $in -E
     depfile = $out.d
 
 rule link
@@ -36,6 +39,7 @@ build $builddir/utf8.o: cc $root/utf8.c
 build $builddir/civ.o: cc $root/civ.c
 build $builddir/timer.o: cc $root/timer.c
 build $builddir/gl_image.o: cc $root/gl_image.c
+build $builddir/arg.o: cc $root/arg.c
 
 build civ.out: link $
     $builddir/main.o $
@@ -48,4 +52,5 @@ build civ.out: link $
     $builddir/civ.o $
     $builddir/timer.o $
     $builddir/gl_image.o $
+    $builddir/arg.o $
 

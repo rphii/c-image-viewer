@@ -73,7 +73,7 @@ exit:
     return 0;
 }
 
-void images_load(VImage *images, const char **files, long n, pthread_mutex_t *mutex, bool *cancel, long jobs, long *done) {
+void images_load(VImage *images, VrStr *files, pthread_mutex_t *mutex, bool *cancel, long jobs, long *done) {
 
     ImageLoad *image_load = malloc(sizeof(ImageLoad) * jobs);
     if(!image_load) return;
@@ -85,8 +85,10 @@ void images_load(VImage *images, const char **files, long n, pthread_mutex_t *mu
 
     /* push images to load */
     pthread_mutex_lock(mutex);
+    size_t n = vrstr_length(*files);
     for(long i = 0; i < n; ++i) {
-        Image push = { .filename = files[i] };
+        const char *filename = vrstr_get_at(files, i);
+        Image push = { .filename = filename };
         vimage_push_back(images, &push);
     }
     pthread_mutex_unlock(mutex);
@@ -146,7 +148,7 @@ void images_load(VImage *images, const char **files, long n, pthread_mutex_t *mu
 
 void *images_load_voidptr(void *argp) {
     ImageLoadArgs *args = argp;
-    images_load(args->images, args->files, args->n, args->mutex, args->cancel, args->jobs, &args->done);
+    images_load(args->images, args->files, args->mutex, args->cancel, args->jobs, &args->done);
     return 0;
 }
 
@@ -267,4 +269,21 @@ void civ_cmd_pan(Civ *civ, vec2 pan) {
 }
 
 /* commands }}} */
+
+void civ_defaults(Civ *civ) {
+    CivConfig *defaults = &civ->defaults;
+    defaults->font_path = "/usr/share/fonts/MonoLisa/ttf/MonoLisa-Regular.ttf";
+}
+
+void civ_arg(Civ *civ, const char *name) {
+    Arg *arg = &civ->arg;
+    arg_attach_help(arg, 'h', "--help", "list this help", name, "image viewer written in C", "https://github.com/rphii/c-image-viewer");
+    arg_allow_rest(arg, "images");
+    ArgOpt *opt;
+    CivConfig *defaults = &civ->defaults;
+    CivConfig *config = &civ->config;
+    /* font */
+    opt = arg_attach(arg, &arg->options, 'f', "--font", "specify font");
+    argopt_set_str(opt, &defaults->font_path, &config->font_path);
+}
 

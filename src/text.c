@@ -54,13 +54,15 @@ Font font_init(const char *path, int height, float hspace, float vspace, unsigne
     FT_Face face = {0};
     int width = 0;
     if(FT_New_Face(ft, path, 0, &face)) {
-        fprintf(stderr, "[FREETYPE] Error! Could not load font\n");
-        assert(0);
+        fprintf(stderr, "[FREETYPE] Error! Could not load font: '%s'\n", path);
+        //assert(0);
+        return (Font){0};
     }
     //if(FT_Set_Pixel_Sizes(face, width, height)) {
     if(FT_Set_Pixel_Sizes(face, height, height)) {
         fprintf(stderr, "[FREETYPE] Error! Could not set pixel sizes\n");
-        assert(0);
+        //assert(0);
+        return (Font){0};
     }
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1); /* disable byte-alignment restriction */
     Font font = {
@@ -96,7 +98,7 @@ void font_load(Font *font, unsigned long i0, unsigned long iE) {
         }
         if(FT_Load_Glyph(font->face, c, FT_LOAD_RENDER)) {
         //if (FT_Load_Char(font->face, i, FT_LOAD_RENDER)) {
-            fprintf(stderr, "[FREETYPE] Error! Could not load character '%#lx'\n", i);
+            //fprintf(stderr, "[FREETYPE] Error! Could not load character '%#lx'\n", i);
             continue;
             //assert(0);
         }
