@@ -8,6 +8,7 @@ void timer_start(Timer *timer, int type, double timeout) {
 }
 
 void timer_restart(Timer *timer) {
+    assert(timer->started);
     clock_gettime(timer->type, &timer->t0);
 }
 

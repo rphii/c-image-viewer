@@ -7,6 +7,7 @@ typedef struct GlImage {
     int loc_projection;
     int loc_view;
     int loc_transform;
+    Shader shader;
 } GlImage;
 
 void gl_image_shader(GlImage *image, Shader shader);
