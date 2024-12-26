@@ -5,6 +5,7 @@
 #include <stdbool.h>
 #include <pthread.h>
 #include <GLFW/glfw3.h>
+#include "arg.h"
 
 typedef enum {
     FILTER_NONE,
@@ -62,8 +63,8 @@ typedef struct ImageLoad {
 
 typedef struct ImageLoadArgs {
     VImage *images;
-    const char **files;
-    long n;
+    //const char **files;
+    VrStr *files;
     pthread_mutex_t *mutex;
     bool *cancel;
     pthread_t thread;
@@ -83,13 +84,17 @@ typedef enum {
     POPUP__COUNT
 } PopupList;
 
+typedef struct CivConfig {
+    char *font_path;
+    unsigned int font_size;
+} CivConfig;
+
 typedef struct Civ {
     VImage images;
     Image *active;
     FilterList filter;
     size_t selected;
-    float zoom;
-    struct {
+    float zoom; struct {
         FitList initial;
         FitList current;
     } fit;
@@ -101,6 +106,9 @@ typedef struct Civ {
         Timer timer;
         PopupList active;
     } popup;
+    CivConfig config;
+    CivConfig defaults;
+    Arg arg;
 } Civ;
 
 void send_texture_to_gpu(Image *image, FilterList filter, bool *render);
@@ -108,6 +116,8 @@ const char *fit_cstr(FitList id);
 const char *filter_cstr(FilterList id);
 void images_load_async(ImageLoadArgs *args);
 void civ_free(Civ *state);
+void civ_defaults(Civ *civ);
+void civ_arg(Civ *civ, const char *name);
 
 void civ_popup_set(Civ *state, PopupList id);
 

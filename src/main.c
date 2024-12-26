@@ -226,9 +226,39 @@ void scroll_callback(GLFWwindow *window, double xoffset, double yoffset)
     s_action.zoom += yoffset < 0 ? -0.1 : 0.1;
 }
 
+#include "arg.h"
+
 int main(const int argc, const char **argv) {
 
     if(argc < 1) return -1;
+
+#if 0
+    //printf("SIZEOF %zu\n", sizeof(TArgOptItem));
+    ArgOpt *rv;
+
+    const char *fontpathdefault = "/usr/share/fonts/MonoLisa/ttf/MonoLisa-Regular.ttf";
+    const char *font_path = 0;
+    char *opt = strdup("--font");
+    rv = arg_attach(&arg, &arg.options, 'f', opt, "font path");
+    argopt_set_str(rv, &fontpathdefault, &font_path);
+
+    char *somestr;
+    bool exit_early = false;
+    if(arg_parse(&arg, argc, argv, &exit_early)) return -1;
+    if(exit_early) return false;
+
+    printf("DONE\n");
+    return -1;
+#endif
+#if 1
+    Civ state = {0};
+    civ_defaults(&state);
+    civ_arg(&state, argv[0]);
+    arg_defaults(&state.arg);
+    if(arg_parse(&state.arg, argc, argv, &s_action.quit)) return -1;
+    if(s_action.quit) return 0;
+    //return -1;
+#endif
 
     s_state.wwidth = 800;
     s_state.wheight = 600;
@@ -270,16 +300,14 @@ int main(const int argc, const char **argv) {
 
     const char **files = &argv[1];    /* init state */
     int total = argc - 1;
-    Civ state = {0};
     state.show_loaded = true;
     state.filter = FILTER_NEAREST;
     state.zoom = 1.0;
 
     pthread_mutex_t mutex_image;
     pthread_mutex_init(&mutex_image, 0);
-    state.loader.files = files;
+    state.loader.files = &state.arg.rest.vstr;
     state.loader.images = &state.images;
-    state.loader.n = total;
     state.loader.mutex = &mutex_image;
     state.loader.cancel = &s_action.quit;
     state.loader.jobs = sysconf(_SC_NPROCESSORS_ONLN);
@@ -326,7 +354,8 @@ int main(const int argc, const char **argv) {
     int font_size = 24;
     //Font font = font_init("/usr/share/fonts/mikachan-font-ttf/mikachan.ttf", font_size, 1.0, 1.5, 1024);
     //Font font = font_init("/usr/share/fonts/lato/Lato-Regular.ttf", font_size, 1.0, 1.5, 1024);
-    Font font = font_init("/usr/share/fonts/MonoLisa/ttf/MonoLisa-Regular.ttf", font_size, 1.0, 1.5, 1024);
+    //Font font = font_init("/usr/share/fonts/MonoLisa/ttf/MonoLisa-Regular.ttf", font_size, 1.0, 1.5, 1024);
+    Font font = font_init(state.config.font_path, font_size, 1.0, 1.5, 1024);
     font_shader(&font, sh_text);
     font_load(&font, 0, 256);
 

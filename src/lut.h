@@ -247,7 +247,10 @@
             if(LUT_IS_BY_REF(MV)) { \
                 req += sizeof(*LUT_REF(MV)(*item)->val); \
             } \
+            /*req *= 10;*/ \
+            /*printf("REQ: %zu\n", req);*/\
             *item = malloc(req); \
+            /*printf("MALLOCD: %p (%zu)\n", *item, req);*/\
             memset(*item, 0, req); \
             if(!*item) return 0; \
             if(LUT_IS_BY_REF(MK)) { \
@@ -261,6 +264,8 @@
                 memcpy(&(*item)->val, &p, sizeof((*item)->val)); \
             } \
         } \
+        /*printf("*item %p / (*item)->key %p , &: %p / (*item)->val %p\n", *item, (*item)->key, &(*item)->key, (*item)->val);*/\
+        /*printf("%p <- %p\n", LUT_REF(MK)(*item)->key, LUT_REF(MK)key);*/ \
         memcpy(LUT_REF(MK)(*item)->key, LUT_REF(MK)key, sizeof(TK)); \
         if(LUT_IS_BY_REF(MV)) { \
             if(LUT_REF(MV)val != 0) { \
