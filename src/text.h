@@ -20,6 +20,12 @@ typedef struct Character {
     unsigned int advance;
 } Character;
 
+typedef enum {
+    TEXT_ALIGN_RENDER,
+    TEXT_ALIGN_NONE,
+    TEXT_ALIGN_CENTER,
+} TextAlignList;
+
 LUT_INCLUDE(TCharacter, tcharacter, unsigned long, BY_VAL, Character, BY_VAL);
 
 typedef struct Font {
@@ -48,7 +54,7 @@ void text_init(void);
 [[nodiscard("memory leak")]] Font font_init(const char *path, int height, float hspace, float vspace, unsigned int glyphs);
 void font_load(Font *font, unsigned long i0, unsigned long iE);
 void font_shader(Font *font, Shader shader);
-void font_render(Font font, const char *text, mat4 projection, float x, float y, float scale, float expand, vec3 color, vec4 dimensions, bool render);
+void font_render(Font font, const char *text, mat4 projection, vec2 pos, float scale, float expand, vec3 color, vec4 dimensions, TextAlignList align);
 void font_free(Font *font);
 void text_free(void);
 

@@ -16,9 +16,9 @@ typedef enum {
 
 typedef enum {
     FIT_XY,
+    FIT_FILL_XY,
     FIT_X,
     FIT_Y,
-    FIT_FILL_XY,
     FIT_PAN,
     /* above */
     FIT__COUNT

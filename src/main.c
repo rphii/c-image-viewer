@@ -445,26 +445,26 @@ int main(const int argc, const char **argv) {
                     snprintf(str_info, sizeof(str_info), "[%zu/%zu] %s (%ux%ux%u) [%.1f%% %s]", state.selected + 1, vimage_length(state.images), state.active->filename, state.active->width, state.active->height, state.active->channels, 100.0f * state.zoom, fit_cstr(fit));
                 }
 
-                font_render(font, str_info, s_state.text_projection, text_pos[0], text_pos[1], 1.0, 1.0, (vec3){1.0f, 1.0f, 1.0f}, text_dim, false);
+                font_render(font, str_info, s_state.text_projection, text_pos, 1.0, 1.0, (vec3){1.0f, 1.0f, 1.0f}, text_dim, TEXT_ALIGN_NONE);
 
                 glEnable(GL_BLEND);
                 glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
                 box_render(sh_box, s_state.text_projection, text_dim, (vec4){0.0f, 0.0f, 0.0f, 0.7f}, 6);
-                font_render(font, str_info, s_state.text_projection, text_pos[0], text_pos[1], 1.0, 1.0, (vec3){1.0f, 1.0f, 1.0f}, text_dim, true);
+                font_render(font, str_info, s_state.text_projection, text_pos, 1.0, 1.0, (vec3){1.0f, 1.0f, 1.0f}, text_dim, TEXT_ALIGN_RENDER);
             }
 
             if(state.show_loaded && state.loader.done < vimage_length(state.images)) {
-                snprintf(str_load, sizeof(str_load), "Loaded %zu/%zu", state.loader.done, vimage_length(state.images));
+                snprintf(str_load, sizeof(str_load), "Loaded %.1f%% (%zu/%zu)", 100.0 * (double)(state.loader.done) / (double)vimage_length(state.images), state.loader.done, vimage_length(state.images));
 
                 vec2 text_pos = { 5, s_state.theight - font.height * 1.25 * 4 };
                 vec4 text_dim;
 
-                font_render(font, str_load, s_state.text_projection, text_pos[0], text_pos[1], 1.0, 1.0, (vec3){1.0f, 1.0f, 1.0f}, text_dim, false);
+                font_render(font, str_load, s_state.text_projection, text_pos, 1.0, 1.0, (vec3){1.0f, 1.0f, 1.0f}, text_dim, TEXT_ALIGN_NONE);
 
                 glEnable(GL_BLEND);
                 glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
                 box_render(sh_box, s_state.text_projection, text_dim, (vec4){0.0f, 0.0f, 0.0f, 0.7f}, 6);
-                font_render(font, str_load, s_state.text_projection, text_pos[0], text_pos[1], 1.0, 1.0, (vec3){1.0f, 1.0f, 1.0f}, text_dim, true);
+                font_render(font, str_load, s_state.text_projection, text_pos, 1.0, 1.0, (vec3){1.0f, 1.0f, 1.0f}, text_dim, TEXT_ALIGN_RENDER);
             }
 
             str_popup[0] = 0;
@@ -473,7 +473,7 @@ int main(const int argc, const char **argv) {
                     snprintf(str_popup, sizeof(str_popup), "%s", state.show_description ? "show description" : "hide description");
                 } break;
                 case POPUP_SELECT: {
-                    snprintf(str_popup, sizeof(str_popup), "%zu/%zu", state.selected, vimage_length(state.images));
+                    snprintf(str_popup, sizeof(str_popup), "[%zu/%zu] %s", state.selected + 1, vimage_length(state.images), fit_cstr(state.fit.current));
                 } break;
                 case POPUP_FIT: {
                     snprintf(str_popup, sizeof(str_popup), "[%s]", fit_cstr(state.fit.current));
@@ -493,20 +493,11 @@ int main(const int argc, const char **argv) {
                 vec2 text_pos = { (float)s_state.twidth / 2.0f, (float)s_state.theight / 2.0f };
                 vec4 text_dim;
 
-                font_render(font, str_popup, s_state.text_projection, text_pos[0], text_pos[1], 1.0, 1.0, (vec3){1.0f, 1.0f, 1.0f}, text_dim, false);
-                float dx = (text_dim[2] - text_dim[0]) / 2.0f;
-                float dy = (text_dim[3] - text_dim[1]) / 2.0f;
-                text_pos[0] -= dx;
-                text_pos[1] -= dy;
-                text_dim[0] -= dx;
-                text_dim[2] -= dx;
-                text_dim[1] -= dy;
-                text_dim[3] -= dy;
-
+                font_render(font, str_popup, s_state.text_projection, text_pos, 1.0, 1.0, (vec3){1.0f, 1.0f, 1.0f}, text_dim, TEXT_ALIGN_CENTER);
                 glEnable(GL_BLEND);
                 glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
                 box_render(sh_box, s_state.text_projection, text_dim, (vec4){0.0f, 0.0f, 0.0f, 0.7f}, 6);
-                font_render(font, str_popup, s_state.text_projection, text_pos[0], text_pos[1], 1.0, 1.0, (vec3){1.0f, 1.0f, 1.0f}, text_dim, true);
+                font_render(font, str_popup, s_state.text_projection, text_pos, 1.0, 1.0, (vec3){1.0f, 1.0f, 1.0f}, text_dim, TEXT_ALIGN_RENDER);
             }
 
             glBindVertexArray(0);

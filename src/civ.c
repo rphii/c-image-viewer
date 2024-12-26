@@ -171,7 +171,7 @@ const char *fit_cstr(FitList id) {
         case FIT_XY: return "XY";
         case FIT_X: return "X";
         case FIT_Y: return "Y";
-        case FIT_FILL_XY: return "FILL XY";
+        case FIT_FILL_XY: return "XY-FILL";
         case FIT_PAN: return "PAN";
         default: return "";
     }
@@ -197,7 +197,7 @@ void civ_popup_set(Civ *state, PopupList id) {
     if(id >= POPUP__COUNT) return;
     state->popup.active = id;
     if(id) {
-        timer_start(&state->popup.timer, CLOCK_REALTIME, 0.25);
+        timer_start(&state->popup.timer, CLOCK_REALTIME, 0.33);
     }
 }
 
