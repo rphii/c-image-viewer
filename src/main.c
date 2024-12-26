@@ -271,8 +271,9 @@ int main(const int argc, const char **argv) {
     const char **files = &argv[1];    /* init state */
     int total = argc - 1;
     Civ state = {0};
-    state.zoom = 1.0;
+    state.show_loaded = true;
     state.filter = FILTER_NEAREST;
+    state.zoom = 1.0;
 
     pthread_mutex_t mutex_image;
     pthread_mutex_init(&mutex_image, 0);
@@ -331,6 +332,7 @@ int main(const int argc, const char **argv) {
 
     char str_info[1024] = {0};
     char str_load[1024] = {0};
+    char str_popup[1024] = {0};
     bool run_timer = true;
 
     //clock_gettime(CLOCK_REALTIME, &s_state.t_now);
@@ -359,6 +361,11 @@ int main(const int argc, const char **argv) {
         }
 
         if(state.loader.done < vimage_length(state.images)) {
+            s_action.gl_update = true;
+        }
+
+        if(state.popup.active && timer_timedout(&state.popup.timer)) {
+            civ_popup_set(&state, POPUP_NONE);
             s_action.gl_update = true;
         }
 
@@ -433,7 +440,7 @@ int main(const int argc, const char **argv) {
                 vec4 text_dim;
                 FitList fit = state.fit.current;
                 if(state.pan[0] || state.pan[1]) {
-                    snprintf(str_info, sizeof(str_info), "[%zu/%zu] %s (%ux%ux%u) [%.1f%% %s @ %i/%i]", state.selected + 1, vimage_length(state.images), state.active->filename, state.active->width, state.active->height, state.active->channels, 100.0f * state.zoom, fit_cstr(fit), -(int)state.pan[0], -(int)state.pan[1]);
+                    snprintf(str_info, sizeof(str_info), "[%zu/%zu] %s (%ux%ux%u) [%.1f%% %s @ %.0f,%.0f]", state.selected + 1, vimage_length(state.images), state.active->filename, state.active->width, state.active->height, state.active->channels, 100.0f * state.zoom, fit_cstr(fit), -state.pan[0], -state.pan[1]);
                 } else {
                     snprintf(str_info, sizeof(str_info), "[%zu/%zu] %s (%ux%ux%u) [%.1f%% %s]", state.selected + 1, vimage_length(state.images), state.active->filename, state.active->width, state.active->height, state.active->channels, 100.0f * state.zoom, fit_cstr(fit));
                 }
@@ -446,7 +453,7 @@ int main(const int argc, const char **argv) {
                 font_render(font, str_info, s_state.text_projection, text_pos[0], text_pos[1], 1.0, 1.0, (vec3){1.0f, 1.0f, 1.0f}, text_dim, true);
             }
 
-            if(state.loader.done < vimage_length(state.images)) {
+            if(state.show_loaded && state.loader.done < vimage_length(state.images)) {
                 snprintf(str_load, sizeof(str_load), "Loaded %zu/%zu", state.loader.done, vimage_length(state.images));
 
                 vec2 text_pos = { 5, s_state.theight - font.height * 1.25 * 4 };
@@ -458,6 +465,48 @@ int main(const int argc, const char **argv) {
                 glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
                 box_render(sh_box, s_state.text_projection, text_dim, (vec4){0.0f, 0.0f, 0.0f, 0.7f}, 6);
                 font_render(font, str_load, s_state.text_projection, text_pos[0], text_pos[1], 1.0, 1.0, (vec3){1.0f, 1.0f, 1.0f}, text_dim, true);
+            }
+
+            str_popup[0] = 0;
+            switch(state.popup.active) {
+                case POPUP_DESCRIPTION: {
+                    snprintf(str_popup, sizeof(str_popup), "%s", state.show_description ? "show description" : "hide description");
+                } break;
+                case POPUP_SELECT: {
+                    snprintf(str_popup, sizeof(str_popup), "%zu/%zu", state.selected, vimage_length(state.images));
+                } break;
+                case POPUP_FIT: {
+                    snprintf(str_popup, sizeof(str_popup), "[%s]", fit_cstr(state.fit.current));
+                } break;
+                case POPUP_PAN: {
+                    snprintf(str_popup, sizeof(str_popup), "%.0f,%.0f", -state.pan[0], -state.pan[1]);
+                } break;
+                case POPUP_ZOOM: {
+                    snprintf(str_popup, sizeof(str_popup), "%.1f%%", 100 * state.zoom);
+                } break;
+                case POPUP_FILTER: {
+                    snprintf(str_popup, sizeof(str_popup), "%s", filter_cstr(state.filter));
+                } break;
+                default: case POPUP__COUNT: case POPUP_NONE: break;
+            }
+            if(strlen(str_popup)) {
+                vec2 text_pos = { (float)s_state.twidth / 2.0f, (float)s_state.theight / 2.0f };
+                vec4 text_dim;
+
+                font_render(font, str_popup, s_state.text_projection, text_pos[0], text_pos[1], 1.0, 1.0, (vec3){1.0f, 1.0f, 1.0f}, text_dim, false);
+                float dx = (text_dim[2] - text_dim[0]) / 2.0f;
+                float dy = (text_dim[3] - text_dim[1]) / 2.0f;
+                text_pos[0] -= dx;
+                text_pos[1] -= dy;
+                text_dim[0] -= dx;
+                text_dim[2] -= dx;
+                text_dim[1] -= dy;
+                text_dim[3] -= dy;
+
+                glEnable(GL_BLEND);
+                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                box_render(sh_box, s_state.text_projection, text_dim, (vec4){0.0f, 0.0f, 0.0f, 0.7f}, 6);
+                font_render(font, str_popup, s_state.text_projection, text_pos[0], text_pos[1], 1.0, 1.0, (vec3){1.0f, 1.0f, 1.0f}, text_dim, true);
             }
 
             glBindVertexArray(0);

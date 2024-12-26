@@ -78,6 +78,5 @@ Changing from floating to tiling window can be done via:
 - better error handling
 - info / verbose
 - make pthreads optional (single core)
-- show short hint when changing anything (S,jk)
 - wayland - how to set tiling ?
 
