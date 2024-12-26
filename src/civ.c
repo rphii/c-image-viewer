@@ -223,6 +223,7 @@ void civ_cmd_select(Civ *civ, int change) {
 
 void civ_cmd_fit(Civ *civ, bool next) {
     if(!next) return;
+    // TODO: if we're zoomed in, don't go next, but re-set the current to initial
     ++civ->fit.initial;
     civ->fit.initial %= FIT__COUNT;
     civ->fit.current = civ->fit.initial;
