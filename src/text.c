@@ -147,11 +147,11 @@ void font_shader(Font *font, Shader shader) {
 }
 
 
-void font_render(Font font, const char *text, mat4 projection, float x, float y, float scale, float expand, vec3 color, vec4 dimensions, bool render) {
+void font_render(Font font, const char *text, mat4 projection, vec2 pos, float scale, float expand, vec3 color, vec4 dimensions, TextAlignList align) {
     glUseProgram(font.shader.id);
     //scale = scale * font.height / 256.0f; /* re-adjust scale to original size of font */
     
-    if(render) {
+    if(align == TEXT_ALIGN_RENDER) {
         glUniformMatrix4fv(font.shader.loc_projection, 1, GL_FALSE, (float *)projection);
         glUniform3f(font.shader.loc_color, color[0], color[1], color[2]);
         glActiveTexture(GL_TEXTURE0);
@@ -160,6 +160,8 @@ void font_render(Font font, const char *text, mat4 projection, float x, float y,
         glBindBuffer(GL_ARRAY_BUFFER, VBO);
     }
     
+    float x = pos[0];
+    float y = pos[1];
     float x0 = x;
     mat4 mat_scale;
     unsigned int i_instance = 0;
@@ -226,7 +228,7 @@ void font_render(Font font, const char *text, mat4 projection, float x, float y,
         ++i_instance;
         i += (u8p.bytes - 1);
 
-        if(i_instance >= TEXT_INSTANCE_LIMIT && render) {
+        if(i_instance >= TEXT_INSTANCE_LIMIT && align == TEXT_ALIGN_RENDER) {
             glUniformMatrix4fv(font.shader.loc_transforms, i_instance, GL_FALSE, (float *)transforms);
             glUniform1iv(font.shader.loc_map, i_instance, (int *)maps);
             glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, i_instance);
@@ -235,14 +237,14 @@ void font_render(Font font, const char *text, mat4 projection, float x, float y,
 
     }
 
-    if(i_instance && render) {
-        glUniformMatrix4fv(font.shader.loc_transforms, i_instance, GL_FALSE, (float *)transforms);
-        glUniform1iv(font.shader.loc_map, i_instance, (int *)maps);
-        glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, i_instance);
-    }
-
     /* done */
-    if(render) {
+    if(align == TEXT_ALIGN_RENDER) {
+        if(i_instance) {
+            glUniformMatrix4fv(font.shader.loc_transforms, i_instance, GL_FALSE, (float *)transforms);
+            glUniform1iv(font.shader.loc_map, i_instance, (int *)maps);
+            glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, i_instance);
+        }
+
         glBindBuffer(GL_ARRAY_BUFFER, 0);
         glBindVertexArray(0);
         glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
@@ -254,6 +256,21 @@ void font_render(Font font, const char *text, mat4 projection, float x, float y,
         dimensions[2] = max_x;
         dimensions[3] = max_y;
     }
+
+    switch(align) {
+        case TEXT_ALIGN_CENTER: {
+            float dx = (dimensions[2] - dimensions[0]) / 2.0f;
+            float dy = (dimensions[3] - dimensions[1]) / 2.0f;
+            pos[0] -= dx;
+            pos[1] -= dy;
+            dimensions[0] -= dx;
+            dimensions[2] -= dx;
+            dimensions[1] -= dy;
+            dimensions[3] -= dy;
+        } break;
+        default: break;
+    }
+
 }
 
 void font_free(Font *font) {
