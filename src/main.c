@@ -391,42 +391,7 @@ int main(const int argc, const char **argv) {
     int loc_transform = get_uniform(sh_rect, "transform");
 
     GlImage image = {0};
-#if 0
     gl_image_shader(&image, sh_rect);
-#else
-    /* normalized device coordinates -- NDC */
-    /* 0,1 top / -1,0 left */
-    float vertices[4*5] = {
-        // positions          // texture coords
-         1.0f,  1.0f,  0.0f,  0.0f,  0.0f, // top right
-         1.0f, -1.0f,  0.0f,  0.0f,  1.0f, // bottom right
-        -1.0f, -1.0f,  0.0f, -1.0f,  1.0f, // bottom left
-        -1.0f,  1.0f,  0.0f, -1.0f,  0.0f, // top left
-    };
-    unsigned int indices[6] = { // note that we start from 0!
-        0, 1, 3, // first triangle
-        1, 2, 3 // second triangle
-    };
-
-    //text_init();
-
-    unsigned int VAO, VBO, EBO;
-
-    glGenVertexArrays(1, &VAO);
-    glGenBuffers(1, &VBO);
-    glBindVertexArray(VAO);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), &vertices, GL_STATIC_DRAW);
-
-    glGenBuffers(1, &EBO);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 5, (void *)(sizeof(float) * 0));
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 5, (void *)(sizeof(float) * 3));
-#endif
 
     //glEnable(GL_DEPTH_TEST);
 
@@ -542,22 +507,8 @@ int main(const int argc, const char **argv) {
                 /* scale back */
                 glm_scale(s_state.image_projection, (vec3){ 1.0f/s_state.wwidth, 1.0f/s_state.wheight, 0 });
 
-#if 0
                 glDisable(GL_BLEND);
                 gl_image_render(&image, state.active->texture, s_state.image_projection, s_state.image_view, s_state.image_transform);
-#else
-                glUseProgram(sh_rect);
-                /* send to gpu */
-                glBindVertexArray(VAO);
-                glUniformMatrix4fv(loc_view, 1, GL_FALSE, (float *)s_state.image_view);
-                glUniformMatrix4fv(loc_projection, 1, GL_FALSE, (float *)s_state.image_projection);
-                glUniformMatrix4fv(loc_transform, 1, GL_FALSE, (float *)s_state.image_transform);
-
-                glDisable(GL_BLEND);
-                glActiveTexture(GL_TEXTURE0);
-                glBindTexture(GL_TEXTURE_2D, state.active->texture);
-                glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-#endif
             }
 
             if(state.active && state.show_description) {
