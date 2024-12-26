@@ -44,6 +44,10 @@ typedef struct ActionMap {
     double pan_y;
 } ActionMap;
 
+static ActionMap s_action_init = {
+    .zoom = 1.0,
+};
+
 typedef struct StateMap {
     int wwidth;
     int wheight;
@@ -176,9 +180,31 @@ void key_callback(GLFWwindow* window, int key, int scancode, int act, int mods)
     }
 }
 
+void actionmap_print(ActionMap map) {
+    printf("%u update\n", map.gl_update);
+    printf("%f zoom\n", map.zoom);
+    printf("%u desc\n", map.toggle_description);
+    printf("%u quit\n", map.quit);
+    printf("%f pan x\n", map.pan_x);
+    printf("%f pan y\n", map.pan_y);
+    printf("%u resi\n", map.resized);
+    printf("%u next filt\n", map.filter_next);
+    printf("%u next stret\n", map.stretch_next);
+    printf("%u next img\n", map.select_image);
+    printf("%u fullsc\n", map.toggle_fullscreen);
+    printf("============\n\n");
+}
+
 void process_action_map(GLFWwindow *window, Civ *state) {
+    //printf("INIT::::::::::::\n");
+    //actionmap_print(s_action_init);
+    //printf("MAP::::::::::::\n");
+    //actionmap_print(s_action);
+    bool update = s_action.gl_update;
+    if(memcmp(&s_action_init, &s_action, sizeof(s_action))) update = true;
+
     if(s_action.select_image) {
-        s_action.gl_update = true;
+        //s_action.gl_update = true;
         glm_vec2_zero(state->pan);
         state->zoom = 1.0f;
         size_t n_img = vimage_length(state->images);
@@ -193,7 +219,7 @@ void process_action_map(GLFWwindow *window, Civ *state) {
             state->fit.current = state->fit.initial;
         }
         //if(state->fit. == FIT_PAN && state->zoom != 1.0f) state->stretch = FIT_XY;
-        s_action.select_image = 0;
+        //s_action.select_image = 0;
     }
 
     if(s_action.quit) {
@@ -201,20 +227,19 @@ void process_action_map(GLFWwindow *window, Civ *state) {
     }
 
     if(s_action.resized) {
-        s_action.resized = false;
+        //s_action.resized = false;
         //if(state->zoom != 1.0) {
         //    state->stretch = FIT_PAN;
         //}
     }
 
     if(s_action.stretch_next) {
-        s_action.stretch_next = false;
+        //s_action.stretch_next = false;
         ++state->fit.initial;
         state->fit.initial %= FIT__COUNT;
         state->fit.current = state->fit.initial;
         state->zoom = 1.0;
         glm_vec2_zero(state->pan);
-        s_action.gl_update = true;
     }
 
     if(s_action.zoom) {
@@ -224,27 +249,21 @@ void process_action_map(GLFWwindow *window, Civ *state) {
             state->zoom /= (1.0 - s_action.zoom);
         }
         //printf("ZOOM : %f\n", state->zoom);
-        s_action.zoom = 0;
         state->fit.current = FIT_PAN;
-        s_action.gl_update = true;
     }
 
     if(s_action.filter_next) {
-        s_action.filter_next = false;
         ++state->filter;
         state->filter %= FILTER__COUNT;
         if(state->filter == 0) ++state->filter;
-        s_action.gl_update = true;
     }
 
     if(s_action.toggle_description) {
-        s_action.toggle_description = false;
         state->show_description = !state->show_description;
-        s_action.gl_update = true;
     }
 
     if(s_action.toggle_fullscreen) {
-        s_action.toggle_fullscreen = false;
+        //s_action.toggle_fullscreen = false;
         //GLFWmonitor *monitor = glfwGetWindowMonitor(window);
         //const GLFWvidmode *mode = glfwGetVideoMode(monitor);
         //glfwSetWindowMonitor(window, monitor, 0, 0, mode->width, mode->height, 0);
@@ -254,11 +273,10 @@ void process_action_map(GLFWwindow *window, Civ *state) {
         state->pan[0] += s_action.pan_x / state->zoom; //s_action.pan_x / s_state.wwidth * state->zoom;
         state->pan[1] -= s_action.pan_y / state->zoom; //s_action.pan_y / s_state.wheight * state->zoom;
         state->fit.current = FIT_PAN;
-        /* done */
-        s_action.pan_x = 0;
-        s_action.pan_y = 0;
-        s_action.gl_update = true;
     }
+
+    s_action = s_action_init;
+    s_action.gl_update = update;
 
 }
 
@@ -373,7 +391,42 @@ int main(const int argc, const char **argv) {
     int loc_transform = get_uniform(sh_rect, "transform");
 
     GlImage image = {0};
+#if 0
     gl_image_shader(&image, sh_rect);
+#else
+    /* normalized device coordinates -- NDC */
+    /* 0,1 top / -1,0 left */
+    float vertices[4*5] = {
+        // positions          // texture coords
+         1.0f,  1.0f,  0.0f,  0.0f,  0.0f, // top right
+         1.0f, -1.0f,  0.0f,  0.0f,  1.0f, // bottom right
+        -1.0f, -1.0f,  0.0f, -1.0f,  1.0f, // bottom left
+        -1.0f,  1.0f,  0.0f, -1.0f,  0.0f, // top left
+    };
+    unsigned int indices[6] = { // note that we start from 0!
+        0, 1, 3, // first triangle
+        1, 2, 3 // second triangle
+    };
+
+    //text_init();
+
+    unsigned int VAO, VBO, EBO;
+
+    glGenVertexArrays(1, &VAO);
+    glGenBuffers(1, &VBO);
+    glBindVertexArray(VAO);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), &vertices, GL_STATIC_DRAW);
+
+    glGenBuffers(1, &EBO);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 5, (void *)(sizeof(float) * 0));
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 5, (void *)(sizeof(float) * 3));
+#endif
 
     //glEnable(GL_DEPTH_TEST);
 
@@ -425,6 +478,8 @@ int main(const int argc, const char **argv) {
         if(state.loader.done < vimage_length(state.images)) {
             s_action.gl_update = true;
         }
+
+        printf("gl_update %u\n", s_action.gl_update);
 
         /* render */
         if(s_action.gl_update) {
@@ -484,10 +539,25 @@ int main(const int argc, const char **argv) {
 
                 glm_mat4_mul(m_zoom, m_pan, s_state.image_view);
 
-
                 /* scale back */
                 glm_scale(s_state.image_projection, (vec3){ 1.0f/s_state.wwidth, 1.0f/s_state.wheight, 0 });
+
+#if 0
+                glDisable(GL_BLEND);
                 gl_image_render(&image, state.active->texture, s_state.image_projection, s_state.image_view, s_state.image_transform);
+#else
+                glUseProgram(sh_rect);
+                /* send to gpu */
+                glBindVertexArray(VAO);
+                glUniformMatrix4fv(loc_view, 1, GL_FALSE, (float *)s_state.image_view);
+                glUniformMatrix4fv(loc_projection, 1, GL_FALSE, (float *)s_state.image_projection);
+                glUniformMatrix4fv(loc_transform, 1, GL_FALSE, (float *)s_state.image_transform);
+
+                glDisable(GL_BLEND);
+                glActiveTexture(GL_TEXTURE0);
+                glBindTexture(GL_TEXTURE_2D, state.active->texture);
+                glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+#endif
             }
 
             if(state.active && state.show_description) {

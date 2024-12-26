@@ -1,5 +1,6 @@
 #include "vec.h"
 #include "glad.h"
+#include "timer.h"
 #include <cglm/cglm.h>
 #include <stdbool.h>
 #include <pthread.h>
@@ -89,3 +90,9 @@ void send_texture_to_gpu(Image *image, FilterList filter, bool *render);
 const char *fit_cstr(FitList id);
 void images_load_async(ImageLoadArgs *args);
 void civ_free(Civ *state);
+
+void civ_cmd_fit_next(Civ *civ);
+void civ_cmd_stretch_next(Civ *civ);
+void civ_cmd_description_toggle(Civ *civ);
+void civ_cmd_zoom(Civ *civ, double zoom);
+void civ_cmd_pan(Civ *civ, vec2 pan);

@@ -45,17 +45,19 @@ void gl_image_shader(GlImage *image, Shader shader) {
     image->loc_projection = get_uniform(shader, "projection");
     image->loc_view = get_uniform(shader, "view");
     image->loc_transform = get_uniform(shader, "transform");
+    image->shader = shader;
 }
 
 void gl_image_render(GlImage *image, unsigned int texture, mat4 projection, mat4 view, mat4 transform) {
     if(!gl_image_initialized) gl_image_initialize();
 
+    glUseProgram(image->shader);
+
     glBindVertexArray(VAO);
-    glUniformMatrix4fv(image->loc_view, 1, GL_FALSE, (float *)view);
     glUniformMatrix4fv(image->loc_projection, 1, GL_FALSE, (float *)projection);
+    glUniformMatrix4fv(image->loc_view, 1, GL_FALSE, (float *)view);
     glUniformMatrix4fv(image->loc_transform, 1, GL_FALSE, (float *)transform);
 
-    glDisable(GL_BLEND);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, texture);
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
