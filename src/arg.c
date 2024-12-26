@@ -37,13 +37,13 @@ int argopt_parse(ArgOpt *opt, char **str) {
 void argval_print(ArgList id, ArgVal opt) {
     switch(id) {
         case ARG_STRING: {
-            if(opt.s) printf("<%s>", *opt.s);
+            if(opt.s) printf("[%s]", *opt.s);
         } break;
         case ARG_INTEGER: {
-            if(opt.i) printf("<%i>", *opt.i);
+            if(opt.i) printf("[%i]", *opt.i);
         } break;
         case ARG_DOUBLE: {
-            if(opt.d) printf("<%f>", *opt.d);
+            if(opt.d) printf("[%f]", *opt.d);
         } break;
         case ARG_NONE: break;
         default: assert(0 && "invalid enum"); break;
