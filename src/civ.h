@@ -71,6 +71,18 @@ typedef struct ImageLoadArgs {
     long done;
 } ImageLoadArgs;
 
+typedef enum {
+    POPUP_NONE,
+    POPUP_SELECT,
+    POPUP_FIT,
+    POPUP_DESCRIPTION,
+    POPUP_ZOOM,
+    POPUP_FILTER,
+    POPUP_PAN,
+    /* above */
+    POPUP__COUNT
+} PopupList;
+
 typedef struct Civ {
     VImage images;
     Image *active;
@@ -84,16 +96,23 @@ typedef struct Civ {
     vec2 pan;
     ImageLoadArgs loader;
     bool show_description;
+    bool show_loaded;
+    struct {
+        Timer timer;
+        PopupList active;
+    } popup;
 } Civ;
 
 void send_texture_to_gpu(Image *image, FilterList filter, bool *render);
 const char *fit_cstr(FitList id);
+const char *filter_cstr(FilterList id);
 void images_load_async(ImageLoadArgs *args);
 void civ_free(Civ *state);
 
+void civ_popup_set(Civ *state, PopupList id);
+
 void civ_cmd_select(Civ *civ, int change);
 void civ_cmd_fit(Civ *civ, bool next);
-void civ_cmd_stretch(Civ *civ, bool next);
 void civ_cmd_description(Civ *civ, bool toggle);
 void civ_cmd_zoom(Civ *civ, double zoom);
 void civ_cmd_filter(Civ *civ, bool next);

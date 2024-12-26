@@ -177,6 +177,14 @@ const char *fit_cstr(FitList id) {
     }
 }
 
+const char *filter_cstr(FilterList id) {
+    switch(id) {
+        case FILTER_LINEAR: return "linear";
+        case FILTER_NEAREST: return "nearest";
+        default: return "";
+    }
+}
+
 void civ_free(Civ *state) {
     pthread_mutex_lock(state->loader.mutex);
     vimage_free(&state->images);
@@ -184,6 +192,16 @@ void civ_free(Civ *state) {
     pthread_join(state->loader.thread, 0);
     memset(state, 0, sizeof(*state));
 }
+
+void civ_popup_set(Civ *state, PopupList id) {
+    if(id >= POPUP__COUNT) return;
+    state->popup.active = id;
+    if(id) {
+        timer_start(&state->popup.timer, CLOCK_REALTIME, 0.25);
+    }
+}
+
+/* commands {{{ */
 
 void civ_cmd_select(Civ *civ, int change) {
     if(!change) return;
@@ -200,6 +218,7 @@ void civ_cmd_select(Civ *civ, int change) {
         civ->selected %= n_img;
         civ->fit.current = civ->fit.initial;
     }
+    civ_popup_set(civ, POPUP_SELECT);
 }
 
 void civ_cmd_fit(Civ *civ, bool next) {
@@ -209,11 +228,13 @@ void civ_cmd_fit(Civ *civ, bool next) {
     civ->fit.current = civ->fit.initial;
     civ->zoom = 1.0;
     glm_vec2_zero(civ->pan);
+    civ_popup_set(civ, POPUP_FIT);
 }
 
 void civ_cmd_description(Civ *civ, bool toggle) {
     if(!toggle) return;
     civ->show_description = !civ->show_description;
+    civ_popup_set(civ, POPUP_DESCRIPTION);
 }
 
 void civ_cmd_zoom(Civ *civ, double zoom) {
@@ -225,6 +246,7 @@ void civ_cmd_zoom(Civ *civ, double zoom) {
     }
     //printf("ZOOM : %f\n", civ->zoom);
     civ->fit.current = FIT_PAN;
+    civ_popup_set(civ, POPUP_ZOOM);
 }
 
 void civ_cmd_filter(Civ *civ, bool next) {
@@ -232,6 +254,7 @@ void civ_cmd_filter(Civ *civ, bool next) {
     ++civ->filter;
     civ->filter %= FILTER__COUNT;
     if(civ->filter == 0) ++civ->filter;
+    civ_popup_set(civ, POPUP_FILTER);
 }
 
 void civ_cmd_pan(Civ *civ, vec2 pan) {
@@ -239,6 +262,8 @@ void civ_cmd_pan(Civ *civ, vec2 pan) {
     civ->pan[0] += pan[0] / civ->zoom; //s_action.pan_x / s_civ.wwidth * civ->zoom;
     civ->pan[1] -= pan[1] / civ->zoom; //s_action.pan_y / s_civ.wheight * civ->zoom;
     civ->fit.current = FIT_PAN;
+    civ_popup_set(civ, POPUP_PAN);
 }
 
+/* commands }}} */
 
