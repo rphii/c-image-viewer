@@ -44,9 +44,7 @@ typedef struct ActionMap {
     double pan_y;
 } ActionMap;
 
-static ActionMap s_action_init = {
-    .zoom = 1.0,
-};
+static ActionMap s_action_init = {0};
 
 typedef struct StateMap {
     int wwidth;
@@ -180,26 +178,7 @@ void key_callback(GLFWwindow* window, int key, int scancode, int act, int mods)
     }
 }
 
-void actionmap_print(ActionMap map) {
-    printf("%u update\n", map.gl_update);
-    printf("%f zoom\n", map.zoom);
-    printf("%u desc\n", map.toggle_description);
-    printf("%u quit\n", map.quit);
-    printf("%f pan x\n", map.pan_x);
-    printf("%f pan y\n", map.pan_y);
-    printf("%u resi\n", map.resized);
-    printf("%u next filt\n", map.filter_next);
-    printf("%u next stret\n", map.stretch_next);
-    printf("%u next img\n", map.select_image);
-    printf("%u fullsc\n", map.toggle_fullscreen);
-    printf("============\n\n");
-}
-
 void process_action_map(GLFWwindow *window, Civ *state) {
-    //printf("INIT::::::::::::\n");
-    //actionmap_print(s_action_init);
-    //printf("MAP::::::::::::\n");
-    //actionmap_print(s_action);
     bool update = s_action.gl_update;
     if(memcmp(&s_action_init, &s_action, sizeof(s_action))) update = true;
 
@@ -443,8 +422,6 @@ int main(const int argc, const char **argv) {
         if(state.loader.done < vimage_length(state.images)) {
             s_action.gl_update = true;
         }
-
-        printf("gl_update %u\n", s_action.gl_update);
 
         /* render */
         if(s_action.gl_update) {
