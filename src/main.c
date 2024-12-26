@@ -32,7 +32,7 @@
 
 typedef struct ActionMap {
     bool gl_update;
-    bool stretch_next;
+    bool fit_next;
     bool resized;
     bool filter_next;
     bool toggle_fullscreen;
@@ -168,7 +168,7 @@ void key_callback(GLFWwindow* window, int key, int scancode, int act, int mods)
                 if(glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) {
                     s_action.filter_next = true;
                 } else {
-                    s_action.stretch_next = true;
+                    s_action.fit_next = true;
                 }
             } break;
             case GLFW_KEY_F: { s_action.toggle_fullscreen = true; } break;
@@ -182,77 +182,16 @@ void process_action_map(GLFWwindow *window, Civ *state) {
     bool update = s_action.gl_update;
     if(memcmp(&s_action_init, &s_action, sizeof(s_action))) update = true;
 
-    if(s_action.select_image) {
-        //s_action.gl_update = true;
-        glm_vec2_zero(state->pan);
-        state->zoom = 1.0f;
-        size_t n_img = vimage_length(state->images);
-        if(n_img) {
-            if(s_action.select_image < 0) {
-                size_t sel = (-s_action.select_image) % n_img;
-                state->selected += n_img - sel;
-            } else {
-                state->selected += s_action.select_image;
-            }
-            state->selected %= n_img;
-            state->fit.current = state->fit.initial;
-        }
-        //if(state->fit. == FIT_PAN && state->zoom != 1.0f) state->stretch = FIT_XY;
-        //s_action.select_image = 0;
-    }
+    if(s_action.quit) glfwSetWindowShouldClose(window, true);
+    if(s_action.resized) {}
+    if(s_action.toggle_fullscreen) {}
 
-    if(s_action.quit) {
-        glfwSetWindowShouldClose(window, true);
-    }
-
-    if(s_action.resized) {
-        //s_action.resized = false;
-        //if(state->zoom != 1.0) {
-        //    state->stretch = FIT_PAN;
-        //}
-    }
-
-    if(s_action.stretch_next) {
-        //s_action.stretch_next = false;
-        ++state->fit.initial;
-        state->fit.initial %= FIT__COUNT;
-        state->fit.current = state->fit.initial;
-        state->zoom = 1.0;
-        glm_vec2_zero(state->pan);
-    }
-
-    if(s_action.zoom) {
-        if(s_action.zoom < 0) {
-            state->zoom *= (1.0 + s_action.zoom);
-        } else if(s_action.zoom > 0) {
-            state->zoom /= (1.0 - s_action.zoom);
-        }
-        //printf("ZOOM : %f\n", state->zoom);
-        state->fit.current = FIT_PAN;
-    }
-
-    if(s_action.filter_next) {
-        ++state->filter;
-        state->filter %= FILTER__COUNT;
-        if(state->filter == 0) ++state->filter;
-    }
-
-    if(s_action.toggle_description) {
-        state->show_description = !state->show_description;
-    }
-
-    if(s_action.toggle_fullscreen) {
-        //s_action.toggle_fullscreen = false;
-        //GLFWmonitor *monitor = glfwGetWindowMonitor(window);
-        //const GLFWvidmode *mode = glfwGetVideoMode(monitor);
-        //glfwSetWindowMonitor(window, monitor, 0, 0, mode->width, mode->height, 0);
-    }
-
-    if(s_action.pan_x || s_action.pan_y) {
-        state->pan[0] += s_action.pan_x / state->zoom; //s_action.pan_x / s_state.wwidth * state->zoom;
-        state->pan[1] -= s_action.pan_y / state->zoom; //s_action.pan_y / s_state.wheight * state->zoom;
-        state->fit.current = FIT_PAN;
-    }
+    civ_cmd_select(state, s_action.select_image);
+    civ_cmd_fit(state, s_action.fit_next);
+    civ_cmd_zoom(state, s_action.zoom);
+    civ_cmd_filter(state, s_action.filter_next);
+    civ_cmd_description(state, s_action.toggle_description);
+    civ_cmd_pan(state, (vec2){ s_action.pan_x, s_action.pan_y });
 
     s_action = s_action_init;
     s_action.gl_update = update;

@@ -185,3 +185,60 @@ void civ_free(Civ *state) {
     memset(state, 0, sizeof(*state));
 }
 
+void civ_cmd_select(Civ *civ, int change) {
+    if(!change) return;
+    glm_vec2_zero(civ->pan);
+    civ->zoom = 1.0f;
+    size_t n_img = vimage_length(civ->images);
+    if(n_img) {
+        if(change < 0) {
+            size_t sel = (-change) % n_img;
+            civ->selected += n_img - sel;
+        } else {
+            civ->selected += change;
+        }
+        civ->selected %= n_img;
+        civ->fit.current = civ->fit.initial;
+    }
+}
+
+void civ_cmd_fit(Civ *civ, bool next) {
+    if(!next) return;
+    ++civ->fit.initial;
+    civ->fit.initial %= FIT__COUNT;
+    civ->fit.current = civ->fit.initial;
+    civ->zoom = 1.0;
+    glm_vec2_zero(civ->pan);
+}
+
+void civ_cmd_description(Civ *civ, bool toggle) {
+    if(!toggle) return;
+    civ->show_description = !civ->show_description;
+}
+
+void civ_cmd_zoom(Civ *civ, double zoom) {
+    if(!zoom) return;
+    if(zoom < 0) {
+        civ->zoom *= (1.0 + zoom);
+    } else if(zoom > 0) {
+        civ->zoom /= (1.0 - zoom);
+    }
+    //printf("ZOOM : %f\n", civ->zoom);
+    civ->fit.current = FIT_PAN;
+}
+
+void civ_cmd_filter(Civ *civ, bool next) {
+    if(!next) return;
+    ++civ->filter;
+    civ->filter %= FILTER__COUNT;
+    if(civ->filter == 0) ++civ->filter;
+}
+
+void civ_cmd_pan(Civ *civ, vec2 pan) {
+    if(!pan[0] && !pan[1]) return;
+    civ->pan[0] += pan[0] / civ->zoom; //s_action.pan_x / s_civ.wwidth * civ->zoom;
+    civ->pan[1] -= pan[1] / civ->zoom; //s_action.pan_y / s_civ.wheight * civ->zoom;
+    civ->fit.current = FIT_PAN;
+}
+
+
