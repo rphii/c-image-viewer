@@ -9,7 +9,6 @@ cflags   = -Wall -Wextra -pipe -Wno-unused-parameter -fdiagnostics-color=always 
 
 #-Og -rdynamic -ggdb3
 
-
 #-Og -fsanitize=address -rdynamic -ggdb3
 #-Og -rdynamic -ggdb3
 ldflags  = -lglfw -lm -lcglm -lfreetype $

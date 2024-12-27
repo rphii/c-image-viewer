@@ -19,7 +19,10 @@ void argval_assign(ArgList id, ArgVal *opt, ArgVal val) {
 int argopt_parse(ArgOpt *opt, char **str) {
     switch(opt->id) {
         case ARG_INTEGER: {
-            assert(0 && "todo implement");
+            char *endptr;
+            int i = strtoll(*str, &endptr, 0);
+            argval_assign(opt->id, &opt->val, (ArgVal){ .i = &i });
+            //assert(0 && "todo implement");
         } break;
         case ARG_DOUBLE: {
             assert(0 && "todo implement");
