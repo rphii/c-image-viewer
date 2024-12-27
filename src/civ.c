@@ -26,6 +26,9 @@ void send_texture_to_gpu(Image *image, FilterList filter, bool *render) {
         glBindTexture(GL_TEXTURE_2D, image->texture);
         glTexImage2D(GL_TEXTURE_2D, 0, format, image->width, image->height, 0, format, GL_UNSIGNED_BYTE, image->data);
     }
+    if(image->sent && image->data) {
+        glBindTexture(GL_TEXTURE_2D, image->texture);
+    }
 
     switch(filter) {
         case FILTER_LINEAR: {
@@ -59,6 +62,10 @@ void *image_load_thread(void *args) {
     if(image->data) goto exit;
 
     image->data = stbi_load(image->filename, &image->width, &image->height, &image->channels, 0);
+
+    //pthread_mutex_lock(image_load->mutex);
+    //send_texture_to_gpu(image, FILTER_NEAREST, 0);
+    //pthread_mutex_unlock(image_load->mutex);
     glfwPostEmptyEvent();
     //if(image->data) printf("LOADED '%s'\n", image->filename);
 
@@ -144,6 +151,14 @@ void images_load(VImage *images, VrStr *files, pthread_mutex_t *mutex, bool *can
     }
     free(image_load);
     free(queue.q);
+
+    pthread_mutex_lock(mutex);
+    for(size_t i = 0; i < vimage_length(*images); ++i) {
+        Image *image = vimage_get_at(images, i);
+        if(!image->data) vimage_pop_at(images, i--, 0);
+    }
+    pthread_mutex_unlock(mutex);
+    glfwPostEmptyEvent();
 }
 
 void *images_load_voidptr(void *argp) {
@@ -205,11 +220,21 @@ void civ_popup_set(Civ *state, PopupList id) {
 
 /* commands {{{ */
 
+void civ_cmd_random(Civ *civ, bool random) {
+    if(!random) return;
+    size_t n_img = vimage_length(civ->images);
+    if(!n_img) return;
+    civ_cmd_select(civ, rand() % n_img);
+}
+
 void civ_cmd_select(Civ *civ, int change) {
     if(!change) return;
     glm_vec2_zero(civ->pan);
     civ->zoom = 1.0f;
     size_t n_img = vimage_length(civ->images);
+    /* cap index, in case size changd */
+    if(civ->selected > n_img) civ->selected = n_img ? n_img - 1 : 0;
+    /* adjust */
     if(n_img) {
         if(change < 0) {
             size_t sel = (-change) % n_img;
@@ -273,6 +298,7 @@ void civ_cmd_pan(Civ *civ, vec2 pan) {
 void civ_defaults(Civ *civ) {
     CivConfig *defaults = &civ->defaults;
     defaults->font_path = "/usr/share/fonts/MonoLisa/ttf/MonoLisa-Regular.ttf";
+    defaults->font_size = 24;
 }
 
 void civ_arg(Civ *civ, const char *name) {
@@ -285,5 +311,7 @@ void civ_arg(Civ *civ, const char *name) {
     /* font */
     opt = arg_attach(arg, &arg->options, 'f', "--font", "specify font");
     argopt_set_str(opt, &defaults->font_path, &config->font_path);
+    opt = arg_attach(arg, &arg->options, 'F', "--font-size", "specify font size");
+    argopt_set_int(opt, &defaults->font_size, &config->font_size);
 }
 

@@ -38,6 +38,7 @@ typedef struct ActionMap {
     bool toggle_fullscreen;
     bool toggle_description;
     bool quit;
+    bool select_random;
     int select_image;
     double zoom;
     double pan_x;
@@ -160,6 +161,9 @@ void key_callback(GLFWwindow* window, int key, int scancode, int act, int mods)
                     ++s_action.select_image;
                 }
             } break;
+            case GLFW_KEY_R: {
+                ++s_action.select_random;
+            } break;
         }
     }
     if(act == GLFW_PRESS) {
@@ -186,6 +190,7 @@ void process_action_map(GLFWwindow *window, Civ *state) {
     if(s_action.resized) {}
     if(s_action.toggle_fullscreen) {}
 
+    civ_cmd_random(state, s_action.select_random);
     civ_cmd_select(state, s_action.select_image);
     civ_cmd_fit(state, s_action.fit_next);
     civ_cmd_zoom(state, s_action.zoom);
@@ -231,6 +236,7 @@ void scroll_callback(GLFWwindow *window, double xoffset, double yoffset)
 int main(const int argc, const char **argv) {
 
     if(argc < 1) return -1;
+    srand(time(0));
 
 #if 0
     //printf("SIZEOF %zu\n", sizeof(TArgOptItem));
@@ -351,11 +357,10 @@ int main(const int argc, const char **argv) {
     glm_translate(s_state.image_view, (vec3){0.0f, 0.0f, 0.0f});
 
     //glUseProgram(0);
-    int font_size = 24;
     //Font font = font_init("/usr/share/fonts/mikachan-font-ttf/mikachan.ttf", font_size, 1.0, 1.5, 1024);
     //Font font = font_init("/usr/share/fonts/lato/Lato-Regular.ttf", font_size, 1.0, 1.5, 1024);
     //Font font = font_init("/usr/share/fonts/MonoLisa/ttf/MonoLisa-Regular.ttf", font_size, 1.0, 1.5, 1024);
-    Font font = font_init(state.config.font_path, font_size, 1.0, 1.5, 1024);
+    Font font = font_init(state.config.font_path, state.config.font_size, 1.0, 1.5, 1024);
     font_shader(&font, sh_text);
     font_load(&font, 0, 256);
 

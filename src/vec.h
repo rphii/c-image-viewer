@@ -742,13 +742,15 @@ typedef enum {
     inline void A##_pop_at(N *vec, size_t index, T *val) \
     { \
         VEC_ASSERT_REAL(vec); \
-        VEC_ASSERT(val, M); \
+        /*VEC_ASSERT(val, M);*/ \
         VEC_ITEM(T, M) *item = A##_static_get(vec, index + vec->first); \
         if(val) { \
             vec_memcpy(val, VEC_REF(M) *item, sizeof(T)); \
         } \
+        VEC_ITEM(T, M) *last = A##_static_get(vec, vec->last - 1); \
         vec->last--; \
         vec_memmove(item, item + 1, sizeof(*item) * (vec->last - index - vec->first)); \
+        *last = *item; \
         return; \
     }
 
@@ -966,6 +968,7 @@ typedef enum {
         VEC_ASSERT_REAL(vec); \
         for(size_t i = 0; i < vec->cap; i++) { \
             if(F != 0) { \
+                /*printf("  freeing %zu/%zu : %p\n", i, vec->cap, &vec->VEC_STRUCT_ITEMS[i]);*/\
                 VEC_TYPE_FREE(F, vec->VEC_STRUCT_ITEMS[i], T); \
             } \
             free(vec->VEC_STRUCT_ITEMS[i]); \
