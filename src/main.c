@@ -452,7 +452,7 @@ int main(const int argc, const char **argv) {
                     snprintf(str_info, sizeof(str_info), "[%zu/%zu] %.*s (%ux%ux%u) [%.1f%% %s]", state.selected + 1, vimage_length(state.images), RSTR_F(state.active->filename), state.active->width, state.active->height, state.active->channels, 100.0f * state.zoom, fit_cstr(fit));
                 }
 
-                font_render(font, str_info, s_state.text_projection, text_pos, 1.0, 1.0, (vec3){1.0f, 1.0f, 1.0f}, text_dim, TEXT_ALIGN_NONE);
+                font_render(font, str_info, s_state.text_projection, text_pos, 1.0, 1.0, (vec3){1.0f, 1.0f, 1.0f}, text_dim, TEXT_ALIGN_LEFT);
 
                 glEnable(GL_BLEND);
                 glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -463,10 +463,11 @@ int main(const int argc, const char **argv) {
             if(state.show_loaded && state.loader.done < vimage_length(state.images)) {
                 snprintf(str_load, sizeof(str_load), "Loaded %.1f%% (%zu/%zu)", 100.0 * (double)(state.loader.done) / (double)vimage_length(state.images), state.loader.done, vimage_length(state.images));
 
-                vec2 text_pos = { 5, s_state.theight - font.height * 1.25 * 4 };
+                vec2 text_pos = { s_state.twidth - 5, s_state.theight - font.height * 1.25 };
+                //vec2 text_pos = { 5, s_state.theight - font.height * 1.25 * 4 };
                 vec4 text_dim;
 
-                font_render(font, str_load, s_state.text_projection, text_pos, 1.0, 1.0, (vec3){1.0f, 1.0f, 1.0f}, text_dim, TEXT_ALIGN_NONE);
+                font_render(font, str_load, s_state.text_projection, text_pos, 1.0, 1.0, (vec3){1.0f, 1.0f, 1.0f}, text_dim, TEXT_ALIGN_RIGHT);
 
                 glEnable(GL_BLEND);
                 glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);

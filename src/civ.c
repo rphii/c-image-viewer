@@ -406,6 +406,8 @@ void civ_cmd_description(Civ *civ, bool toggle) {
 
 void civ_cmd_zoom(Civ *civ, double zoom) {
     if(!zoom) return;
+    if(!civ->active) return;
+    /* TODO: make zoom dependant on image-to-window ratio ... */
     if(zoom < 0) {
         civ->zoom *= (1.0 + zoom);
     } else if(zoom > 0) {
