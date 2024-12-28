@@ -46,15 +46,17 @@ void text_init(void) {
     glBindVertexArray(0);
 }
 
-Font font_init(const char *path, int height, float hspace, float vspace, unsigned int glyphs) {
+Font font_init(const RStr *path, int height, float hspace, float vspace, unsigned int glyphs) {
     if(!text_initialized) {
         text_init();
         text_initialized = true;
     }
     FT_Face face = {0};
     int width = 0;
-    if(FT_New_Face(ft, path, 0, &face)) {
-        fprintf(stderr, "[FREETYPE] Error! Could not load font: '%s'\n", path);
+    char cpath[PATH_MAX];
+    rstr_cstr(*path, cpath, PATH_MAX);
+    if(FT_New_Face(ft, cpath, 0, &face)) {
+        fprintf(stderr, "[FREETYPE] Error! Could not load font: '%s'\n", cpath);
         //assert(0);
         return (Font){0};
     }

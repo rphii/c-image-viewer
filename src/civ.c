@@ -3,6 +3,8 @@
 
 VEC_IMPLEMENT(VImage, vimage, Image, BY_REF, BASE, image_free);
 
+#include "str.h"
+
 void send_texture_to_gpu(Image *image, FilterList filter, bool *render) {
     if(!image) return;
     if(!image->data) return;
@@ -51,6 +53,8 @@ void send_texture_to_gpu(Image *image, FilterList filter, bool *render) {
     }
 }
 
+#include <limits.h>
+
 void *image_load_thread(void *args) {
     ImageLoad *image_load = args;
     if(!vimage_length(*image_load->images)) goto exit;
@@ -61,7 +65,10 @@ void *image_load_thread(void *args) {
 
     if(image->data) goto exit;
 
-    image->data = stbi_load(image->filename, &image->width, &image->height, &image->channels, 0);
+    char cfilename[PATH_MAX];
+    rstr_cstr(image->filename, cfilename, PATH_MAX);
+
+    image->data = stbi_load(cfilename, &image->width, &image->height, &image->channels, 0);
 
     //pthread_mutex_lock(image_load->mutex);
     //send_texture_to_gpu(image, FILTER_NEAREST, 0);
@@ -80,7 +87,119 @@ exit:
     return 0;
 }
 
-void images_load(VImage *images, VrStr *files, pthread_mutex_t *mutex, bool *cancel, long jobs, long *done) {
+
+#if 0
+typedef enum {
+    FILE_TYPE_NONE,
+    FILE_TYPE_FILE,
+    FILE_TYPE_DIR,
+    FILE_TYPE_ERROR,
+} FileTypeList;
+
+#include <dirent.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/sysmacros.h>
+
+FileTypeList file_get_type(const char *filename) {
+#if defined(PLATFORM_WINDOWS)
+    ASSERT("not implemented");
+#else
+    struct stat s;
+    int r = lstat(filename, &s);
+    if(r) return FILE_TYPE_ERROR;
+    if(S_ISREG(s.st_mode)) return FILE_TYPE_FILE;
+    if(S_ISDIR(s.st_mode)) return FILE_TYPE_DIR;
+#endif
+    return 0;
+}
+
+#define FILE_PATH_MAX   4096
+
+typedef int (*FileFunc)(const char *filename, void *);
+int file_exec(const char *dirname, VStr *subdirs, bool recursive, FileFunc exec, void *args) {
+    int err = 0;
+    DIR *dir = 0;
+    char *subdir = 0;
+    //printf("FILENAME: %.*s\n", STR_F(dirname));
+    FileTypeList type = file_get_type(dirname);
+    if(type == FILE_TYPE_DIR) {
+        if(!recursive) {
+            fprintf(stderr, "will not go over '%s' (enable recursion to do so)", dirname);
+            goto error;
+        }
+        size_t len = strrchr(dirname, PLATFORM_CH_SUBDIR) - dirname;
+        //size_t len = str_rnch(dirname, PLATFORM_CH_SUBDIR, 0);
+        if(len < strlen(dirname) && dirname[len] != PLATFORM_CH_SUBDIR) ++len;
+        struct dirent *dp = 0;
+        //char cdir[FILE_PATH_MAX];
+        //str_cstr(dirname, cdir, FILE_PATH_MAX);
+        char *cdir = dirname;
+        if((dir = opendir(cdir)) == NULL) {
+            goto clean;
+        }
+        char filename[FILE_PATH_MAX] = {0};
+        while ((dp = readdir(dir)) != NULL) {
+            if(dp->d_name[0] == '.') continue; // TODO add an argument for this
+            if(!strcmp(dp->d_name, ".") || !strcmp(dp->d_name, "..")) continue;
+            size_t len2 = snprintf(filename, FILE_PATH_MAX, "%.*s/%s", (int)len, cdir, dp->d_name);
+            if(len2 != strlen(filename)) assert(0 && "should probably have len2!");
+            //--len;
+            char filename2[FILE_PATH_MAX];
+            snprintf(filename2, FILE_PATH_MAX, "%.*s", (int)len2, filename);
+            FileTypeList type2 = file_get_type(filename2);
+            if(type2 == FILE_TYPE_DIR) {
+                //snprintf(subdir, FILE_PATH_MAX, "%.*s", filename2);
+                size_t len2 = strlen(filename2);
+                subdir = malloc(len2 + 1);
+                if(!subdir) goto error;
+                strncpy(subdir, filename2, len2);
+                subdir[len2] = 0;
+                //TRYC(str_fmt(&subdir, "%.*s", STR_F(filename2)));
+                vstr_push_back(subdirs, subdir);
+                //str_zero(&subdir);
+            } else if(type2 == FILE_TYPE_FILE) {
+                exec(filename2, args); //, "an error occured while executing the function");
+            } else {
+                //info(INFO_skipping_nofile_nodir, "skipping '%.*s' since no regular file nor directory", STR_F(*dirname));
+            }
+        }
+    } else if(type == FILE_TYPE_FILE) {
+        exec(dirname, args); //, "an error occured while executing the function");
+    } else if(type == FILE_TYPE_ERROR) {
+        fprintf(stderr, "failed checking type of '%s' (maybe it doesn't exist?)", dirname);
+        goto error;
+    } else {
+        //info(INFO_skipping_nofile_nodir, "skipping '%.*s' since no regular file nor directory", STR_F(*dirname));
+    }
+clean:
+    //str_free(&subdir);
+    if(dir) closedir(dir);
+    return err;
+error:
+    err = -1;
+    goto clean;;
+}
+
+int image_push_back(const char *filename, void *data) {
+    ImageLoadArgs *image_load = data;
+    printf("PUSH BACK: '%s'\n", filename);
+    Image push = { .filename = filename };
+    //pthread_mutex_lock(image_load->mutex);
+    vimage_push_back(image_load->images, &push);
+    printf("LENGTH: %zu\n", vimage_length(*image_load->images));
+    //pthread_mutex_unlock(image_load->mutex);
+    return 0;
+}
+#endif
+
+
+void images_load(VImage *images, VrStr *files, pthread_mutex_t *mutex, bool *cancel, long jobs, size_t *done) {
+    ASSERT_ARG(images);
+    ASSERT_ARG(files);
+    ASSERT_ARG(mutex);
+    ASSERT_ARG(cancel);
+    ASSERT_ARG(done);
 
     ImageLoad *image_load = malloc(sizeof(ImageLoad) * jobs);
     if(!image_load) return;
@@ -93,11 +212,31 @@ void images_load(VImage *images, VrStr *files, pthread_mutex_t *mutex, bool *can
     /* push images to load */
     pthread_mutex_lock(mutex);
     size_t n = vrstr_length(*files);
+#if 0
+    VStr subdirs = {0};
     for(long i = 0; i < n; ++i) {
         const char *filename = vrstr_get_at(files, i);
-        Image push = { .filename = filename };
+        ImageLoadArgs args = {
+            .images = images,
+            .mutex = mutex,
+        };
+        file_exec(filename, &subdirs, true, image_push_back, &args);
+#if 0
+        FileTypeList type = file_get_type(filename);
+        if(type == FILE_TYPE_FILE) {
+            printf("%u file : '%s'\n", type, filename);
+        } else if(type == FILE_TYPE_DIR) {
+            printf("%u dir : '%s'\n", type, filename);
+        }
+#endif
+    }
+#else
+    for(size_t i = 0; i < n; ++i) {
+        RStr *filename = vrstr_get_at(files, i);
+        Image push = { .filename = *filename };
         vimage_push_back(images, &push);
     }
+#endif
     pthread_mutex_unlock(mutex);
 
     pthread_mutex_init(&queue.mutex, 0);
@@ -116,7 +255,7 @@ void images_load(VImage *images, VrStr *files, pthread_mutex_t *mutex, bool *can
     assert(queue.len <= jobs);
 
     /* load images */
-    for(long i = 0; i < n && !*cancel; ++i) {
+    for(size_t i = 0; i < n && !*cancel; ++i) {
         /* this section is responsible for starting the thread */
         pthread_mutex_lock(&queue.mutex);
         if(queue.len) {
@@ -297,7 +436,7 @@ void civ_cmd_pan(Civ *civ, vec2 pan) {
 
 void civ_defaults(Civ *civ) {
     CivConfig *defaults = &civ->defaults;
-    defaults->font_path = "/usr/share/fonts/MonoLisa/ttf/MonoLisa-Regular.ttf";
+    defaults->font_path = RSTR("/usr/share/fonts/MonoLisa/ttf/MonoLisa-Regular.ttf");
     defaults->font_size = 24;
 }
 

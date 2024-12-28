@@ -189,8 +189,8 @@ typedef enum {
     int A##_reserve(N *vec, size_t cap); \
     int A##_copy(N *dst, const N *src); \
     /* referenced */\
-    R##N r##A##_r##A(const R##N *vec); \
-    R##N A##_r##A(const N *vec); \
+    R##N r##A##_r##A(const R##N vec); \
+    R##N A##_r##A(const N vec); \
     void r##A##_clear(R##N *vec); \
     size_t r##A##_length(const R##N vec); \
     int r##A##_empty(const R##N *vec); \
@@ -315,18 +315,16 @@ typedef enum {
     */
 
 #define VEC_IMPLEMENT_REFER_CONSTRUCT(N, A, T, M) \
-    inline R##N A##_r##A(const N *vec) { \
-        VEC_ASSERT_REAL(vec); \
+    inline R##N A##_r##A(const N vec) { \
         R##N ref = { \
-            .first = vec->first, \
-            .last = vec->last, \
-            .VEC_STRUCT_ITEMS = vec->VEC_STRUCT_ITEMS \
+            .first = vec.first, \
+            .last = vec.last, \
+            .VEC_STRUCT_ITEMS = vec.VEC_STRUCT_ITEMS \
         }; \
         return ref; \
     } \
-    inline R##N r##A##_r##A(const R##N *vec) { \
-        VEC_ASSERT_REAL(vec); \
-        return *vec; \
+    inline R##N r##A##_r##A(const R##N vec) { \
+        return vec; \
     }
 
 

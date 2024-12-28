@@ -25,7 +25,6 @@ void timespec_add(struct timespec *a, struct timespec *b, double t) {
 void *timer_idle(void *argp) {
     Timer *timer = argp;
     //printf("SLEEPING ...\n");
-    long n = 0;
 sleep:
     clock_nanosleep(timer->type, TIMER_ABSTIME, &timer->tE, 0);
     struct timespec tN;

@@ -162,7 +162,7 @@ void key_callback(GLFWwindow* window, int key, int scancode, int act, int mods)
                 }
             } break;
             case GLFW_KEY_R: {
-                ++s_action.select_random;
+                s_action.select_random = true;
             } break;
         }
     }
@@ -236,50 +236,25 @@ void scroll_callback(GLFWwindow *window, double xoffset, double yoffset)
 int main(const int argc, const char **argv) {
 
     if(argc < 1) return -1;
+
     srand(time(0));
 
-#if 0
-    //printf("SIZEOF %zu\n", sizeof(TArgOptItem));
-    ArgOpt *rv;
-
-    const char *fontpathdefault = "/usr/share/fonts/MonoLisa/ttf/MonoLisa-Regular.ttf";
-    const char *font_path = 0;
-    char *opt = strdup("--font");
-    rv = arg_attach(&arg, &arg.options, 'f', opt, "font path");
-    argopt_set_str(rv, &fontpathdefault, &font_path);
-
-    char *somestr;
-    bool exit_early = false;
-    if(arg_parse(&arg, argc, argv, &exit_early)) return -1;
-    if(exit_early) return false;
-
-    printf("DONE\n");
-    return -1;
-#endif
-#if 1
     Civ state = {0};
     civ_defaults(&state);
+
     civ_arg(&state, argv[0]);
-    arg_defaults(&state.arg);
+
     if(arg_parse(&state.arg, argc, argv, &s_action.quit)) return -1;
     if(s_action.quit) return 0;
     //return -1;
-#endif
 
     s_state.wwidth = 800;
     s_state.wheight = 600;
 
     /* get directory */
-    const char *program = argv[0];
-    unsigned int n = strlen(program);
-    while(n > 0) {
-        if(program[n] == '/') {
-            break;
-        }
-        --n;
-    }
+    RStr dir = rstr_get_dir(state.arg.name);
     char directory[4096];
-    snprintf(directory, 4096, "%.*s", n, program);
+    snprintf(directory, 4096, "%.*s", RSTR_F(dir));
     char shaders[4096];
     snprintf(shaders, 4096, "%.4040s/../shaders", directory);
 
@@ -304,8 +279,6 @@ int main(const int argc, const char **argv) {
     }
     glfwMakeContextCurrent(window);
 
-    const char **files = &argv[1];    /* init state */
-    int total = argc - 1;
     state.show_loaded = true;
     state.filter = FILTER_NEAREST;
     state.zoom = 1.0;
@@ -339,9 +312,9 @@ int main(const int argc, const char **argv) {
     Shader sh_text = shader_load(shaders, "text.vert", shaders, "text.frag");
     Shader sh_box = shader_load(shaders, "box.vert", shaders, "box.frag");
     Shader sh_rect = shader_load(shaders, "rectangle.vert", shaders, "rectangle.frag");
-    int loc_projection = get_uniform(sh_rect, "projection");
-    int loc_view = get_uniform(sh_rect, "view");
-    int loc_transform = get_uniform(sh_rect, "transform");
+    //int loc_projection = get_uniform(sh_rect, "projection");
+    //int loc_view = get_uniform(sh_rect, "view");
+    //int loc_transform = get_uniform(sh_rect, "transform");
 
     GlImage image = {0};
     gl_image_shader(&image, sh_rect);
@@ -360,7 +333,7 @@ int main(const int argc, const char **argv) {
     //Font font = font_init("/usr/share/fonts/mikachan-font-ttf/mikachan.ttf", font_size, 1.0, 1.5, 1024);
     //Font font = font_init("/usr/share/fonts/lato/Lato-Regular.ttf", font_size, 1.0, 1.5, 1024);
     //Font font = font_init("/usr/share/fonts/MonoLisa/ttf/MonoLisa-Regular.ttf", font_size, 1.0, 1.5, 1024);
-    Font font = font_init(state.config.font_path, state.config.font_size, 1.0, 1.5, 1024);
+    Font font = font_init(&state.config.font_path, state.config.font_size, 1.0, 1.5, 1024);
     font_shader(&font, sh_text);
     font_load(&font, 0, 256);
 
@@ -474,9 +447,9 @@ int main(const int argc, const char **argv) {
                 vec4 text_dim;
                 FitList fit = state.fit.current;
                 if(state.pan[0] || state.pan[1]) {
-                    snprintf(str_info, sizeof(str_info), "[%zu/%zu] %s (%ux%ux%u) [%.1f%% %s @ %.0f,%.0f]", state.selected + 1, vimage_length(state.images), state.active->filename, state.active->width, state.active->height, state.active->channels, 100.0f * state.zoom, fit_cstr(fit), -state.pan[0], -state.pan[1]);
+                    snprintf(str_info, sizeof(str_info), "[%zu/%zu] %.*s (%ux%ux%u) [%.1f%% %s @ %.0f,%.0f]", state.selected + 1, vimage_length(state.images), RSTR_F(state.active->filename), state.active->width, state.active->height, state.active->channels, 100.0f * state.zoom, fit_cstr(fit), -state.pan[0], -state.pan[1]);
                 } else {
-                    snprintf(str_info, sizeof(str_info), "[%zu/%zu] %s (%ux%ux%u) [%.1f%% %s]", state.selected + 1, vimage_length(state.images), state.active->filename, state.active->width, state.active->height, state.active->channels, 100.0f * state.zoom, fit_cstr(fit));
+                    snprintf(str_info, sizeof(str_info), "[%zu/%zu] %.*s (%ux%ux%u) [%.1f%% %s]", state.selected + 1, vimage_length(state.images), RSTR_F(state.active->filename), state.active->width, state.active->height, state.active->channels, 100.0f * state.zoom, fit_cstr(fit));
                 }
 
                 font_render(font, str_info, s_state.text_projection, text_pos, 1.0, 1.0, (vec3){1.0f, 1.0f, 1.0f}, text_dim, TEXT_ALIGN_NONE);

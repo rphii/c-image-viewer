@@ -1,14 +1,29 @@
 #include "arg.h"
 
+#if 0
+
+VEC_IMPLEMENT(VrStr, vrstr, const char *, BY_VAL, BASE, 0);
+VEC_IMPLEMENT(VStr, vstr, char *, BY_VAL, BASE, 0);
+#endif
+
 void argval_assign(ArgList id, ArgVal *opt, ArgVal val) {
     switch(id) {
         case ARG_INTEGER: {
+            if(val.dynamic) {
+                opt->i = malloc(sizeof(*opt->i));
+            }
             *opt->i = *val.i;
         } break;
         case ARG_STRING: {
+            if(val.dynamic) {
+                opt->s = malloc(sizeof(*opt->s));
+            }
             *opt->s = *val.s;
         } break;
         case ARG_DOUBLE: {
+            if(val.dynamic) {
+                opt->d = malloc(sizeof(*opt->d));
+            }
             *opt->d = *val.d;
         } break;
         case ARG_NONE: break;
@@ -21,14 +36,14 @@ int argopt_parse(ArgOpt *opt, char **str) {
         case ARG_INTEGER: {
             char *endptr;
             int i = strtoll(*str, &endptr, 0);
-            argval_assign(opt->id, &opt->val, (ArgVal){ .i = &i });
+            argval_assign(opt->id, &opt->val, (ArgVal){ .i = &i, .dynamic = true });
             //assert(0 && "todo implement");
         } break;
         case ARG_DOUBLE: {
             assert(0 && "todo implement");
         } break;
         case ARG_STRING: {
-            argval_assign(opt->id, &opt->val, (ArgVal){ .s = str });
+            argval_assign(opt->id, &opt->val, (ArgVal){ .s = &RSTR_L(*str), .dynamic = true });
             //*opt->val.s = *str;
         } break;
         case ARG_NONE: break;
@@ -40,7 +55,7 @@ int argopt_parse(ArgOpt *opt, char **str) {
 void argval_print(ArgList id, ArgVal opt) {
     switch(id) {
         case ARG_STRING: {
-            if(opt.s) printf("[%s]", *opt.s);
+            if(rstr_length(*opt.s)) printf("[%.*s]", RSTR_F(*opt.s));
         } break;
         case ARG_INTEGER: {
             if(opt.i) printf("[%i]", *opt.i);
@@ -82,16 +97,16 @@ const char **argv_next(const int argc, const char **argv, const char **iter) {
 void *arg_print_help(void *argp) {
     Arg *arg = argp;
     TArgOptItem **item = 0;
-    printf("%s: %s\n\n", arg->name, arg->info);
+    printf("%.*s: %.*s\n\n", RSTR_F(arg->name), RSTR_F(arg->info));
     /* usage */
     printf("USAGE:\n\n");
-    printf("%2s%s", "", arg->name);
+    printf("%2s%.*s", "", RSTR_F(arg->name));
     while((item = targopt_iter_all(&arg->positional, item))) {
-        printf(" %s", (*item)->val->opt);
+        printf(" %.*s", RSTR_F((*item)->val->opt));
     }
     if(arg->options.used) { printf(" [OPTIONS]"); }
     if(arg->rest.allow) {
-        printf(" %s", arg->rest.opt);
+        printf(" %.*s", RSTR_F(arg->rest.opt));
     }
     printf("\n");
     /* options */
@@ -99,7 +114,7 @@ void *arg_print_help(void *argp) {
         printf("\nOPTIONS:\n\n");
         while((item = targopt_iter_all(&arg->options, item))) {
             ArgOpt *opt = (*item)->val;
-            printf("  -%c  %s  %s ", opt->c, opt->opt, opt->help);
+            printf("  -%c  %.*s  %.*s ", opt->c, RSTR_F(opt->opt), RSTR_F(opt->help));
             argval_print(opt->id, opt->val);
             printf("\n");
         }
@@ -107,43 +122,26 @@ void *arg_print_help(void *argp) {
     /* environment arguments */
     if(arg->env.used) {
         printf("ENVIONMENT ARGUMENTS:\n\n");
-        printf("%6s", arg->name);
+        printf("%6s%.*s", "", RSTR_F(arg->name));
         while((item = targopt_iter_all(&arg->env, item))) {
-            printf("%6s%s %s", "", (*item)->val->opt, (*item)->val->help);
+            printf("%6s%.*s %.*s", "", RSTR_F((*item)->val->opt), RSTR_F((*item)->val->help));
         }
         printf("\n");
     }
-    if(strlen(arg->url)) {
-        printf("\n%s", arg->url);
+    if(rstr_length(arg->url)) {
+        printf("\n%.*s", RSTR_F(arg->url));
     }
     printf("\n");
     return 0;
 }
 
-
-size_t cstr_hash(const char *str) {
-    size_t hash = 5381;
-    size_t i = 0;
-    size_t len = strlen(str);
-    while(i < len) {
-        unsigned char c = str[i++];
-        hash = ((hash << 5) + hash) + c; /* hash * 33 + c */
-    }
-    return hash;
-}
-
-int cstr_cmp(const char *a, const char *b) {
-    return strcmp(a, b);
-}
-
-VEC_IMPLEMENT(VrStr, vrstr, const char *, BY_VAL, BASE, 0);
-LUT_IMPLEMENT(TArgOpt, targopt, char *, BY_VAL, ArgOpt, BY_REF, cstr_hash, cstr_cmp, 0, 0);
+LUT_IMPLEMENT(TArgOpt, targopt, RStr, BY_REF, ArgOpt, BY_REF, rstr_phash, rstr_cmp, 0, 0);
 
 ArgOpt *arg_attach(Arg *arg, TArgOpt *type, unsigned char c, const char *opt, const char *help) {
     ArgOpt opt_set = {
-        .opt = opt,
+        .opt = RSTR_L(opt),
         .c = c,
-        .help = help,
+        .help = RSTR_L(help),
     };
     /* check rules */
     if(type == &arg->options) {
@@ -169,7 +167,7 @@ ArgOpt *arg_attach(Arg *arg, TArgOpt *type, unsigned char c, const char *opt, co
         }
     }
     /* done checking the rules */
-    TArgOptItem *kv_v = targopt_once(type, opt, &opt_set);
+    TArgOptItem *kv_v = targopt_once(type, &opt_set.opt, &opt_set);
     if(!kv_v) {
         fprintf(stderr, "failed setting option! %c,%s,%s\n", c, opt, help);
         assert(0);
@@ -183,19 +181,20 @@ ArgOpt *arg_attach(Arg *arg, TArgOpt *type, unsigned char c, const char *opt, co
 }
 
 void arg_attach_help(Arg *arg, unsigned char c, const char *opt, const char *help, const char *name, const char *info, const char *url) {
-    arg->name = name;
-    arg->info = info;
-    arg->url = url;
+    arg->name = RSTR_L(name);
+    arg->info = RSTR_L(info);
+    arg->url = RSTR_L(url);
     ArgOpt *attached = arg_attach(arg, &arg->options, 'h', "--help", "show this help");
     argopt_set_callback(attached, arg_print_help, arg, true);
 }
 
+
 void arg_allow_rest(Arg *arg, const char *opt) {
     arg->rest.allow = true;
-    arg->rest.opt = opt;
+    arg->rest.opt = RSTR_L(opt);
 }
 
-void argopt_set_str(ArgOpt *opt, char **ref, char **val) {
+void argopt_set_str(ArgOpt *opt, RStr *ref, RStr *val) {
     opt->ref.s = ref;
     opt->val.s = val;
     opt->id = ARG_STRING;
@@ -235,24 +234,23 @@ next:
 }
 
 int arg_parse(Arg *arg, const int argc, const char **argv, bool *exit_early) {
-    
     arg->argc = argc;
     arg->argv = argv;
-    //arg_defaults(arg);
+    arg_defaults(arg);
     const char **iter = 0;
     while((iter = arg_iter(argc, argv, iter))) {
-        size_t len = strlen(*iter);
+        RStr it = RSTR_L(*iter);
         ArgOpt *item = 0;
-        if(len == 2 && (*iter)[0] == '-') {
+        if(rstr_length(it) == 2 && (*iter)[0] == '-') {
             unsigned char c = (*iter)[1];
             item = arg->c[c];
         }
         if(!item) {
-            item = targopt_get(&arg->options, *iter);
+            item = targopt_get(&arg->options, &it);
         }
         if(!item) {
             if(arg->rest.allow) {
-                vrstr_push_back(&arg->rest.vstr, *iter);
+                vrstr_push_back(&arg->rest.vstr, &it);
             }
             continue;
         }
@@ -261,7 +259,7 @@ int arg_parse(Arg *arg, const int argc, const char **argv, bool *exit_early) {
         iter = argv_next(argc, argv, iter);
         /* finally, parse value */
         if((!iter || (iter && !*iter)) && item->id) {
-            fprintf(stderr, "missing value for: '%s'! id:%u\n", item->opt, item->id);
+            fprintf(stderr, "missing value for: '%.*s'! id:%u\n", RSTR_F(item->opt), item->id);
             return -1;
         }
         if(argopt_parse(item, (char **)iter)) return -1;
@@ -273,6 +271,5 @@ int arg_parse(Arg *arg, const int argc, const char **argv, bool *exit_early) {
 
     return 0;
 }
-
 
 
