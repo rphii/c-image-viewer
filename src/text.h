@@ -23,7 +23,8 @@ typedef struct Character {
 
 typedef enum {
     TEXT_ALIGN_RENDER,
-    TEXT_ALIGN_NONE,
+    TEXT_ALIGN_LEFT,
+    TEXT_ALIGN_RIGHT,
     TEXT_ALIGN_CENTER,
 } TextAlignList;
 

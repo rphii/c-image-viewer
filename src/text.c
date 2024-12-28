@@ -272,6 +272,12 @@ void font_render(Font font, const char *text, mat4 projection, vec2 pos, float s
             dimensions[1] -= dy;
             dimensions[3] -= dy;
         } break;
+        case TEXT_ALIGN_RIGHT: {
+            float dx = (dimensions[2] - dimensions[0]);
+            pos[0] -= dx;
+            dimensions[0] -= dx;
+            dimensions[2] -= dx;
+        } break;
         default: break;
     }
 

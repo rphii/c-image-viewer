@@ -9,26 +9,18 @@ VEC_IMPLEMENT(VStr, vstr, char *, BY_VAL, BASE, 0);
 void argval_assign(ArgList id, ArgVal *opt, ArgVal val) {
     switch(id) {
         case ARG_INTEGER: {
-            if(val.dynamic) {
-                opt->i = malloc(sizeof(*opt->i));
-            }
             *opt->i = *val.i;
         } break;
         case ARG_STRING: {
-            if(val.dynamic) {
-                opt->s = malloc(sizeof(*opt->s));
-            }
             *opt->s = *val.s;
         } break;
         case ARG_DOUBLE: {
-            if(val.dynamic) {
-                opt->d = malloc(sizeof(*opt->d));
-            }
             *opt->d = *val.d;
         } break;
         case ARG_NONE: break;
         default: assert(0 && "invalid enum"); break;
     }
+    opt->dynamic |= val.dynamic;
 }
 
 int argopt_parse(ArgOpt *opt, char **str) {
@@ -36,14 +28,14 @@ int argopt_parse(ArgOpt *opt, char **str) {
         case ARG_INTEGER: {
             char *endptr;
             int i = strtoll(*str, &endptr, 0);
-            argval_assign(opt->id, &opt->val, (ArgVal){ .i = &i, .dynamic = true });
+            argval_assign(opt->id, &opt->val, (ArgVal){ .dynamic = true, .i = &i });
             //assert(0 && "todo implement");
         } break;
         case ARG_DOUBLE: {
             assert(0 && "todo implement");
         } break;
         case ARG_STRING: {
-            argval_assign(opt->id, &opt->val, (ArgVal){ .s = &RSTR_L(*str), .dynamic = true });
+            argval_assign(opt->id, &opt->val, (ArgVal){ .dynamic = true, .s = &RSTR_L(*str) });
             //*opt->val.s = *str;
         } break;
         case ARG_NONE: break;
