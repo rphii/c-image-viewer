@@ -1,16 +1,17 @@
 #include "utf8.h"
+#include "err.h"
 
 int str_to_u8_point(char *in, U8Point *point)
 {
-    if(!in) return -1; //THROW(ERR_CSTR_POINTER);
-    if(!point) return -1; //THROW(ERR_UTF8_POINTER);
+    if(!in) THROW(ERR_CSTR_POINTER);
+    if(!point) THROW(ERR_UTF8_POINTER);
     U8Point tinker = {0};
     // figure out how many bytes we need
     if((*in & 0x80) == 0) point->bytes = 1;
     else if((*in & 0xE0) == 0xC0) point->bytes = 2;
     else if((*in & 0xF0) == 0xE0) point->bytes = 3;
     else if((*in & 0xF8) == 0xF0) point->bytes = 4;
-    else return -1; //THROW("unknown utf-8 pattern");
+    else THROW("unknown utf-8 pattern");
     // magical mask shifting
     int shift = (point->bytes - 1) * 6;
     int mask = 0x7F;
@@ -18,11 +19,11 @@ int str_to_u8_point(char *in, U8Point *point)
     // extract info from bytes
     for(int i = 0; i < point->bytes; i++) {
         // add number to point
-        if(!in[i]) return -1; //THROW(ERR_CSTR_INVALID);
+        if(!in[i]) THROW(ERR_CSTR_INVALID);
         tinker.val |= (uint32_t)((in[i] & mask) << shift);
         if(mask == 0x3F) {
             if((unsigned char)(in[i] & ~mask) != 0x80) {
-                return -1; //THROW("encountered invalid bytes in utf-8 sequence");
+                THROW("encountered invalid bytes in utf-8 sequence");
                 point->bytes = 0;
                 break;
             }
@@ -46,8 +47,8 @@ error:
 
 int str_from_u8_point(char out[6], U8Point *point)
 {
-    if(!out) return -1; //THROW(ERR_CSTR_POINTER);
-    if(!point) return -1; //THROW(ERR_UTF8_POINTER);
+    if(!out) THROW(ERR_CSTR_POINTER);
+    if(!point) THROW(ERR_UTF8_POINTER);
     int bytes = 0;
     int shift = 0;  // shift in bits
     uint32_t in = point->val;

@@ -26,7 +26,7 @@ typedef enum {
 } FitList;
 
 typedef struct Image {
-    const char *filename;
+    RStr filename;
     unsigned char *data;
     int width;
     int height;
@@ -48,7 +48,7 @@ VEC_INCLUDE(VImage, vimage, Image, BY_REF, BASE);
         long len; \
         struct X **q; \
         long jobs; \
-        long *done; \
+        size_t *done; \
     } X##ThreadQueue;
 
 typedef struct VImage VImage;
@@ -63,13 +63,13 @@ typedef struct ImageLoad {
 
 typedef struct ImageLoadArgs {
     VImage *images;
-    //const char **files;
     VrStr *files;
+    //VrStr *files;
     pthread_mutex_t *mutex;
     bool *cancel;
     pthread_t thread;
     long jobs;
-    long done;
+    size_t done;
 } ImageLoadArgs;
 
 typedef enum {
@@ -85,7 +85,7 @@ typedef enum {
 } PopupList;
 
 typedef struct CivConfig {
-    char *font_path;
+    RStr font_path;
     int font_size;
 } CivConfig;
 
@@ -111,9 +111,10 @@ typedef struct Civ {
     Arg arg;
 } Civ;
 
-void send_texture_to_gpu(Image *image, FilterList filter, bool *render);
 const char *fit_cstr(FitList id);
 const char *filter_cstr(FilterList id);
+
+void send_texture_to_gpu(Image *image, FilterList filter, bool *render);
 void images_load_async(ImageLoadArgs *args);
 void civ_free(Civ *state);
 void civ_defaults(Civ *civ);
