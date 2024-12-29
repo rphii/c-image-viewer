@@ -7,4 +7,5 @@ src/callgrind.out.*
 temp
 src/civ.out
 src/build
+*.*_old
 

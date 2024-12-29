@@ -14,6 +14,8 @@ void send_texture_to_gpu(Image *image, FilterList filter, bool *render) {
     if(image->sent == filter) return;
 
     if(!image->sent && image->data) {
+#if 1
+        glGenTextures(1, &image->texture);
         GLenum format;
         if(image->channels == 1) format = GL_RED;
         else if(image->channels == 2) format = GL_RG;
@@ -23,10 +25,25 @@ void send_texture_to_gpu(Image *image, FilterList filter, bool *render) {
             fprintf(stderr, "[TEXTURE] Error: number of channels %u\n", image->channels);
             assert(0 && "unsupported image channels");
         }
-
-        glGenTextures(1, &image->texture);
+#endif
+#if 1
         glBindTexture(GL_TEXTURE_2D, image->texture);
         glTexImage2D(GL_TEXTURE_2D, 0, format, image->width, image->height, 0, format, GL_UNSIGNED_BYTE, image->data);
+#else
+        //glGenBuffers(1, &image->texture);
+        //glGenTextures(1, &image->texture);
+        glGenBuffers(1, &image->texture);
+        //glBindTexture(GL_TEXTURE_2D, image->texture);
+        glBindBuffer(GL_PIXEL_UNPACK_BUFFER, image->texture);
+        void *p = glMapBuffer(GL_PIXEL_UNPACK_BUFFER, GL_WRITE_ONLY);
+        ASSERT_ARG(p);
+        memcpy(p, image->data, image->width * image->height * image->channels);
+        glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
+#endif
+
+        stbi_image_free(image->data);
+        image->freed_from_cpu = true;
+        //image->data = 0;
     }
     if(image->sent && image->data) {
         glBindTexture(GL_TEXTURE_2D, image->texture);
@@ -49,7 +66,7 @@ void send_texture_to_gpu(Image *image, FilterList filter, bool *render) {
     }
     if(image->data) {
         image->sent = filter;
-        *render = true;
+        if(render) *render = true;
     }
 }
 
@@ -71,8 +88,8 @@ void *image_load_thread(void *args) {
     image->data = stbi_load(cfilename, &image->width, &image->height, &image->channels, 0);
 
     //pthread_mutex_lock(image_load->mutex);
-    //send_texture_to_gpu(image, FILTER_NEAREST, 0);
     //pthread_mutex_unlock(image_load->mutex);
+    //send_texture_to_gpu(image, FILTER_NEAREST, 0);
     glfwPostEmptyEvent();
     //if(image->data) printf("LOADED '%s'\n", image->filename);
 
@@ -316,7 +333,9 @@ void images_load_async(ImageLoadArgs *args) {
 void image_free(Image *image) {
     if(image->data) {
         glDeleteTextures(1, &image->texture);
-        stbi_image_free(image->data);
+        if(!image->freed_from_cpu) {
+            stbi_image_free(image->data);
+        }
     }
     memset(image, 0, sizeof(*image));
 }
@@ -404,7 +423,7 @@ void civ_cmd_fit(Civ *civ, bool next) {
 
 void civ_cmd_description(Civ *civ, bool toggle) {
     if(!toggle) return;
-    civ->show_description = !civ->show_description;
+    civ->config.show_description = !civ->config.show_description;
     civ_popup_set(civ, POPUP_DESCRIPTION);
 }
 
@@ -412,9 +431,7 @@ void civ_cmd_zoom(Civ *civ, double zoom) {
     if(!zoom) return;
     if(!civ->active) return;
     /* TODO: make zoom dependant on image-to-window ratio ... */
-    if(!civ->zoom.initial) {
-        civ->zoom.initial = civ->zoom.current;
-    }
+    civ->zoom.initial = civ->zoom.current;
     if(zoom < 0) {
         civ->zoom.current *= (1.0 + zoom);
     } else if(zoom > 0) {
@@ -435,6 +452,7 @@ void civ_cmd_filter(Civ *civ, bool next) {
 
 void civ_cmd_pan(Civ *civ, vec2 pan) {
     if(!pan[0] && !pan[1]) return;
+    civ->zoom.initial = civ->zoom.current;
     civ->pan[0] += pan[0] / civ->zoom.current; //s_action.pan_x / s_civ.wwidth * civ->zoom;
     civ->pan[1] -= pan[1] / civ->zoom.current; //s_action.pan_y / s_civ.wheight * civ->zoom;
     civ->fit.current = FIT_PAN;
@@ -446,20 +464,38 @@ void civ_cmd_pan(Civ *civ, vec2 pan) {
 void civ_defaults(Civ *civ) {
     CivConfig *defaults = &civ->defaults;
     defaults->font_path = RSTR("/usr/share/fonts/MonoLisa/ttf/MonoLisa-Regular.ttf");
-    defaults->font_size = 24;
+    defaults->font_size = 18;
+    defaults->show_description = false;
+    defaults->show_loaded = true;
+    /* finally, do defaults here */
+    civ->config = *defaults;
 }
 
 void civ_arg(Civ *civ, const char *name) {
     Arg *arg = &civ->arg;
-    arg_attach_help(arg, 'h', "--help", "list this help", name, "image viewer written in C", "https://github.com/rphii/c-image-viewer");
-    arg_allow_rest(arg, "images");
-    ArgOpt *opt;
+    arg_allow_rest(arg, RSTR("images"));
+    TRYC(arg_attach_help(arg, RSTR("image viewer written in C"), RSTR("https://github.com/rphii/c-image-viewer")));
+    //arg_allow_rest(arg, "images");
+    ArgOpt *obj;
     CivConfig *defaults = &civ->defaults;
     CivConfig *config = &civ->config;
     /* font */
-    opt = arg_attach(arg, &arg->options, 'f', "--font", "specify font");
-    argopt_set_str(opt, &defaults->font_path, &config->font_path);
-    opt = arg_attach(arg, &arg->options, 'F', "--font-size", "specify font size");
-    argopt_set_int(opt, &defaults->font_size, &config->font_size);
+    obj = argopt_new(arg, &arg->options, 'f', RSTR("--font"), RSTR("specify font"));
+    arg_str(obj, &config->font_path, &defaults->font_path, false, ARG_NO_CALLBACK);
+    obj = argopt_new(arg, &arg->options, 'F', RSTR("--font-size"), RSTR("specify font size"));
+    arg_int(obj, &config->font_size, &defaults->font_size, false, ARG_NO_CALLBACK, 0, 0);
+    obj = argopt_new(arg, &arg->options, 'd', RSTR("--description"), RSTR("toggle description on/off"));
+    arg_bool(obj, &config->show_description, &defaults->show_description, false, ARG_NO_CALLBACK);
+    obj = argopt_new(arg, &arg->options, '%', RSTR("--loaded"), RSTR("toggle loading info on/off"));
+    arg_bool(obj, &config->show_loaded, &defaults->show_loaded, false, ARG_NO_CALLBACK);
+    obj = argopt_new(arg, &arg->options, 's', RSTR("--filter"), RSTR("set filter"));
+    ArgOpt *filter = arg_option(obj, (ssize_t *)&civ->filter);
+    obj = argopt_new(arg, filter->options, 0, RSTR("nearest"), RSTR("set nearest"));
+    arg_enum(obj, false, ARG_NO_CALLBACK, FILTER_NEAREST);
+    obj = argopt_new(arg, filter->options, 0, RSTR("linear"), RSTR("set linear"));
+    arg_enum(obj, false, ARG_NO_CALLBACK, FILTER_LINEAR);
+error:
+    /* TODO: fix ugly code */
+    return;
 }
 

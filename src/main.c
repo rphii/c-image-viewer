@@ -240,12 +240,16 @@ int main(const int argc, const char **argv) {
     srand(time(0));
 
     Civ state = {0};
+    state.filter = FILTER_NEAREST;
+    state.zoom.current = 1.0;
+
     civ_defaults(&state);
 
     civ_arg(&state, argv[0]);
+    if(arg_parse(&state.arg, argc, argv)) return -1;
+    if(state.arg.exit_early) return 0;
 
-    if(arg_parse(&state.arg, argc, argv, &s_action.quit)) return -1;
-    if(s_action.quit) return 0;
+
     //return -1;
 
     s_state.wwidth = 800;
@@ -279,13 +283,9 @@ int main(const int argc, const char **argv) {
     }
     glfwMakeContextCurrent(window);
 
-    state.show_loaded = true;
-    state.filter = FILTER_NEAREST;
-    state.zoom.current = 1.0;
-
     pthread_mutex_t mutex_image;
     pthread_mutex_init(&mutex_image, 0);
-    state.loader.files = &state.arg.rest.vstr;
+    state.loader.files = &state.arg.rest.vrstr;
     state.loader.images = &state.images;
     state.loader.mutex = &mutex_image;
     state.loader.cancel = &s_action.quit;
@@ -345,7 +345,10 @@ int main(const int argc, const char **argv) {
     //clock_gettime(CLOCK_REALTIME, &s_state.t_now);
     glBindVertexArray(0);
     timer_start(&s_state.t_global, CLOCK_REALTIME, 0);
-    while(!glfwWindowShouldClose(window)) {
+
+    for(;;) {
+        if(glfwWindowShouldClose(window)) break;
+
         bool rendered = false;
 
         /* done, timer */
@@ -366,6 +369,7 @@ int main(const int argc, const char **argv) {
             send_texture_to_gpu(state.active, state.filter, &s_action.gl_update);
             pthread_mutex_unlock(state.loader.mutex);
         }
+
 
         if(state.loader.done < vimage_length(state.images)) {
             s_action.gl_update = true;
@@ -441,7 +445,7 @@ int main(const int argc, const char **argv) {
                 gl_image_render(&image, state.active->texture, s_state.image_projection, s_state.image_view, s_state.image_transform);
             }
 
-            if(state.active && state.show_description) {
+            if(state.active && state.config.show_description) {
                 vec2 text_pos = { 5, s_state.theight - font.height * 1.25 };
 
                 vec4 text_dim;
@@ -460,7 +464,7 @@ int main(const int argc, const char **argv) {
                 font_render(font, str_info, s_state.text_projection, text_pos, 1.0, 1.0, (vec3){1.0f, 1.0f, 1.0f}, text_dim, TEXT_ALIGN_RENDER);
             }
 
-            if(state.show_loaded && state.loader.done < vimage_length(state.images)) {
+            if(state.config.show_loaded && state.loader.done < vimage_length(state.images)) {
                 snprintf(str_load, sizeof(str_load), "Loaded %.1f%% (%zu/%zu)", 100.0 * (double)(state.loader.done) / (double)vimage_length(state.images), state.loader.done, vimage_length(state.images));
 
                 vec2 text_pos = { s_state.twidth - 5, s_state.theight - font.height * 1.25 };
@@ -478,7 +482,7 @@ int main(const int argc, const char **argv) {
             str_popup[0] = 0;
             switch(state.popup.active) {
                 case POPUP_DESCRIPTION: {
-                    snprintf(str_popup, sizeof(str_popup), "%s", state.show_description ? "show description" : "hide description");
+                    snprintf(str_popup, sizeof(str_popup), "%s", state.config.show_description ? "show description" : "hide description");
                 } break;
                 case POPUP_SELECT: {
                     snprintf(str_popup, sizeof(str_popup), "[%zu/%zu] %s", state.selected + 1, vimage_length(state.images), fit_cstr(state.fit.current));
