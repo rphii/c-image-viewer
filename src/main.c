@@ -281,7 +281,7 @@ int main(const int argc, const char **argv) {
 
     state.show_loaded = true;
     state.filter = FILTER_NEAREST;
-    state.zoom = 1.0;
+    state.zoom.current = 1.0;
 
     pthread_mutex_t mutex_image;
     pthread_mutex_init(&mutex_image, 0);
@@ -410,10 +410,10 @@ int main(const int argc, const char **argv) {
                         else goto FIT_Y;
                     } break;
                     case FIT_X: FIT_X: {
-                        state.zoom = x;
+                        state.zoom.current = x;
                     } goto FIT_PAN;
                     case FIT_Y: FIT_Y: {
-                        state.zoom = y;
+                        state.zoom.current = y;
                     } goto FIT_PAN;
                     case FIT_PAN: FIT_PAN: {
                         glm_scale(s_state.image_transform, (vec3){ 1.0f/x, 1.0f/y, 0 });
@@ -430,7 +430,7 @@ int main(const int argc, const char **argv) {
 
                 mat4 m_zoom;
                 glm_mat4_identity(m_zoom);
-                glm_scale(m_zoom, (vec3){ state.zoom, state.zoom, 0 });
+                glm_scale(m_zoom, (vec3){ state.zoom.current, state.zoom.current, 0 });
 
                 glm_mat4_mul(m_zoom, m_pan, s_state.image_view);
 
@@ -447,9 +447,9 @@ int main(const int argc, const char **argv) {
                 vec4 text_dim;
                 FitList fit = state.fit.current;
                 if(state.pan[0] || state.pan[1]) {
-                    snprintf(str_info, sizeof(str_info), "[%zu/%zu] %.*s (%ux%ux%u) [%.1f%% %s @ %.0f,%.0f]", state.selected + 1, vimage_length(state.images), RSTR_F(state.active->filename), state.active->width, state.active->height, state.active->channels, 100.0f * state.zoom, fit_cstr(fit), -state.pan[0], -state.pan[1]);
+                    snprintf(str_info, sizeof(str_info), "[%zu/%zu] %.*s (%ux%ux%u) [%.1f%% %s @ %.0f,%.0f]", state.selected + 1, vimage_length(state.images), RSTR_F(state.active->filename), state.active->width, state.active->height, state.active->channels, 100.0f * state.zoom.current, fit_cstr(fit), -state.pan[0], -state.pan[1]);
                 } else {
-                    snprintf(str_info, sizeof(str_info), "[%zu/%zu] %.*s (%ux%ux%u) [%.1f%% %s]", state.selected + 1, vimage_length(state.images), RSTR_F(state.active->filename), state.active->width, state.active->height, state.active->channels, 100.0f * state.zoom, fit_cstr(fit));
+                    snprintf(str_info, sizeof(str_info), "[%zu/%zu] %.*s (%ux%ux%u) [%.1f%% %s]", state.selected + 1, vimage_length(state.images), RSTR_F(state.active->filename), state.active->width, state.active->height, state.active->channels, 100.0f * state.zoom.current, fit_cstr(fit));
                 }
 
                 font_render(font, str_info, s_state.text_projection, text_pos, 1.0, 1.0, (vec3){1.0f, 1.0f, 1.0f}, text_dim, TEXT_ALIGN_LEFT);
@@ -490,7 +490,7 @@ int main(const int argc, const char **argv) {
                     snprintf(str_popup, sizeof(str_popup), "%.0f,%.0f", -state.pan[0], -state.pan[1]);
                 } break;
                 case POPUP_ZOOM: {
-                    snprintf(str_popup, sizeof(str_popup), "%.1f%%", 100 * state.zoom);
+                    snprintf(str_popup, sizeof(str_popup), "%.1f%%", 100 * state.zoom.current);
                 } break;
                 case POPUP_FILTER: {
                     snprintf(str_popup, sizeof(str_popup), "%s", filter_cstr(state.filter));

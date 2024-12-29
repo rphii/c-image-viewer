@@ -94,7 +94,11 @@ typedef struct Civ {
     Image *active;
     FilterList filter;
     size_t selected;
-    float zoom; struct {
+    struct {
+        float initial;
+        float current;
+    } zoom;
+    struct {
         FitList initial;
         FitList current;
     } fit;
