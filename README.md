@@ -60,22 +60,19 @@ Changing from floating to tiling window can be done via:
 ##### TODO so I won't forget
 
 - don't load EVERYTHING, but keep some images around the currently active one loaded
+    - CURRENTLY: freeing CPU memory when sent to GPU (as that appears to work?)
 - specify directory, check mime types (magic.h)
-- config file / arguments
+- config file
     - pan speed
     - zoom speed
-    - show / hide description
-    - filter mode
     - background color
     - text color
-    - font size
-    - font path
 - fix font - fontconfig ...
 - load font symbols for filename
 - config for key bindings ...
-- don't crash if no font loaded ...
 - better error handling
 - info / verbose
 - make pthreads optional (single core)
-- wayland - how to set tiling ?
+- type numbers -> go-to image
+- wayland - how to set tiling ? -> use wayland window instead of glfw
 
