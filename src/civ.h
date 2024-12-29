@@ -28,6 +28,7 @@ typedef enum {
 typedef struct Image {
     RStr filename;
     unsigned char *data;
+    bool freed_from_cpu;
     int width;
     int height;
     int channels;
@@ -53,11 +54,17 @@ VEC_INCLUDE(VImage, vimage, Image, BY_REF, BASE);
 
 typedef struct VImage VImage;
 
+typedef struct GlContext {
+    GLFWwindow *window;
+    pthread_mutex_t mutex;
+} GlContext;
+
 ThreadQueue(ImageLoad);
 typedef struct ImageLoad {
     size_t index;
     VImage *images;
     pthread_mutex_t *mutex;
+    GlContext *context;
   ImageLoadThreadQueue *queue;
 } ImageLoad;
 
@@ -70,6 +77,7 @@ typedef struct ImageLoadArgs {
     pthread_t thread;
     long jobs;
     size_t done;
+    GlContext *context;
 } ImageLoadArgs;
 
 typedef enum {
@@ -86,7 +94,9 @@ typedef enum {
 
 typedef struct CivConfig {
     RStr font_path;
-    int font_size;
+    ssize_t font_size;
+    bool show_description;
+    bool show_loaded;
 } CivConfig;
 
 typedef struct Civ {
@@ -104,8 +114,6 @@ typedef struct Civ {
     } fit;
     vec2 pan;
     ImageLoadArgs loader;
-    bool show_description;
-    bool show_loaded;
     struct {
         Timer timer;
         PopupList active;
@@ -114,6 +122,9 @@ typedef struct Civ {
     CivConfig defaults;
     Arg arg;
 } Civ;
+
+void glcontext_acquire(GlContext *context);
+void glcontext_release(GlContext *context);
 
 const char *fit_cstr(FitList id);
 const char *filter_cstr(FilterList id);
