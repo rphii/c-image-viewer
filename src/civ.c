@@ -369,7 +369,8 @@ void civ_cmd_random(Civ *civ, bool random) {
 void civ_cmd_select(Civ *civ, int change) {
     if(!change) return;
     glm_vec2_zero(civ->pan);
-    civ->zoom = 1.0f;
+    civ->zoom.initial = 0.0f;
+    civ->zoom.current = 1.0f;
     size_t n_img = vimage_length(civ->images);
     /* cap index, in case size changd */
     if(civ->selected > n_img) civ->selected = n_img ? n_img - 1 : 0;
@@ -389,11 +390,14 @@ void civ_cmd_select(Civ *civ, int change) {
 
 void civ_cmd_fit(Civ *civ, bool next) {
     if(!next) return;
-    // TODO: if we're zoomed in, don't go next, but re-set the current to initial
-    ++civ->fit.initial;
-    civ->fit.initial %= FIT__COUNT;
+    /* if we're zoomed in, don't go next, but re-set the current to initial */
+    if(!civ->zoom.initial) {
+        ++civ->fit.initial;
+        civ->fit.initial %= FIT__COUNT;
+    }
     civ->fit.current = civ->fit.initial;
-    civ->zoom = 1.0;
+    civ->zoom.initial = 0.0f;
+    civ->zoom.current = 1.0f;
     glm_vec2_zero(civ->pan);
     civ_popup_set(civ, POPUP_FIT);
 }
@@ -408,10 +412,13 @@ void civ_cmd_zoom(Civ *civ, double zoom) {
     if(!zoom) return;
     if(!civ->active) return;
     /* TODO: make zoom dependant on image-to-window ratio ... */
+    if(!civ->zoom.initial) {
+        civ->zoom.initial = civ->zoom.current;
+    }
     if(zoom < 0) {
-        civ->zoom *= (1.0 + zoom);
+        civ->zoom.current *= (1.0 + zoom);
     } else if(zoom > 0) {
-        civ->zoom /= (1.0 - zoom);
+        civ->zoom.current /= (1.0 - zoom);
     }
     //printf("ZOOM : %f\n", civ->zoom);
     civ->fit.current = FIT_PAN;
@@ -428,8 +435,8 @@ void civ_cmd_filter(Civ *civ, bool next) {
 
 void civ_cmd_pan(Civ *civ, vec2 pan) {
     if(!pan[0] && !pan[1]) return;
-    civ->pan[0] += pan[0] / civ->zoom; //s_action.pan_x / s_civ.wwidth * civ->zoom;
-    civ->pan[1] -= pan[1] / civ->zoom; //s_action.pan_y / s_civ.wheight * civ->zoom;
+    civ->pan[0] += pan[0] / civ->zoom.current; //s_action.pan_x / s_civ.wwidth * civ->zoom;
+    civ->pan[1] -= pan[1] / civ->zoom.current; //s_action.pan_y / s_civ.wheight * civ->zoom;
     civ->fit.current = FIT_PAN;
     civ_popup_set(civ, POPUP_PAN);
 }
