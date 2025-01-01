@@ -97,6 +97,7 @@ typedef struct CivConfig {
     ssize_t font_size;
     bool show_description;
     bool show_loaded;
+    ssize_t jobs;
 } CivConfig;
 
 typedef struct Civ {

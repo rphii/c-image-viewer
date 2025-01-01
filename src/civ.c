@@ -1,3 +1,4 @@
+#include <unistd.h>
 #include "civ.h"
 #include "stb_image.h"
 
@@ -311,7 +312,10 @@ void images_load(VImage *images, VrStr *files, pthread_mutex_t *mutex, bool *can
     pthread_mutex_lock(mutex);
     for(size_t i = 0; i < vimage_length(*images); ++i) {
         Image *image = vimage_get_at(images, i);
-        if(!image->data) vimage_pop_at(images, i--, 0);
+        if(!image->data) {
+            printf(">>> removed '%.*s'\n", RSTR_F(image->filename));
+            vimage_pop_at(images, i--, 0);
+        }
     }
     pthread_mutex_unlock(mutex);
     glfwPostEmptyEvent();
@@ -467,6 +471,8 @@ void civ_defaults(Civ *civ) {
     defaults->font_size = 18;
     defaults->show_description = false;
     defaults->show_loaded = true;
+    defaults->jobs = sysconf(_SC_NPROCESSORS_ONLN);
+
     /* finally, do defaults here */
     civ->config = *defaults;
 }
@@ -488,6 +494,8 @@ void civ_arg(Civ *civ, const char *name) {
     arg_bool(obj, &config->show_description, &defaults->show_description, false, ARG_NO_CALLBACK);
     obj = argopt_new(arg, &arg->options, '%', RSTR("--loaded"), RSTR("toggle loading info on/off"));
     arg_bool(obj, &config->show_loaded, &defaults->show_loaded, false, ARG_NO_CALLBACK);
+    obj = argopt_new(arg, &arg->options, 'j', RSTR("--jobs"), RSTR("set jobs"));
+    arg_int(obj, &config->jobs, &defaults->jobs, false, ARG_NO_CALLBACK, 0, 0);
     obj = argopt_new(arg, &arg->options, 's', RSTR("--filter"), RSTR("set filter"));
     ArgOpt *filter = arg_option(obj, (ssize_t *)&civ->filter);
     obj = argopt_new(arg, filter->options, 0, RSTR("nearest"), RSTR("set nearest"));

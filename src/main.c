@@ -289,7 +289,7 @@ int main(const int argc, const char **argv) {
     state.loader.images = &state.images;
     state.loader.mutex = &mutex_image;
     state.loader.cancel = &s_action.quit;
-    state.loader.jobs = sysconf(_SC_NPROCESSORS_ONLN);
+    state.loader.jobs = state.config.jobs;
     images_load_async(&state.loader);
 
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
