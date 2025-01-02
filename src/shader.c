@@ -60,22 +60,25 @@ static void static_program_assert(unsigned int program) {
 
 Shader shader_load(const char *dir_v, const char *vertex, const char *dir_f, const char *fragment) {
 
-    Shader shader_vertex = static_shader_load(GL_VERTEX_SHADER, dir_v, vertex);
-    Shader shader_fragment = static_shader_load(GL_FRAGMENT_SHADER, dir_f, fragment);
+    Shader shader_vertex = { .id = static_shader_load(GL_VERTEX_SHADER, dir_v, vertex), .loaded = true };
+    Shader shader_fragment = { .id = static_shader_load(GL_FRAGMENT_SHADER, dir_f, fragment), .loaded = true };
 
-    Shader shader = glCreateProgram();
-    glAttachShader(shader, shader_vertex);
-    glAttachShader(shader, shader_fragment);
-    glLinkProgram(shader);
-    static_program_assert(shader);
+    Shader shader = { .id = glCreateProgram(), .loaded = true };
+    glAttachShader(shader.id, shader_vertex.id);
+    glAttachShader(shader.id, shader_fragment.id);
+    glLinkProgram(shader.id);
+    static_program_assert(shader.id);
 
-    glDeleteShader(shader_vertex);
-    glDeleteShader(shader_fragment);
+    glDeleteShader(shader_vertex.id);
+    glDeleteShader(shader_fragment.id);
 
     return shader;
 }
 
 void shader_free(Shader shader) {
-    glDeleteProgram(shader);
+    if(shader.loaded) {
+        glDeleteProgram(shader.id);
+        shader.loaded = false;
+    }
 }
 

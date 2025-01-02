@@ -233,18 +233,45 @@ void scroll_callback(GLFWwindow *window, double xoffset, double yoffset)
 
 #include "arg.h"
 
+
+struct timespec diff(struct timespec start, struct timespec end)
+{
+    struct timespec temp;
+    if ((end.tv_nsec-start.tv_nsec)<0) {
+        temp.tv_sec = end.tv_sec-start.tv_sec-1;
+        temp.tv_nsec = 1000000000+end.tv_nsec-start.tv_nsec;
+    } else {
+        temp.tv_sec = end.tv_sec-start.tv_sec;
+        temp.tv_nsec = end.tv_nsec-start.tv_nsec;
+    }
+    return temp;
+}
+
 int main(const int argc, const char **argv) {
 
     if(argc < 1) return -1;
 
     srand(time(0));
 
+    int err = 0;
+
+    GLFWwindow *window = 0;
+    Shader sh_text = {0};
+    Shader sh_box = {0};
+    Shader sh_rect = {0};
+
     Civ state = {0};
     state.filter = FILTER_NEAREST;
     state.zoom.current = 1.0;
 
-    civ_defaults(&state);
+    pthread_mutex_t mutex_image;
+    pthread_mutex_init(&mutex_image, 0);
+    state.loader.files = &state.arg.rest.vrstr;
+    state.loader.images = &state.images;
+    state.loader.mutex = &mutex_image;
+    state.loader.cancel = &s_action.quit;
 
+    TRYC(civ_defaults(&state));
     civ_arg(&state, argv[0]);
     if(arg_parse(&state.arg, argc, argv)) return -1;
     if(state.arg.exit_early) return 0;
@@ -275,7 +302,7 @@ int main(const int argc, const char **argv) {
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_SAMPLES, 4);
 
-    GLFWwindow* window = glfwCreateWindow(s_state.wwidth, s_state.wheight, "civ", NULL, NULL);
+    window = glfwCreateWindow(s_state.wwidth, s_state.wheight, "civ", NULL, NULL);
     if(window == NULL) {
         printf("Failed to create GLFW window\n");
         glfwTerminate();
@@ -283,12 +310,6 @@ int main(const int argc, const char **argv) {
     }
     glfwMakeContextCurrent(window);
 
-    pthread_mutex_t mutex_image;
-    pthread_mutex_init(&mutex_image, 0);
-    state.loader.files = &state.arg.rest.vrstr;
-    state.loader.images = &state.images;
-    state.loader.mutex = &mutex_image;
-    state.loader.cancel = &s_action.quit;
     state.loader.jobs = state.config.jobs;
     images_load_async(&state.loader);
 
@@ -309,9 +330,9 @@ int main(const int argc, const char **argv) {
     //glEnable(GL_MULTISAMPLE);
 
     /* OPENGL START */
-    Shader sh_text = shader_load(shaders, "text.vert", shaders, "text.frag");
-    Shader sh_box = shader_load(shaders, "box.vert", shaders, "box.frag");
-    Shader sh_rect = shader_load(shaders, "rectangle.vert", shaders, "rectangle.frag");
+    sh_text = shader_load(shaders, "text.vert", shaders, "text.frag");
+    sh_box = shader_load(shaders, "box.vert", shaders, "box.frag");
+    sh_rect = shader_load(shaders, "rectangle.vert", shaders, "rectangle.frag");
     //int loc_projection = get_uniform(sh_rect, "projection");
     //int loc_view = get_uniform(sh_rect, "view");
     //int loc_transform = get_uniform(sh_rect, "transform");
@@ -333,6 +354,7 @@ int main(const int argc, const char **argv) {
     //Font font = font_init("/usr/share/fonts/mikachan-font-ttf/mikachan.ttf", font_size, 1.0, 1.5, 1024);
     //Font font = font_init("/usr/share/fonts/lato/Lato-Regular.ttf", font_size, 1.0, 1.5, 1024);
     //Font font = font_init("/usr/share/fonts/MonoLisa/ttf/MonoLisa-Regular.ttf", font_size, 1.0, 1.5, 1024);
+
     Font font = font_init(&state.config.font_path, state.config.font_size, 1.0, 1.5, 1024);
     font_shader(&font, sh_text);
     font_load(&font, 0, 256);
@@ -373,6 +395,10 @@ int main(const int argc, const char **argv) {
 
         if(state.loader.done < vimage_length(state.images)) {
             s_action.gl_update = true;
+        } else {
+            if(state.config.qafl) {
+                s_action.quit = true;
+            }
         }
 
         if(state.popup.active && timer_timedout(&state.popup.timer)) {
@@ -388,7 +414,7 @@ int main(const int argc, const char **argv) {
             glClear(GL_COLOR_BUFFER_BIT);
 
             if(state.active && state.active->data) {
-                glUseProgram(sh_rect);
+                glUseProgram(sh_rect.id);
 
                 glm_mat4_identity(s_state.image_view);
                 glm_mat4_identity(s_state.image_transform);
@@ -526,8 +552,9 @@ int main(const int argc, const char **argv) {
         }
     }
 
+clean:
     /* we can free stuff when it's hidden :) */
-    glfwHideWindow(window);
+    if(window) glfwHideWindow(window);
     //glfwSwapBuffers(window);
 
     s_action.quit = true;
@@ -540,10 +567,14 @@ int main(const int argc, const char **argv) {
 
     civ_free(&state);
 
-    glfwDestroyWindow(window);
-    glfwTerminate();
+    if(window) {
+        glfwDestroyWindow(window);
+        glfwTerminate();
+    }
     printf("done\n");
 
-    return 0;
+    return err;
+error:
+    ERR_CLEAN;
 }
 

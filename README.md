@@ -30,6 +30,10 @@ launch program:
 
     ./civ.out IMAGE-FILES-HERE
 
+help: _(defaults shown will be AFTER loading config and AFTER applying arguments, if any are passed)_
+
+    ./civ.out --help
+
 controls:
 
     K                                 : previous image
@@ -50,6 +54,23 @@ controls:
 clean with ninja:
 
     ninja -t clean
+
+## Config
+
+following paths get checked for a config file:
+
+    "$XDG_CONFIG_HOME/imv/config",
+    "$HOME/.config/civ/config",
+    "/etc/civ/config"
+
+the following options can be set as of now:
+
+    font-path = /path/to/font
+    font-size = <int>
+    show-loaded = <bool>
+    show-description = <bool>
+    jobs = <int>
+    quit-after-full-load = <bool>
 
 ## Wayland
 

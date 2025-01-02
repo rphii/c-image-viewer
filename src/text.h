@@ -44,7 +44,10 @@ typedef struct Font {
     float hspace;
     float vspace;
     TCharacter characters;
-    unsigned int texture_array;
+    struct {
+        unsigned int id;
+        bool loaded;
+    } texture_array;
     unsigned int glyphs;
     struct {
         int buf_w;

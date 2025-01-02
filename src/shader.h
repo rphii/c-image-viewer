@@ -1,9 +1,13 @@
 #ifndef SHADER_H
 
+#include <stdbool.h>
 #include <assert.h>
 #include "glad.h"
 
-typedef unsigned int Shader;
+typedef struct Shader {
+    unsigned int id;
+    bool loaded;
+} Shader;
 
 Shader shader_load(const char *dir_v, const char *vertex, const char *dir_f, const char *fragment);
 void shader_free(Shader shader);

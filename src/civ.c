@@ -1,6 +1,7 @@
 #include <unistd.h>
 #include "civ.h"
 #include "stb_image.h"
+#include "file.h"
 
 VEC_IMPLEMENT(VImage, vimage, Image, BY_REF, BASE, image_free);
 
@@ -92,7 +93,7 @@ void *image_load_thread(void *args) {
     //pthread_mutex_unlock(image_load->mutex);
     //send_texture_to_gpu(image, FILTER_NEAREST, 0);
     glfwPostEmptyEvent();
-    //if(image->data) printf("LOADED '%s'\n", image->filename);
+    //if(image->data) printf("LOADED '%.*s'\n", RSTR_F(image->filename));
 
 exit:
     /* finished this thread .. make space for next thread */
@@ -104,113 +105,6 @@ exit:
 
     return 0;
 }
-
-
-#if 0
-typedef enum {
-    FILE_TYPE_NONE,
-    FILE_TYPE_FILE,
-    FILE_TYPE_DIR,
-    FILE_TYPE_ERROR,
-} FileTypeList;
-
-#include <dirent.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/sysmacros.h>
-
-FileTypeList file_get_type(const char *filename) {
-#if defined(PLATFORM_WINDOWS)
-    ASSERT("not implemented");
-#else
-    struct stat s;
-    int r = lstat(filename, &s);
-    if(r) return FILE_TYPE_ERROR;
-    if(S_ISREG(s.st_mode)) return FILE_TYPE_FILE;
-    if(S_ISDIR(s.st_mode)) return FILE_TYPE_DIR;
-#endif
-    return 0;
-}
-
-#define FILE_PATH_MAX   4096
-
-typedef int (*FileFunc)(const char *filename, void *);
-int file_exec(const char *dirname, VStr *subdirs, bool recursive, FileFunc exec, void *args) {
-    int err = 0;
-    DIR *dir = 0;
-    char *subdir = 0;
-    //printf("FILENAME: %.*s\n", STR_F(dirname));
-    FileTypeList type = file_get_type(dirname);
-    if(type == FILE_TYPE_DIR) {
-        if(!recursive) {
-            fprintf(stderr, "will not go over '%s' (enable recursion to do so)", dirname);
-            goto error;
-        }
-        size_t len = strrchr(dirname, PLATFORM_CH_SUBDIR) - dirname;
-        //size_t len = str_rnch(dirname, PLATFORM_CH_SUBDIR, 0);
-        if(len < strlen(dirname) && dirname[len] != PLATFORM_CH_SUBDIR) ++len;
-        struct dirent *dp = 0;
-        //char cdir[FILE_PATH_MAX];
-        //str_cstr(dirname, cdir, FILE_PATH_MAX);
-        char *cdir = dirname;
-        if((dir = opendir(cdir)) == NULL) {
-            goto clean;
-        }
-        char filename[FILE_PATH_MAX] = {0};
-        while ((dp = readdir(dir)) != NULL) {
-            if(dp->d_name[0] == '.') continue; // TODO add an argument for this
-            if(!strcmp(dp->d_name, ".") || !strcmp(dp->d_name, "..")) continue;
-            size_t len2 = snprintf(filename, FILE_PATH_MAX, "%.*s/%s", (int)len, cdir, dp->d_name);
-            if(len2 != strlen(filename)) assert(0 && "should probably have len2!");
-            //--len;
-            char filename2[FILE_PATH_MAX];
-            snprintf(filename2, FILE_PATH_MAX, "%.*s", (int)len2, filename);
-            FileTypeList type2 = file_get_type(filename2);
-            if(type2 == FILE_TYPE_DIR) {
-                //snprintf(subdir, FILE_PATH_MAX, "%.*s", filename2);
-                size_t len2 = strlen(filename2);
-                subdir = malloc(len2 + 1);
-                if(!subdir) goto error;
-                strncpy(subdir, filename2, len2);
-                subdir[len2] = 0;
-                //TRYC(str_fmt(&subdir, "%.*s", STR_F(filename2)));
-                vstr_push_back(subdirs, subdir);
-                //str_zero(&subdir);
-            } else if(type2 == FILE_TYPE_FILE) {
-                exec(filename2, args); //, "an error occured while executing the function");
-            } else {
-                //info(INFO_skipping_nofile_nodir, "skipping '%.*s' since no regular file nor directory", STR_F(*dirname));
-            }
-        }
-    } else if(type == FILE_TYPE_FILE) {
-        exec(dirname, args); //, "an error occured while executing the function");
-    } else if(type == FILE_TYPE_ERROR) {
-        fprintf(stderr, "failed checking type of '%s' (maybe it doesn't exist?)", dirname);
-        goto error;
-    } else {
-        //info(INFO_skipping_nofile_nodir, "skipping '%.*s' since no regular file nor directory", STR_F(*dirname));
-    }
-clean:
-    //str_free(&subdir);
-    if(dir) closedir(dir);
-    return err;
-error:
-    err = -1;
-    goto clean;;
-}
-
-int image_push_back(const char *filename, void *data) {
-    ImageLoadArgs *image_load = data;
-    printf("PUSH BACK: '%s'\n", filename);
-    Image push = { .filename = filename };
-    //pthread_mutex_lock(image_load->mutex);
-    vimage_push_back(image_load->images, &push);
-    printf("LENGTH: %zu\n", vimage_length(*image_load->images));
-    //pthread_mutex_unlock(image_load->mutex);
-    return 0;
-}
-#endif
-
 
 void images_load(VImage *images, VrStr *files, pthread_mutex_t *mutex, bool *cancel, long jobs, size_t *done) {
     ASSERT_ARG(images);
@@ -370,6 +264,7 @@ void civ_free(Civ *state) {
     pthread_mutex_unlock(state->loader.mutex);
     pthread_join(state->loader.thread, 0);
     memset(state, 0, sizeof(*state));
+    str_free(&state->config_content);
 }
 
 void civ_popup_set(Civ *state, PopupList id) {
@@ -465,7 +360,111 @@ void civ_cmd_pan(Civ *civ, vec2 pan) {
 
 /* commands }}} */
 
-void civ_defaults(Civ *civ) {
+#include <wordexp.h>
+
+#define ERR_civ_config_path(...) "error while getting config path"
+[[nodiscard]] int civ_config_path(Civ *civ, Str *path) {
+    ASSERT_ARG(civ);
+    ASSERT_ARG(path);
+    const char *paths[] = {
+        "$XDG_CONFIG_HOME/imv/config",
+        "$HOME/.config/civ/config",
+        "/etc/civ/config"
+    };
+    char cpath[PATH_MAX];
+    for(size_t i = 0; i < SIZE_ARRAY(paths); ++i, str_clear(path)) {
+        wordexp_t word;
+        if(wordexp(paths[i], &word, 0)) {
+            continue;
+        }
+        if(!word.we_wordv[0]) {
+            wordfree(&word);
+            continue;
+        }
+        TRYC(str_fmt(path, "%s", word.we_wordv[0]));
+        str_cstr(*path, cpath, PATH_MAX);
+        if(!strlen(cpath) || access(cpath, R_OK) == -1) {
+            continue;
+        }
+        break;
+    }
+    return 0;
+error:
+    return -1;
+}
+
+RStr civ_config_list(CivConfigList id) {
+    switch(id) {
+        case CIV_FONT_PATH: return RSTR("font-path");
+        case CIV_FONT_SIZE: return RSTR("font-size");
+        case CIV_SHOW_DESCRIPTION: return RSTR("show-description");
+        case CIV_SHOW_LOADED: return RSTR("show-loaded");
+        case CIV_JOBS: return RSTR("jobs");
+        case CIV_QAFL: return RSTR("quit-after-full-load");
+        default: ABORT("unsupported id: '%u'", id);
+    }
+}
+
+#define ERR_civ_config_load(...) "error while loading config"
+[[nodiscard]] int civ_config_load(Civ *civ, Str *path) {
+    ASSERT_ARG(civ);
+    ASSERT_ARG(path);
+    size_t linenb = 1;
+    Str *content = &civ->config_content;
+    TRYC(file_str_read(path, content));
+    for(RStr line = {0}; line.first < content->last; line.s ? ++linenb : linenb, line = str_splice(*content, &line, '\n'), line = rstr_trim(line)) {
+        if(!rstr_length(line) || !line.s) continue;
+        if(rstr_get_front(&line) == '#') continue;
+        size_t argnb = 0;
+        //printff(">> LINE %zu : '%.*s'", linenb, RSTR_F(line));
+        CivConfigList id = CIV_NONE;
+        for(RStr arg = {0}; arg.first < line.last; arg.s ? ++argnb : argnb, arg = rstr_splice(line, &arg, '='), arg = rstr_trim(arg)) {
+            if(!arg.s) continue;
+            //printff(">> ARG %zu : '%.*s'", argnb, RSTR_F(arg));
+            if(argnb == 0) {
+                /* check which id we could possibly deal with */
+                for(size_t j = 1; j < CIV__COUNT; ++j) {
+                    RStr cmp = civ_config_list(j);
+                    if(rstr_cmp(&cmp, &arg)) continue;
+                    id = j;
+                    break;
+                }
+            } else if(argnb == 1) {
+                switch(id) {
+                    case CIV_FONT_PATH: {
+                        civ->defaults.font_path = arg;
+                    } break;
+                    case CIV_FONT_SIZE: {
+                        TRYC(rstr_as_int(arg, &civ->defaults.font_size));
+                    } break;
+                    case CIV_SHOW_DESCRIPTION: {
+                        TRYC(rstr_as_bool(arg, &civ->defaults.show_description, true));
+                    } break;
+                    case CIV_SHOW_LOADED: {
+                        TRYC(rstr_as_bool(arg, &civ->defaults.show_loaded, true));
+                    } break;
+                    case CIV_JOBS: {
+                        TRYC(rstr_as_int(arg, &civ->defaults.jobs));
+                    } break;
+                    case CIV_QAFL: {
+                        TRYC(rstr_as_bool(arg, &civ->defaults.qafl, true));
+                    } break;
+                    default: ABORT("unhandled id: %u", id);
+                }
+            }
+            if(!id && !argnb) THROW("invalid config: " F("'%.*s'", BOLD) " in file '%.*s' at line %zu", RSTR_F(arg), STR_F(*path), linenb);
+            //printff(">> id %u, %zu", id, argnb)
+        }
+        if(argnb < 2) THROW("missing value for: " F("'%.*s'", BOLD) " in file '%.*s' at line %zu", RSTR_F(line), STR_F(*path), linenb);
+    }
+
+    return 0;
+error:
+    return -1;
+}
+
+[[nodiscard]] int civ_defaults(Civ *civ) {
+    int err = 0;
     CivConfig *defaults = &civ->defaults;
     defaults->font_path = RSTR("/usr/share/fonts/MonoLisa/ttf/MonoLisa-Regular.ttf");
     defaults->font_size = 18;
@@ -475,6 +474,18 @@ void civ_defaults(Civ *civ) {
 
     /* finally, do defaults here */
     civ->config = *defaults;
+
+    /* load config */
+    Str path = {0};
+    TRYC(civ_config_path(civ, &path));
+    TRYC(civ_config_load(civ, &path));
+    //printff("PATH: '%.*s'", STR_F(path));
+
+clean:
+    str_free(&path);
+    return err;
+error:
+    ERR_CLEAN;
 }
 
 void civ_arg(Civ *civ, const char *name) {
@@ -482,26 +493,20 @@ void civ_arg(Civ *civ, const char *name) {
     arg_allow_rest(arg, RSTR("images"));
     TRYC(arg_attach_help(arg, RSTR("image viewer written in C"), RSTR("https://github.com/rphii/c-image-viewer")));
     //arg_allow_rest(arg, "images");
-    ArgOpt *obj;
     CivConfig *defaults = &civ->defaults;
     CivConfig *config = &civ->config;
     /* font */
-    obj = argopt_new(arg, &arg->options, 'f', RSTR("--font"), RSTR("specify font"));
-    arg_str(obj, &config->font_path, &defaults->font_path, false, ARG_NO_CALLBACK);
-    obj = argopt_new(arg, &arg->options, 'F', RSTR("--font-size"), RSTR("specify font size"));
-    arg_int(obj, &config->font_size, &defaults->font_size, false, ARG_NO_CALLBACK, 0, 0);
-    obj = argopt_new(arg, &arg->options, 'd', RSTR("--description"), RSTR("toggle description on/off"));
-    arg_bool(obj, &config->show_description, &defaults->show_description, false, ARG_NO_CALLBACK);
-    obj = argopt_new(arg, &arg->options, '%', RSTR("--loaded"), RSTR("toggle loading info on/off"));
-    arg_bool(obj, &config->show_loaded, &defaults->show_loaded, false, ARG_NO_CALLBACK);
-    obj = argopt_new(arg, &arg->options, 'j', RSTR("--jobs"), RSTR("set jobs"));
-    arg_int(obj, &config->jobs, &defaults->jobs, false, ARG_NO_CALLBACK, 0, 0);
-    obj = argopt_new(arg, &arg->options, 's', RSTR("--filter"), RSTR("set filter"));
-    ArgOpt *filter = arg_option(obj, (ssize_t *)&civ->filter);
-    obj = argopt_new(arg, filter->options, 0, RSTR("nearest"), RSTR("set nearest"));
-    arg_enum(obj, false, ARG_NO_CALLBACK, FILTER_NEAREST);
-    obj = argopt_new(arg, filter->options, 0, RSTR("linear"), RSTR("set linear"));
-    arg_enum(obj, false, ARG_NO_CALLBACK, FILTER_LINEAR);
+    arg_str(argopt_new(arg, &arg->options, 'f', RSTR("--font"), RSTR("specify font")), &config->font_path, &defaults->font_path, false, ARG_NO_CALLBACK);
+    arg_int(argopt_new(arg, &arg->options, 'F', RSTR("--font-size"), RSTR("specify font size")), &config->font_size, &defaults->font_size, false, ARG_NO_CALLBACK, 0, 0);
+    arg_bool(argopt_new(arg, &arg->options, 'd', RSTR("--description"), RSTR("toggle description on/off")), &config->show_description, &defaults->show_description, false, ARG_NO_CALLBACK);
+    arg_bool(argopt_new(arg, &arg->options, '%', RSTR("--loaded"), RSTR("toggle loading info on/off")), &config->show_loaded, &defaults->show_loaded, false, ARG_NO_CALLBACK);
+    arg_bool(argopt_new(arg, &arg->options, 0, RSTR("--quit-after-full-load"), RSTR("quit after fully loading")), &config->qafl, &defaults->qafl, false, ARG_NO_CALLBACK);
+    arg_int(argopt_new(arg, &arg->options, 'j', RSTR("--jobs"), RSTR("set maximum jobs to use when loading")), &config->jobs, &defaults->jobs, false, ARG_NO_CALLBACK, 0, 0);
+
+    ArgOpt *filter = arg_option(argopt_new(arg, &arg->options, 's', RSTR("--filter"), RSTR("set filter")), (ssize_t *)&civ->filter);
+    arg_enum(argopt_new(arg, filter->options, 0, RSTR("nearest"), RSTR("set nearest")), false, ARG_NO_CALLBACK, FILTER_NEAREST);
+    arg_enum(argopt_new(arg, filter->options, 0, RSTR("linear"), RSTR("set linear")), false, ARG_NO_CALLBACK, FILTER_LINEAR);
+
 error:
     /* TODO: fix ugly code */
     return;

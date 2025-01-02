@@ -30,6 +30,7 @@ rule link
 
 build $builddir/glad.o: cc $root/glad.c
 build $builddir/str.o: cc $root/str.c
+build $builddir/file.o: cc $root/file.c
 build $builddir/civ.o: cc $root/civ.c
 build $builddir/shader.o: cc $root/shader.c
 build $builddir/text.o: cc $root/text.c
@@ -54,4 +55,5 @@ build civ.out: link $
     $builddir/gl_image.o $
     $builddir/arg.o $
     $builddir/str.o $
+    $builddir/file.o $
 
