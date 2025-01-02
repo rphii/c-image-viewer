@@ -15,6 +15,7 @@ LUT_IMPLEMENT(TCharacter, tcharacter, unsigned long, BY_VAL, Character, BY_VAL,
         static_hash_unsigned_long, static_cmp_unsigned_long, 0, 0);
 
 static FT_Library ft;
+static bool initialized;
 static unsigned int VAO;
 static unsigned int VBO;
 static mat4 transforms[TEXT_INSTANCE_LIMIT];
@@ -44,6 +45,7 @@ void text_init(void) {
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, 0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
+    initialized = true;
 }
 
 Font font_init(const RStr *path, int height, float hspace, float vspace, unsigned int glyphs) {
@@ -80,8 +82,8 @@ Font font_init(const RStr *path, int height, float hspace, float vspace, unsigne
     //int h = font.height < 256 ? 256 : font.height; /* height has to be at least 256 */
     font.gl.buf_w = font.height < 256 ? 256 : font.height; /* width has to be at least 16 */
     font.gl.buf_h = font.height < 256 ? 256 : font.height; /* height has to be at least 256 */
-    glGenTextures(1, &font.texture_array);
-    glBindTexture(GL_TEXTURE_2D_ARRAY, font.texture_array);
+    glGenTextures(1, &font.texture_array.id);
+    glBindTexture(GL_TEXTURE_2D_ARRAY, font.texture_array.id);
     glActiveTexture(GL_TEXTURE0);
     glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_R8, font.gl.buf_w, font.gl.buf_h, glyphs, 0, GL_RED, GL_UNSIGNED_BYTE, 0);
     //glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_RGBA, height + 128, height + 128, glyphs, 0, GL_RGB, GL_UNSIGNED_BYTE, 0);
@@ -139,10 +141,10 @@ void font_load(Font *font, unsigned long i0, unsigned long iE) {
 }
 
 void font_shader(Font *font, Shader shader) {
-    font->shader.loc_transforms = glGetUniformLocation(shader, "transforms");
-    font->shader.loc_projection = glGetUniformLocation(shader, "projection");
-    font->shader.loc_map = glGetUniformLocation(shader, "letter_map");
-    font->shader.loc_color = glGetUniformLocation(shader, "text_color");
+    font->shader.loc_transforms = glGetUniformLocation(shader.id, "transforms");
+    font->shader.loc_projection = glGetUniformLocation(shader.id, "projection");
+    font->shader.loc_map = glGetUniformLocation(shader.id, "letter_map");
+    font->shader.loc_color = glGetUniformLocation(shader.id, "text_color");
     font->shader.id = shader;
     assert(font->shader.loc_map >= 0);
     assert(font->shader.loc_color >= 0);
@@ -152,14 +154,14 @@ void font_shader(Font *font, Shader shader) {
 
 
 void font_render(Font font, const char *text, mat4 projection, vec2 pos, float scale, float expand, vec3 color, vec4 dimensions, TextAlignList align) {
-    glUseProgram(font.shader.id);
+    glUseProgram(font.shader.id.id);
     //scale = scale * font.height / 256.0f; /* re-adjust scale to original size of font */
     
     if(align == TEXT_ALIGN_RENDER) {
         glUniformMatrix4fv(font.shader.loc_projection, 1, GL_FALSE, (float *)projection);
         glUniform3f(font.shader.loc_color, color[0], color[1], color[2]);
         glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D_ARRAY, font.texture_array);
+        glBindTexture(GL_TEXTURE_2D_ARRAY, font.texture_array.id);
         glBindVertexArray(VAO);
         glBindBuffer(GL_ARRAY_BUFFER, VBO);
     }
@@ -287,10 +289,13 @@ void font_free(Font *font) {
     FT_Done_Face(font->face);
     tcharacter_free(&font->characters);
     //memset(font, 0, sizeof(*font));
-    glDeleteTextures(1, &font->texture_array);
+    if(font->texture_array.loaded) {
+        glDeleteTextures(1, &font->texture_array.id);
+    }
 }
 
 void text_free(void) {
+    if(!initialized) return;
     glDeleteVertexArrays(1, &VAO);
     glDeleteBuffers(1, &VBO);
     FT_Done_FreeType(ft);

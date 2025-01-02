@@ -42,16 +42,16 @@ void gl_image_initialize(void) {
 void gl_image_shader(GlImage *image, Shader shader) {
     if(!gl_image_initialized) gl_image_initialize();
 
-    image->loc_projection = get_uniform(shader, "projection");
-    image->loc_view = get_uniform(shader, "view");
-    image->loc_transform = get_uniform(shader, "transform");
+    image->loc_projection = get_uniform(shader.id, "projection");
+    image->loc_view = get_uniform(shader.id, "view");
+    image->loc_transform = get_uniform(shader.id, "transform");
     image->shader = shader;
 }
 
 void gl_image_render(GlImage *image, unsigned int texture, mat4 projection, mat4 view, mat4 transform) {
     if(!gl_image_initialized) gl_image_initialize();
 
-    glUseProgram(image->shader);
+    glUseProgram(image->shader.id);
 
     glBindVertexArray(VAO);
     glUniformMatrix4fv(image->loc_projection, 1, GL_FALSE, (float *)projection);

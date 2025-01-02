@@ -29,6 +29,7 @@ VEC_INCLUDE(VrStr, vrstr, struct RStr, BY_REF, ERR);
 #define VEC_SETTINGS_STRUCT_ITEMS s
 #include "vec.h"
 VEC_INCLUDE(Str, str, char, BY_VAL, BASE);
+VEC_INCLUDE(Str, str, char, BY_VAL, ERR);
 #undef VEC_SETTINGS_DEFAULT_SIZE
 #undef VEC_SETTINGS_KEEP_ZERO_END
 #undef VEC_SETTINGS_STRUCT_ITEMS
@@ -73,7 +74,7 @@ VEC_INCLUDE(Str, str, char, BY_VAL, BASE);
 
 /* }}} header-only fluff */
 
-/* {{{ Str-only , failable */
+/* {{{ both , failable */
 
 #define ERR_str_fmt_va(...) "failed formatting string"
 ErrDecl str_fmt_va(Str *str, const char *format, va_list argp);
@@ -87,25 +88,36 @@ ErrDecl str_fmt_fgbg(Str *out, const Str *text, const V3u8 fg, const V3u8 bg, bo
 #define ERR_str_get_str(...) "failed getting string from user"
 ErrDecl str_get_str(Str *str);
 
+#define ERR_str_as_int(...) "error while converting string to number"
+ErrDecl str_as_int(const Str str, ssize_t *out);
+#define ERR_rstr_as_int(...) "error while converting string to number"
+ErrDecl rstr_as_int(const RStr str, ssize_t *out);
+
+#define ERR_str_as_bool(...) "error while converting string to bool"
+ErrDecl str_as_bool(const Str str, bool *out, bool expand_pool);
+#define ERR_rstr_as_bool(...) "error while converting string to bool"
+ErrDecl rstr_as_bool(const RStr str, bool *out, bool expand_pool);
+
+
 //#define ERR_str_expand_path(...) "failed expanding path"
 //ErrDecl str_expand_path(Str *path, const Str *base, const Str *home);
 
 
 /*OK*/size_t str_writefunc(void *ptr, size_t size, size_t nmemb, Str *str);
 
-/* }}} Str-only , failable */
+/* }}} both , failable */
 
 /* {{{ both , no-fail */
 
 STR_INCLUDE_MOD(void, pop_back_char, RStr *);
 STR_INCLUDE_MOD(void, pop_back_word, RStr *);
-STR_INCLUDE_MOD(void, triml);
-STR_INCLUDE_MOD(void, trimr);
-STR_INCLUDE_MOD(void, trim);
-
 STR_INCLUDE_MOD(void, rremove_ch, char ch, char ch_escape);
 
 STR_INCLUDE_CONST(void, cstr, char *cstr, size_t len);
+
+STR_INCLUDE_CONST(RStr, triml);
+STR_INCLUDE_CONST(RStr, trimr);
+STR_INCLUDE_CONST(RStr, trim);
 
 STR_INCLUDE_CONST(RStr, get_ext);         /* /home/user/file.test -> .test */
 STR_INCLUDE_CONST(RStr, get_noext);       /* /home/user/file.test -> /home/user/file */

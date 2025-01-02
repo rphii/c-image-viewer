@@ -98,7 +98,22 @@ typedef struct CivConfig {
     bool show_description;
     bool show_loaded;
     ssize_t jobs;
+    bool qafl;
 } CivConfig;
+
+typedef enum {
+    CIV_NONE,
+    /* below */
+    CIV_FONT_PATH,
+    CIV_FONT_SIZE,
+    CIV_SHOW_DESCRIPTION,
+    CIV_SHOW_LOADED,
+    CIV_JOBS,
+    CIV_QAFL,
+    /* above */
+    CIV__COUNT
+} CivConfigList;
+
 
 typedef struct Civ {
     VImage images;
@@ -122,6 +137,7 @@ typedef struct Civ {
     CivConfig config;
     CivConfig defaults;
     Arg arg;
+    Str config_content;
 } Civ;
 
 void glcontext_acquire(GlContext *context);
@@ -133,7 +149,8 @@ const char *filter_cstr(FilterList id);
 void send_texture_to_gpu(Image *image, FilterList filter, bool *render);
 void images_load_async(ImageLoadArgs *args);
 void civ_free(Civ *state);
-void civ_defaults(Civ *civ);
+#define ERR_civ_defaults(...) "error while loading defaults"
+int civ_defaults(Civ *civ);
 void civ_arg(Civ *civ, const char *name);
 
 void civ_popup_set(Civ *state, PopupList id);

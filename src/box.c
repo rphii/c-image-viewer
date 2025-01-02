@@ -48,9 +48,9 @@ void box_render(Shader shader, mat4 projection, vec4 dim, vec4 color, float bord
     glm_mat4_identity(m_pos);
     glm_mat4_identity(m_scale);
 
-    int loc_box_transform = glGetUniformLocation(shader, "transform");
-    int loc_box_projection = glGetUniformLocation(shader, "projection");
-    int loc_box_color = glGetUniformLocation(shader, "color");
+    int loc_box_transform = glGetUniformLocation(shader.id, "transform");
+    int loc_box_projection = glGetUniformLocation(shader.id, "projection");
+    int loc_box_color = glGetUniformLocation(shader.id, "color");
     assert(loc_box_transform >= 0);
     assert(loc_box_projection >= 0);
     assert(loc_box_color >= 0);
@@ -68,7 +68,7 @@ void box_render(Shader shader, mat4 projection, vec4 dim, vec4 color, float bord
     glBlendFunc(GL_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 #endif
 
-    glUseProgram(shader);
+    glUseProgram(shader.id);
     glBindVertexArray(VAO);
     glUniformMatrix4fv(loc_box_transform, 1, GL_FALSE, (float *)m_transform);
     glUniformMatrix4fv(loc_box_projection, 1, GL_FALSE, (float *)projection);

@@ -16,6 +16,7 @@
 #define VEC_SETTINGS_KEEP_ZERO_END 1
 #define VEC_SETTINGS_STRUCT_ITEMS s
 VEC_IMPLEMENT(Str, str, char, BY_VAL, BASE, 0);
+VEC_IMPLEMENT(Str, str, char, BY_VAL, ERR);
 #undef VEC_SETTINGS_DEFAULT_SIZE
 #undef VEC_SETTINGS_KEEP_ZERO_END
 #undef VEC_SETTINGS_STRUCT_ITEMS
@@ -232,42 +233,6 @@ IMPL_STR_POP_BACK_WORD(str, Str);
 IMPL_STR_POP_BACK_WORD(rstr, RStr);
 /*}}}*/
 
-#define IMPL_STR_TRIML(A, N) /*{{{*/ \
-    void A##_triml(N *str) { \
-        ASSERT_ARG(str); \
-        while(str->first < str->last) { \
-            char c = str->s[str->first]; \
-            if(!isspace(c)) break; \
-            ++str->first; \
-        } \
-    }
-IMPL_STR_TRIML(str, Str);
-IMPL_STR_TRIML(rstr, RStr);
-/*}}}*/
-
-#define IMPL_STR_TRIMR(A, N) /*{{{*/ \
-    void A##_trimr(N *str) { \
-        ASSERT_ARG(str); \
-        while(str->last > str->first) { \
-            char c = str->s[str->last - 1]; \
-            if(!isspace(c)) break; \
-            --str->last; \
-        } \
-    }
-IMPL_STR_TRIMR(str, Str);
-IMPL_STR_TRIMR(rstr, RStr);
-/*}}}*/
-
-#define IMPL_STR_TRIM(A, N) /*{{{*/ \
-    void A##_trim(N *str) { \
-        ASSERT_ARG(str); \
-        A##_triml(str); \
-        A##_trimr(str); \
-    }
-IMPL_STR_TRIM(str, Str);
-IMPL_STR_TRIM(rstr, RStr);
-/*}}}*/
-
 #define IMPL_STR_RREMOVE_CH(A, N) /*{{{*/ \
     void A##_rremove_ch(N *str, char ch, char ch_escape) { \
         ASSERT_ARG(str); \
@@ -291,6 +256,44 @@ IMPL_STR_RREMOVE_CH(rstr, RStr);
     }
 STR_IMPL_CSTR(str, Str, STR_F);
 STR_IMPL_CSTR(rstr, RStr, RSTR_F);
+/*}}}*/
+
+#define IMPL_STR_TRIML(A, N) /*{{{*/ \
+    RStr A##_triml(const N str) { \
+        RStr result = A##_rstr(str); \
+        while(result.first < result.last) { \
+            char c = result.s[result.first]; \
+            if(!isspace(c)) break; \
+            ++result.first; \
+        } \
+        return result; \
+    }
+IMPL_STR_TRIML(str, Str);
+IMPL_STR_TRIML(rstr, RStr);
+/*}}}*/
+
+#define IMPL_STR_TRIMR(A, N) /*{{{*/ \
+    RStr A##_trimr(const N str) { \
+        RStr result = A##_rstr(str); \
+        while(result.last > result.first) { \
+            char c = result.s[result.last - 1]; \
+            if(!isspace(c)) break; \
+            --result.last; \
+        } \
+        return result; \
+    }
+IMPL_STR_TRIMR(str, Str);
+IMPL_STR_TRIMR(rstr, RStr);
+/*}}}*/
+
+#define IMPL_STR_TRIM(A, N) /*{{{*/ \
+    RStr A##_trim(N str) { \
+        RStr result = A##_triml(str); \
+        result = rstr_trimr(result); \
+        return result; \
+    }
+IMPL_STR_TRIM(str, Str);
+IMPL_STR_TRIM(rstr, RStr);
 /*}}}*/
 
 #define IMPL_STR_GET_EXT(A, N) /*{{{*/ \
@@ -576,10 +579,11 @@ IMPL_STR_HASH_CI(rstr, RStr, , );
 #define IMPL_STR_SPLICE(A, N) /*{{{*/ \
     RStr A##_splice(const N to_splice, RStr *prev_splice, char sep) { \
         RStr result = A##_rstr(to_splice); \
-        if(prev_splice && prev_splice->s) { \
-            size_t from = rstr_iter_begin(*prev_splice) - A##_iter_begin(to_splice); \
+        RStr *prev = prev_splice; \
+        if(prev && prev->s) { \
+            size_t from = rstr_iter_begin(*prev) - A##_iter_begin(to_splice); \
             RStr search = RSTR_I0(A##_rstr(to_splice), from); \
-            result.first += rstr_find_ch(search, sep, 0); /*TODO is this really += ??*/ \
+            result.first += rstr_find_ch(search, sep, 0) + from; /*TODO is this really += ??*/ \
             if((size_t)(rstr_iter_begin(result) - A##_iter_begin(to_splice)) < A##_length(to_splice)) { \
                 ++result.first; \
             } \
@@ -589,6 +593,50 @@ IMPL_STR_HASH_CI(rstr, RStr, , );
     }
 IMPL_STR_SPLICE(str, Str);
 IMPL_STR_SPLICE(rstr, RStr);
+/*}}}*/
+
+#define IMPL_STR_AS_INT(A, N, F) /*{{{*/ \
+    int A##_as_int(const N str, ssize_t *out) { \
+        ASSERT_ARG(out); \
+        char *endptr; \
+        ssize_t result = strtoll(A##_iter_begin(str), &endptr, 0); \
+        if(endptr != A##_iter_end(&str)) THROW("failed conversion to number: '%.*s'", F(str)); \
+        *out = result; \
+        return 0; \
+    error: \
+        return -1; \
+    }
+IMPL_STR_AS_INT(str, Str, STR_F);
+IMPL_STR_AS_INT(rstr, RStr, RSTR_F);
+/*}}}*/
+
+#define IMPL_STR_AS_BOOL(A, N, F) /*{{{*/ \
+    int A##_as_bool(const N str, bool *out, bool expand_pool) { \
+        ASSERT_ARG(out); \
+        RStr in = A##_rstr(str); \
+        RStr val_true[3] = { \
+            RSTR("true"), \
+            RSTR("yes"), \
+            RSTR("enable"), \
+        }; \
+        RStr val_false[3] = { \
+            RSTR("false"), \
+            RSTR("no"), \
+            RSTR("disable"), \
+        }; \
+        bool result = false; \
+        for(size_t i = 0; i < 3; ++i) { \
+            if(i && !expand_pool) THROW("invalid bool: '%.*s'", F(str)); \
+            if(!rstr_cmp(&val_true[i], &in)) { result = true; break; } \
+            if(!rstr_cmp(&val_false[i], &in)) { result = false; break; } \
+        } \
+        *out = result; \
+        return 0; \
+    error: \
+        return -1; \
+    }
+IMPL_STR_AS_BOOL(str, Str, STR_F);
+IMPL_STR_AS_BOOL(rstr, RStr, RSTR_F);
 /*}}}*/
 
 
