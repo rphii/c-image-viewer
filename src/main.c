@@ -250,6 +250,8 @@ struct timespec diff(struct timespec start, struct timespec end)
 int main(const int argc, const char **argv) {
 
     if(argc < 1) return -1;
+    if(!argv) return -1;
+    if(!argv[0]) return -1;
 
     srand(time(0));
 
@@ -282,12 +284,14 @@ int main(const int argc, const char **argv) {
     s_state.wwidth = 800;
     s_state.wheight = 600;
 
+
     /* get directory */
+    char directory[PATH_MAX];
+    char shaders[PATH_MAX];
+    if(readlink("/proc/self/exe", directory, PATH_MAX) == -1) goto error;
     RStr dir = rstr_get_dir(state.arg.name);
-    char directory[4096];
-    snprintf(directory, 4096, "%.*s", RSTR_F(dir));
-    char shaders[4096];
-    snprintf(shaders, 4096, "%.4040s/shaders", directory);
+    snprintf(shaders, PATH_MAX, "%.4040s/shaders", directory);
+    snprintf(shaders, PATH_MAX, "%s", "/opt/civ/shaders");
 
     //printf("%zu\n", sizeof(ImageLoadThreadQueue));
     //return 0;
