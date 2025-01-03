@@ -287,7 +287,7 @@ int main(const int argc, const char **argv) {
     char directory[4096];
     snprintf(directory, 4096, "%.*s", RSTR_F(dir));
     char shaders[4096];
-    snprintf(shaders, 4096, "%.4040s/../shaders", directory);
+    snprintf(shaders, 4096, "%.4040s/shaders", directory);
 
     //printf("%zu\n", sizeof(ImageLoadThreadQueue));
     //return 0;
