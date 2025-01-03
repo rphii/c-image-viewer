@@ -72,6 +72,14 @@ the following options can be set as of now:
     jobs = <int>
     quit-after-full-load = <bool>
 
+an example config:
+
+    font-path = /usr/share/fonts/lato/Lato-Regular.ttf
+    font-size = 12
+    show-loaded = false
+    show-description = yes
+    jobs = 4
+
 ## Wayland
 
 Changing from floating to tiling window can be done via:
