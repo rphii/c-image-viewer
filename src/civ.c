@@ -409,6 +409,7 @@ RStr civ_config_list(CivConfigList id) {
 [[nodiscard]] int civ_config_load(Civ *civ, Str *path) {
     ASSERT_ARG(civ);
     ASSERT_ARG(path);
+    if(!str_length(*path)) return 0;
     size_t linenb = 1;
     Str *content = &civ->config_content;
     TRYC(file_str_read(path, content));
