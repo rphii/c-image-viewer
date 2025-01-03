@@ -288,10 +288,10 @@ int main(const int argc, const char **argv) {
     /* get directory */
     char directory[PATH_MAX];
     char shaders[PATH_MAX];
-    if(readlink("/proc/self/exe", directory, PATH_MAX) == -1) goto error;
-    RStr dir = rstr_get_dir(state.arg.name);
-    snprintf(shaders, PATH_MAX, "%.4040s/shaders", directory);
-    snprintf(shaders, PATH_MAX, "%s", "/opt/civ/shaders");
+    if(readlink("/proc/self/exe", directory, PATH_MAX) == -1) THROW(ERR_UNREACHABLE);
+    RStr dir = rstr_get_dir(RSTR_LL(directory, strlen(directory)));
+    if(rstr_length(dir) > PATH_MAX - 10) THROW(ERR_UNREACHABLE);
+    snprintf(shaders, PATH_MAX, "%.*s/shaders", RSTR_F(dir));
 
     //printf("%zu\n", sizeof(ImageLoadThreadQueue));
     //return 0;
