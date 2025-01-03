@@ -78,6 +78,10 @@ Changing from floating to tiling window can be done via:
 
     windowrule = tile, title:^civ(\.out)?$
 
+## Distributions
+
+- [gentoo ebuild](https://github.com/rphii/gentoo-ebuilds/blob/main/media-gfx/civ/civ-9999.ebuild)
+
 ##### TODO so I won't forget
 
 - don't load EVERYTHING, but keep some images around the currently active one loaded
