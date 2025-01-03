@@ -11,8 +11,8 @@ dependencies:
 - cglm
 - opengl
 - freetype
+- glfw
 - (glad - in src)
-- (glfw - in src)
 
 clone:
 
