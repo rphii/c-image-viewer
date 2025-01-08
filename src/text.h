@@ -58,6 +58,7 @@ typedef struct Font {
 void text_init(void);
 [[nodiscard("memory leak")]] Font font_init(const RStr *path, int height, float hspace, float vspace, unsigned int glyphs);
 void font_load(Font *font, unsigned long i0, unsigned long iE);
+void font_load_single(Font *font, unsigned long i);
 void font_shader(Font *font, Shader shader);
 void font_render(Font font, const char *text, mat4 projection, vec2 pos, float scale, float expand, vec3 color, vec4 dimensions, TextAlignList align);
 void font_free(Font *font);

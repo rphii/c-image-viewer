@@ -94,6 +94,12 @@ Font font_init(const RStr *path, int height, float hspace, float vspace, unsigne
 
 void font_load(Font *font, unsigned long i0, unsigned long iE) {
     for(unsigned long i = i0; i < iE; ++i) {
+#if 1
+        if(tcharacter_get(&font->characters, i)) {
+            continue;
+        }
+#endif
+
         /* load glyph */
         unsigned long c = FT_Get_Char_Index(font->face, i);
         if(c == 0 && i >= 128) {
@@ -137,7 +143,11 @@ void font_load(Font *font, unsigned long i0, unsigned long iE) {
             assert(0);
         }
     }
-    fprintf(stderr, "[FONT] Internal Lookup Length: %zu, Alloced %zu\n", font->characters.used, LUT_CAP(font->characters.width));
+    //fprintf(stderr, "[FONT] Internal Lookup Length: %zu, Alloced %zu\n", font->characters.used, LUT_CAP(font->characters.width));
+}
+
+void font_load_single(Font *font, unsigned long i) {
+    font_load(font, i, i + 1);
 }
 
 void font_shader(Font *font, Shader shader) {

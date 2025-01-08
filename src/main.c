@@ -360,7 +360,7 @@ int main(const int argc, const char **argv) {
     //Font font = font_init("/usr/share/fonts/lato/Lato-Regular.ttf", font_size, 1.0, 1.5, 1024);
     //Font font = font_init("/usr/share/fonts/MonoLisa/ttf/MonoLisa-Regular.ttf", font_size, 1.0, 1.5, 1024);
 
-    Font font = font_init(&state.config.font_path, state.config.font_size, 1.0, 1.5, 1024);
+    Font font = font_init(&state.config.font_path, state.config.font_size, 1.0, 1.5, 2048);
     font_shader(&font, sh_text);
     font_load(&font, 0, 256);
 
@@ -396,6 +396,15 @@ int main(const int argc, const char **argv) {
             if(state.selected > vimage_length(state.images)) state.selected = vimage_length(state.images) - 1;
             state.active = vimage_get_at(&state.images, state.selected);
             send_texture_to_gpu(state.active, state.filter, &s_action.gl_update);
+            /* also make sure the full character set is available */
+            U8Point point;
+            char buf[6];
+            for(size_t i = 0; i < str_length(state.active->filename); ++i) {
+                str_cstr(state.active->filename, buf, 6);
+                str_to_u8_point(buf, &point);
+                //font_load_single(&font, point.val);
+                i += (point.bytes - 1);
+            }
         }
         pthread_mutex_unlock(&mutex_image);
 
