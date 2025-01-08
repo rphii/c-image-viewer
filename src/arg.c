@@ -646,7 +646,6 @@ ErrImpl arg_parse(Arg *arg, size_t argc, const char **argv) { /*{{{*/
         TRYC(arg_parse_val(arg, 0, 0, var, rest, 0, 0, true));
     }
 
-
     TRYC(arg_verify(arg));
     TRYC(arg_defaults(&arg->positional));
     TRYC(arg_defaults(&arg->options));
