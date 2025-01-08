@@ -59,9 +59,9 @@ clean with ninja:
 
 following paths get checked for a config file:
 
-    "$XDG_CONFIG_HOME/imv/config",
-    "$HOME/.config/civ/config",
-    "/etc/civ/config"
+    "$XDG_CONFIG_HOME/imv/civ.conf",
+    "$HOME/.config/civ/civ.conf",
+    "/etc/civ/civ.conf"
 
 the following options can be set as of now:
 
