@@ -63,7 +63,7 @@ following paths get checked for a config file:
     "$HOME/.config/civ/civ.conf",
     "/etc/civ/civ.conf"
 
-the following options can be set as of now (see `--help`):
+the following options can be set as of now, see also `--help`:
 
     font-path = /path/to/font
     font-size = <int>
