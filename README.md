@@ -63,7 +63,7 @@ following paths get checked for a config file:
     "$HOME/.config/civ/civ.conf",
     "/etc/civ/civ.conf"
 
-the following options can be set as of now:
+the following options can be set as of now (see `--help`):
 
     font-path = /path/to/font
     font-size = <int>
@@ -71,6 +71,8 @@ the following options can be set as of now:
     show-description = <bool>
     jobs = <int>
     quit-after-full-load = <bool>
+    shuffle = <bool>
+    image-cap = <int>
 
 an example config:
 
