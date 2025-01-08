@@ -104,7 +104,7 @@ exit:
             image->data = data;
             ++(*image_load->queue->done);
         } else {
-            printf(">>> load failed '%.*s'\n", STR_F(image->filename));
+            printf(">>> Load failed '%.*s'\n", STR_F(image->filename));
             ++(*image_load->queue->failed);
         }
     } else {
@@ -245,23 +245,22 @@ void images_load(VImage *images, VrStr *files, pthread_mutex_t *mutex, bool *can
         pthread_mutex_unlock(&queue.mutex);
     }
 
+    /* now free since we *know* all threads finished, we can ignore usage of the lock */
+    free(image_load);
+    free(queue.q);
+
     /* remove invalid images */
     pthread_mutex_lock(mutex);
     for(size_t i = 0; i < vimage_length(*images) && !*cancel; ++i) {
         Image *image = vimage_get_at(images, i);
         if(!image->data) {
-            Image popped;
-            vimage_pop_at(images, i--, &popped);
-            image_free(&popped);
+            vimage_pop_at(images, i--, 0);
         }
     }
-    printf(">>> load finished\n");
+    printf(">>> Load finished\n");
     pthread_mutex_unlock(mutex);
     glfwPostEmptyEvent();
 
-    /* now free since we *know* all threads finished, we can ignore usage of the lock */
-    free(image_load);
-    free(queue.q);
     return;
 
 error: ABORT(ERR_UNREACHABLE);
