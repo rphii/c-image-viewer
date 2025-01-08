@@ -391,13 +391,13 @@ int main(const int argc, const char **argv) {
         /* process */
         process_action_map(window, &state);
 
-        pthread_mutex_lock(state.loader.mutex);
+        pthread_mutex_lock(&mutex_image);
         if(vimage_length(state.images)) {
             if(state.selected > vimage_length(state.images)) state.selected = vimage_length(state.images) - 1;
             state.active = vimage_get_at(&state.images, state.selected);
             send_texture_to_gpu(state.active, state.filter, &s_action.gl_update);
         }
-        pthread_mutex_unlock(state.loader.mutex);
+        pthread_mutex_unlock(&mutex_image);
 
 
         if(done_prev != state.loader.done) {
@@ -580,7 +580,7 @@ clean:
         glfwDestroyWindow(window);
         glfwTerminate();
     }
-    printf("done\n");
+    printf("Done, quitting\n");
 
     return err;
 error:
