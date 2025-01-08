@@ -228,7 +228,7 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 
 void scroll_callback(GLFWwindow *window, double xoffset, double yoffset)
 {
-    s_action.zoom += yoffset < 0 ? -0.1 : 0.1;
+    s_action.zoom += yoffset < 0 ? -0.25 : 0.25;
 }
 
 #include "arg.h"
