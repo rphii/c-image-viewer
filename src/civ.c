@@ -91,18 +91,20 @@ void *image_load_thread(void *args) {
     str_cstr(image->filename, cfilename, PATH_MAX);
 
     data = stbi_load(cfilename, &image->width, &image->height, &image->channels, 0);
+    //printf(">>> STBI_LOAD '%.*s' %zu / %zu\n", STR_F(image->filename), *image_load->queue->done, image_load->image_cap);
 
 exit:
     /* finished this thread's work */
     pthread_mutex_lock(&image_load->queue->mutex);
     /* check to only add as many images as we want */
-    if(image_load->image_cap && (ssize_t)image_load->index < image_load->image_cap + (ssize_t)*image_load->queue->failed) {
+#if 1
+    if(!image_load->image_cap || (image_load->image_cap && (ssize_t)image_load->index < image_load->image_cap + (ssize_t)*image_load->queue->failed)) {
         if(data) {
-            printf(">>> LOADED '%.*s' %zu / %zu\n", STR_F(image->filename), *image_load->queue->done, image_load->image_cap);
+            //printf(F(">>> LOADED '%.*s' %zu / %zu\n", FG_GN), STR_F(image->filename), *image_load->queue->done, image_load->image_cap);
             image->data = data;
             ++(*image_load->queue->done);
         } else {
-            printf(F(">>> FAILED '%.*s' %zu / %zu\n", FG_RD), STR_F(image->filename), *image_load->queue->done, image_load->image_cap);
+            printf(">>> load failed '%.*s'\n", STR_F(image->filename));
             ++(*image_load->queue->failed);
         }
     } else {
@@ -110,6 +112,7 @@ exit:
             stbi_image_free(data);
         }
     }
+#endif
     /* make space for next thread */
     image_load->queue->q[(image_load->queue->i0 + image_load->queue->len) % image_load->queue->jobs] = image_load;
     ++image_load->queue->len;
@@ -215,7 +218,7 @@ void images_load(VImage *images, VrStr *files, pthread_mutex_t *mutex, bool *can
 
     /* load images */
     for(size_t i = 0; i < vimage_length(*images) && !*cancel; ++i) {
-        if(!(config->image_cap && (ssize_t)i < config->image_cap)) break;
+        if(!(!config->image_cap || (config->image_cap && (ssize_t)i < config->image_cap + (ssize_t)failed))) break;
         /* this section is responsible for starting the thread */
         pthread_mutex_lock(&queue.mutex);
         if(queue.len) {
@@ -241,24 +244,24 @@ void images_load(VImage *images, VrStr *files, pthread_mutex_t *mutex, bool *can
         }
         pthread_mutex_unlock(&queue.mutex);
     }
-    /* now free since we *know* all threads finished, we can ignore usage of the lock */
-    free(image_load);
-    free(queue.q);
 
     /* remove invalid images */
+    pthread_mutex_lock(mutex);
     for(size_t i = 0; i < vimage_length(*images) && !*cancel; ++i) {
-        pthread_mutex_lock(mutex);
         Image *image = vimage_get_at(images, i);
         if(!image->data) {
-            printf(">>> removed '%.*s'\n", STR_F(image->filename));
             Image popped;
             vimage_pop_at(images, i--, &popped);
             image_free(&popped);
         }
-        pthread_mutex_unlock(mutex);
     }
+    printf(">>> load finished\n");
+    pthread_mutex_unlock(mutex);
     glfwPostEmptyEvent();
 
+    /* now free since we *know* all threads finished, we can ignore usage of the lock */
+    free(image_load);
+    free(queue.q);
     return;
 
 error: ABORT(ERR_UNREACHABLE);

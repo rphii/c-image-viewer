@@ -744,13 +744,14 @@ typedef enum {
         VEC_ASSERT_REAL(vec); \
         /*VEC_ASSERT(val, M);*/ \
         VEC_ITEM(T, M) *item = A##_static_get(vec, index + vec->first); \
+        VEC_ITEM(T, M) pop = *item; \
         if(val) { \
             vec_memcpy(val, VEC_REF(M) *item, sizeof(T)); \
         } \
         VEC_ITEM(T, M) *last = A##_static_get(vec, vec->last - 1); \
         vec->last--; \
         vec_memmove(item, item + 1, sizeof(*item) * (vec->last - index - vec->first)); \
-        *last = *item; \
+        *last = pop; \
         return; \
     }
 
