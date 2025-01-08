@@ -19,14 +19,14 @@ typedef enum {
     FILE_TYPE_ERROR,
 } FileTypeList;
 
-typedef int (*FileFunc)(Str *filename, void *);
+typedef int (*FileFunc)(RStr filename, void *);
 
-#define ERR_file_exec(dirname, subdirs, rec, exec, args) "an error occured executing function on files '%.*s'", STR_F(dirname)
-ErrDecl file_exec(Str *dirname, VStr *subdirs, bool recursive, FileFunc exec, void *args);
+#define ERR_file_exec(dirname, subdirs, rec, exec, args) "an error occured executing function on files '%.*s'", RSTR_F(dirname)
+ErrDecl file_exec(RStr path, VStr *subdirs, bool recursive, FileFunc exec, void *args);
 
 #define FILE_PATH_MAX   4096
 
-FileTypeList file_get_type(Str *filename);
+FileTypeList file_get_type(RStr filename);
 
 int file_is_dir(const Str *filename);
 size_t file_size(Str *filename);
