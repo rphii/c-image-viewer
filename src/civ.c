@@ -367,9 +367,9 @@ void civ_cmd_pan(Civ *civ, vec2 pan) {
     ASSERT_ARG(civ);
     ASSERT_ARG(path);
     const char *paths[] = {
-        "$XDG_CONFIG_HOME/imv/config",
-        "$HOME/.config/civ/config",
-        "/etc/civ/config"
+        "$XDG_CONFIG_HOME/imv/civ.conf",
+        "$HOME/.config/civ/civ.conf",
+        "/etc/civ/civ.conf"
     };
     char cpath[PATH_MAX];
     for(size_t i = 0; i < SIZE_ARRAY(paths); ++i, str_clear(path)) {
