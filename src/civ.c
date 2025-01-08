@@ -435,7 +435,7 @@ void civ_arg(Civ *civ, const char *name) {
     arg_enum(argopt_new(arg, filter->options, 0, RSTR("linear"), RSTR("set linear")), false, ARG_NO_CALLBACK, FILTER_LINEAR);
 
     arg_bool(argopt_new(arg, &arg->options, 'S', RSTR("--shuffle"), RSTR("shuffle images before loading")), &config->shuffle, &defaults->shuffle, false, ARG_NO_CALLBACK);
-    arg_int(argopt_new(arg, &arg->options, 'C', RSTR("--image-cap"), RSTR("limit number of images to be loaded")), &config->image_cap, &defaults->image_cap, false, ARG_NO_CALLBACK, 0, 0);
+    arg_int(argopt_new(arg, &arg->options, 'C', RSTR("--image-cap"), RSTR("limit number of images to be loaded, 0 to load all")), &config->image_cap, &defaults->image_cap, false, ARG_NO_CALLBACK, 0, 0);
 
 error:
     /* TODO: fix ugly code */
