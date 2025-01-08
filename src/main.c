@@ -286,8 +286,8 @@ int main(const int argc, const char **argv) {
 
 
     /* get directory */
-    char directory[PATH_MAX];
-    char shaders[PATH_MAX];
+    char directory[PATH_MAX] = {0};
+    char shaders[PATH_MAX] = {0};
     if(readlink("/proc/self/exe", directory, PATH_MAX) == -1) THROW(ERR_UNREACHABLE);
     RStr dir = rstr_get_dir(RSTR_LL(directory, strlen(directory)));
     if(rstr_length(dir) > PATH_MAX - 10) THROW(ERR_UNREACHABLE);
@@ -367,6 +367,7 @@ int main(const int argc, const char **argv) {
     char str_load[1024] = {0};
     char str_popup[1024] = {0};
     bool run_timer = true;
+    size_t done_prev = 0;
 
     //clock_gettime(CLOCK_REALTIME, &s_state.t_now);
     glBindVertexArray(0);
@@ -397,7 +398,8 @@ int main(const int argc, const char **argv) {
         }
 
 
-        if(state.loader.done < vimage_length(state.images)) {
+        if(done_prev != state.loader.done) {
+            done_prev = state.loader.done;
             s_action.gl_update = true;
         } else {
             if(state.config.qafl) {
@@ -562,6 +564,7 @@ clean:
     //glfwSwapBuffers(window);
 
     s_action.quit = true;
+
 
     shader_free(sh_rect);
     shader_free(sh_text);

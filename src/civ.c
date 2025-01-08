@@ -194,15 +194,10 @@ void images_load(VImage *images, VrStr *files, pthread_mutex_t *mutex, bool *can
         pthread_mutex_unlock(&queue.mutex);
     }
     /* now free since we *know* all threads finished, we can ignore usage of the lock */
-    for(long i = 0; i < jobs; ++i) {
-        if(image_load[i].queue->id) {
-            //str_free(&thr_search[i].content);
-            //str_free(&thr_search[i].cmd);
-        }
-    }
     free(image_load);
     free(queue.q);
 
+    /* remove invalid images */
     pthread_mutex_lock(mutex);
     for(size_t i = 0; i < vimage_length(*images); ++i) {
         Image *image = vimage_get_at(images, i);
@@ -259,12 +254,14 @@ const char *filter_cstr(FilterList id) {
 }
 
 void civ_free(Civ *state) {
+    pthread_join(state->loader.thread, 0);
     pthread_mutex_lock(state->loader.mutex);
     vimage_free(&state->images);
     pthread_mutex_unlock(state->loader.mutex);
-    pthread_join(state->loader.thread, 0);
-    memset(state, 0, sizeof(*state));
     str_free(&state->config_content);
+    arg_free(&state->arg);
+    /* done freeing; set zero */
+    memset(state, 0, sizeof(*state));
 }
 
 void civ_popup_set(Civ *state, PopupList id) {
@@ -366,19 +363,21 @@ void civ_cmd_pan(Civ *civ, vec2 pan) {
 [[nodiscard]] int civ_config_path(Civ *civ, Str *path) {
     ASSERT_ARG(civ);
     ASSERT_ARG(path);
+    int err = 0;
     const char *paths[] = {
         "$XDG_CONFIG_HOME/imv/civ.conf",
         "$HOME/.config/civ/civ.conf",
         "/etc/civ/civ.conf"
     };
     char cpath[PATH_MAX];
+    wordexp_t word = {0};
     for(size_t i = 0; i < SIZE_ARRAY(paths); ++i, str_clear(path)) {
-        wordexp_t word;
+        wordfree(&word);
+        memset(&word, 0, sizeof(word));
         if(wordexp(paths[i], &word, 0)) {
             continue;
         }
         if(!word.we_wordv[0]) {
-            wordfree(&word);
             continue;
         }
         TRYC(str_fmt(path, "%s", word.we_wordv[0]));
@@ -388,9 +387,11 @@ void civ_cmd_pan(Civ *civ, vec2 pan) {
         }
         break;
     }
-    return 0;
+clean:
+    wordfree(&word);
+    return err;
 error:
-    return -1;
+    ERR_CLEAN;
 }
 
 RStr civ_config_list(CivConfigList id) {
