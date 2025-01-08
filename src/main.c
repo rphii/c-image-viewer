@@ -391,12 +391,13 @@ int main(const int argc, const char **argv) {
         /* process */
         process_action_map(window, &state);
 
-        if(state.selected < vimage_length(state.images)) {
-            pthread_mutex_lock(state.loader.mutex);
+        pthread_mutex_lock(state.loader.mutex);
+        if(vimage_length(state.images)) {
+            if(state.selected > vimage_length(state.images)) state.selected = vimage_length(state.images) - 1;
             state.active = vimage_get_at(&state.images, state.selected);
             send_texture_to_gpu(state.active, state.filter, &s_action.gl_update);
-            pthread_mutex_unlock(state.loader.mutex);
         }
+        pthread_mutex_unlock(state.loader.mutex);
 
 
         if(done_prev != state.loader.done) {
