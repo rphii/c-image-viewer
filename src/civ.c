@@ -214,8 +214,8 @@ void images_load(VImage *images, VrStr *files, pthread_mutex_t *mutex, bool *can
 
     /* load images */
     for(size_t i = 0; i < vimage_length(*images) && !*cancel; ++i) {
-        if(!(!config->image_cap || (config->image_cap && (ssize_t)i < config->image_cap + (ssize_t)failed))) break;
         /* this section is responsible for starting the thread */
+        if(!(!config->image_cap || (config->image_cap && (ssize_t)i < config->image_cap + (ssize_t)failed))) break;
         pthread_mutex_lock(&queue.mutex);
         if(queue.len) {
             /* load job */
