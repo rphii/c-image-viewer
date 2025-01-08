@@ -97,22 +97,18 @@ exit:
     /* finished this thread's work */
     pthread_mutex_lock(&image_load->queue->mutex);
     /* check to only add as many images as we want */
-#if 1
-    if(!image_load->image_cap || (image_load->image_cap && (ssize_t)image_load->index < image_load->image_cap + (ssize_t)*image_load->queue->failed)) {
-        if(data) {
+    if(data) {
+        if(!image_load->image_cap || (image_load->image_cap && (ssize_t)image_load->index < image_load->image_cap + (ssize_t)*image_load->queue->failed)) {
             //printf(F(">>> LOADED '%.*s' %zu / %zu\n", FG_GN), STR_F(image->filename), *image_load->queue->done, image_load->image_cap);
             image->data = data;
             ++(*image_load->queue->done);
         } else {
-            printf(">>> Load failed '%.*s'\n", STR_F(image->filename));
-            ++(*image_load->queue->failed);
-        }
-    } else {
-        if(data) {
             stbi_image_free(data);
         }
+    } else {
+        printf(">>> Load failed '%.*s'\n", STR_F(image->filename));
+        ++(*image_load->queue->failed);
     }
-#endif
     /* make space for next thread */
     image_load->queue->q[(image_load->queue->i0 + image_load->queue->len) % image_load->queue->jobs] = image_load;
     ++image_load->queue->len;
