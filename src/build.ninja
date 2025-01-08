@@ -13,7 +13,6 @@ cflags   = -Wall -Wextra -pipe -Wno-unused-parameter -fdiagnostics-color=always 
 #-Og -rdynamic -ggdb3
 ldflags  = -lglfw -lm -lcglm -lfreetype -lpthread $
 
-#-Og -fsanitize=address -rdynamic -ggdb3
 cc = gcc
 
 #command = $cc -MMD -MT $out -MF $out.d $cflags -c $in -o $out
@@ -32,6 +31,7 @@ build $builddir/glad.o: cc $root/glad.c
 build $builddir/str.o: cc $root/str.c
 build $builddir/file.o: cc $root/file.c
 build $builddir/civ.o: cc $root/civ.c
+build $builddir/civ_config.o: cc $root/civ_config.c
 build $builddir/shader.o: cc $root/shader.c
 build $builddir/text.o: cc $root/text.c
 build $builddir/box.o: cc $root/box.c
@@ -51,6 +51,7 @@ build civ.out: link $
     $builddir/box.o $
     $builddir/utf8.o $
     $builddir/civ.o $
+    $builddir/civ_config.o $
     $builddir/timer.o $
     $builddir/gl_image.o $
     $builddir/arg.o $

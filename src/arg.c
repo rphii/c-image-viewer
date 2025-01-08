@@ -741,6 +741,7 @@ void arg_free(Arg *arg) { /*{{{*/
     vpargopt_free(&arg->positional.array);
     targopt_free(&arg->environment.table);
     vpargopt_free(&arg->environment.array);
+    vrstr_free(&arg->rest.vrstr);
 } /*}}}*/
 
 ArgOpt *argopt_new(Arg *arg, ArgObj *obj, unsigned char c, RStr str, RStr help) { /*{{{*/

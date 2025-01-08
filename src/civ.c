@@ -4,6 +4,7 @@
 #include "file.h"
 
 VEC_IMPLEMENT(VImage, vimage, Image, BY_REF, BASE, image_free);
+VEC_IMPLEMENT(VImage, vimage, Image, BY_REF, ERR);
 
 #include "str.h"
 
@@ -76,72 +77,117 @@ void send_texture_to_gpu(Image *image, FilterList filter, bool *render) {
 
 void *image_load_thread(void *args) {
     ImageLoad *image_load = args;
+    Image *image = 0;
+    unsigned char *data = 0;
     if(!vimage_length(*image_load->images)) goto exit;
 
     pthread_mutex_lock(image_load->mutex);
-    Image *image = vimage_get_at(image_load->images, image_load->index);
+    image = vimage_get_at(image_load->images, image_load->index);
     pthread_mutex_unlock(image_load->mutex);
 
     if(image->data) goto exit;
 
     char cfilename[PATH_MAX];
-    rstr_cstr(image->filename, cfilename, PATH_MAX);
+    str_cstr(image->filename, cfilename, PATH_MAX);
 
-    image->data = stbi_load(cfilename, &image->width, &image->height, &image->channels, 0);
-
-    //pthread_mutex_lock(image_load->mutex);
-    //pthread_mutex_unlock(image_load->mutex);
-    //send_texture_to_gpu(image, FILTER_NEAREST, 0);
-    glfwPostEmptyEvent();
-    //if(image->data) printf("LOADED '%.*s'\n", RSTR_F(image->filename));
+    data = stbi_load(cfilename, &image->width, &image->height, &image->channels, 0);
 
 exit:
-    /* finished this thread .. make space for next thread */
+    /* finished this thread's work */
     pthread_mutex_lock(&image_load->queue->mutex);
+    /* check to only add as many images as we want */
+    if(image_load->image_cap && (ssize_t)image_load->index < image_load->image_cap + (ssize_t)*image_load->queue->failed) {
+        if(data) {
+            printf(">>> LOADED '%.*s' %zu / %zu\n", STR_F(image->filename), *image_load->queue->done, image_load->image_cap);
+            image->data = data;
+            ++(*image_load->queue->done);
+        } else {
+            printf(F(">>> FAILED '%.*s' %zu / %zu\n", FG_RD), STR_F(image->filename), *image_load->queue->done, image_load->image_cap);
+            ++(*image_load->queue->failed);
+        }
+    } else {
+        if(data) {
+            stbi_image_free(data);
+        }
+    }
+    /* make space for next thread */
     image_load->queue->q[(image_load->queue->i0 + image_load->queue->len) % image_load->queue->jobs] = image_load;
     ++image_load->queue->len;
-    ++(*image_load->queue->done);
     pthread_mutex_unlock(&image_load->queue->mutex);
+
+    glfwPostEmptyEvent();
 
     return 0;
 }
 
-void images_load(VImage *images, VrStr *files, pthread_mutex_t *mutex, bool *cancel, long jobs, size_t *done) {
+int image_add_to_queue(RStr filename, void *data) {
+    VImage *images = data;
+    //printff("ADD TO QUEUE: '%.*s'", RSTR_F(filename));
+    Image push = {0};
+    TRYG(rstr_copy(&push.filename, &filename));
+    TRYG(vimage_push_back(images, &push));
+    return 0;
+error:
+    return -1;
+}
+
+void images_load(VImage *images, VrStr *files, pthread_mutex_t *mutex, bool *cancel, long jobs, size_t *done, CivConfig *config) {
     ASSERT_ARG(images);
     ASSERT_ARG(files);
     ASSERT_ARG(mutex);
     ASSERT_ARG(cancel);
     ASSERT_ARG(done);
+    ASSERT_ARG(config);
 
     ImageLoad *image_load = malloc(sizeof(ImageLoad) * jobs);
     if(!image_load) return;
     ImageLoadThreadQueue queue = {0};
+    size_t failed = 0;
     queue.q = malloc(sizeof(ImageLoad *) * jobs);
     queue.jobs = jobs;
     queue.done = done;
-    assert(queue.q);
+    queue.failed = &failed;
+    if(!queue.q) ABORT("job count cannot be 0!");
+    VStr subdirs = {0};
+    Str subdirname = {0};
+    bool recursive = true;
 
     /* push images to load */
     pthread_mutex_lock(mutex);
+#if 1
     size_t n = vrstr_length(*files);
-#if 0
-    VStr subdirs = {0};
-    for(long i = 0; i < n; ++i) {
-        const char *filename = vrstr_get_at(files, i);
-        ImageLoadArgs args = {
-            .images = images,
-            .mutex = mutex,
-        };
-        file_exec(filename, &subdirs, true, image_push_back, &args);
-#if 0
-        FileTypeList type = file_get_type(filename);
-        if(type == FILE_TYPE_FILE) {
-            printf("%u file : '%s'\n", type, filename);
-        } else if(type == FILE_TYPE_DIR) {
-            printf("%u dir : '%s'\n", type, filename);
+    for(size_t i = 0; i < n; ++i) {
+        RStr *filename = vrstr_get_at(files, i);
+        if(!filename) ABORT(ERR_UNREACHABLE);
+        //vstr_push_back(&subdirs, &STR_LL(rstr_iter_begin(*filename), rstr_length(*filename)));
+        /* now iterate over all subdirs until there are none */
+        TRYC(file_exec(*filename, &subdirs, recursive, image_add_to_queue, images));
+        while(vstr_length(subdirs)) {
+            vstr_pop_back(&subdirs, &subdirname);
+            //memset(subdirs.items[vstr_length(subdirs)], 0, sizeof(Str)); // TODO: this should probably happen in my vector!
+            TRYC(file_exec(str_rstr(subdirname), &subdirs, recursive, image_add_to_queue, images));
+            //str_free(&subdirname);
         }
-#endif
     }
+    vstr_free(&subdirs);
+
+    /* shuffle if requested */
+    if(config->shuffle) {
+        size_t n = vimage_length(*images);
+        for(size_t i = 0; i < n; ++i) {
+            size_t i1 = i;
+            size_t i2 = rand() % n;
+            //printff("SWAP %zu - %zu\n", i1, i2);
+            vimage_swap(images, i1, i2);
+        }
+    }
+
+#if 0
+    /* remove images if requrested */
+    if(config->image_cap) {
+        images->last = images->first + config->image_cap;
+    }
+#endif
 #else
     for(size_t i = 0; i < n; ++i) {
         RStr *filename = vrstr_get_at(files, i);
@@ -159,6 +205,7 @@ void images_load(VImage *images, VrStr *files, pthread_mutex_t *mutex, bool *can
         image_load[i].mutex = mutex;
         image_load[i].queue = &queue;
         image_load[i].images = images;
+        image_load[i].image_cap = config->image_cap;
         /* add to queue */
         queue.q[i] = &image_load[i];
         ++queue.len;
@@ -167,7 +214,8 @@ void images_load(VImage *images, VrStr *files, pthread_mutex_t *mutex, bool *can
     assert(queue.len <= jobs);
 
     /* load images */
-    for(size_t i = 0; i < n && !*cancel; ++i) {
+    for(size_t i = 0; i < vimage_length(*images) && !*cancel; ++i) {
+        if(!(config->image_cap && (ssize_t)i < config->image_cap)) break;
         /* this section is responsible for starting the thread */
         pthread_mutex_lock(&queue.mutex);
         if(queue.len) {
@@ -198,21 +246,27 @@ void images_load(VImage *images, VrStr *files, pthread_mutex_t *mutex, bool *can
     free(queue.q);
 
     /* remove invalid images */
-    pthread_mutex_lock(mutex);
-    for(size_t i = 0; i < vimage_length(*images); ++i) {
+    for(size_t i = 0; i < vimage_length(*images) && !*cancel; ++i) {
+        pthread_mutex_lock(mutex);
         Image *image = vimage_get_at(images, i);
         if(!image->data) {
-            printf(">>> removed '%.*s'\n", RSTR_F(image->filename));
-            vimage_pop_at(images, i--, 0);
+            printf(">>> removed '%.*s'\n", STR_F(image->filename));
+            Image popped;
+            vimage_pop_at(images, i--, &popped);
+            image_free(&popped);
         }
+        pthread_mutex_unlock(mutex);
     }
-    pthread_mutex_unlock(mutex);
     glfwPostEmptyEvent();
+
+    return;
+
+error: ABORT(ERR_UNREACHABLE);
 }
 
 void *images_load_voidptr(void *argp) {
     ImageLoadArgs *args = argp;
-    images_load(args->images, args->files, args->mutex, args->cancel, args->jobs, &args->done);
+    images_load(args->images, args->files, args->mutex, args->cancel, args->jobs, &args->done, args->config);
     return 0;
 }
 
@@ -230,6 +284,8 @@ void image_free(Image *image) {
             stbi_image_free(image->data);
         }
     }
+    /* TODO: this SHOULD be freed, I THINK, but if I do that I get double free ... AHHHHHHHHH */
+    //str_free(&image->filename);
     memset(image, 0, sizeof(*image));
 }
 
@@ -357,139 +413,6 @@ void civ_cmd_pan(Civ *civ, vec2 pan) {
 
 /* commands }}} */
 
-#include <wordexp.h>
-
-#define ERR_civ_config_path(...) "error while getting config path"
-[[nodiscard]] int civ_config_path(Civ *civ, Str *path) {
-    ASSERT_ARG(civ);
-    ASSERT_ARG(path);
-    int err = 0;
-    const char *paths[] = {
-        "$XDG_CONFIG_HOME/imv/civ.conf",
-        "$HOME/.config/civ/civ.conf",
-        "/etc/civ/civ.conf"
-    };
-    char cpath[PATH_MAX];
-    wordexp_t word = {0};
-    for(size_t i = 0; i < SIZE_ARRAY(paths); ++i, str_clear(path)) {
-        wordfree(&word);
-        memset(&word, 0, sizeof(word));
-        if(wordexp(paths[i], &word, 0)) {
-            continue;
-        }
-        if(!word.we_wordv[0]) {
-            continue;
-        }
-        TRYC(str_fmt(path, "%s", word.we_wordv[0]));
-        str_cstr(*path, cpath, PATH_MAX);
-        if(!strlen(cpath) || access(cpath, R_OK) == -1) {
-            continue;
-        }
-        break;
-    }
-clean:
-    wordfree(&word);
-    return err;
-error:
-    ERR_CLEAN;
-}
-
-RStr civ_config_list(CivConfigList id) {
-    switch(id) {
-        case CIV_FONT_PATH: return RSTR("font-path");
-        case CIV_FONT_SIZE: return RSTR("font-size");
-        case CIV_SHOW_DESCRIPTION: return RSTR("show-description");
-        case CIV_SHOW_LOADED: return RSTR("show-loaded");
-        case CIV_JOBS: return RSTR("jobs");
-        case CIV_QAFL: return RSTR("quit-after-full-load");
-        default: ABORT("unsupported id: '%u'", id);
-    }
-}
-
-#define ERR_civ_config_load(...) "error while loading config"
-[[nodiscard]] int civ_config_load(Civ *civ, Str *path) {
-    ASSERT_ARG(civ);
-    ASSERT_ARG(path);
-    if(!str_length(*path)) return 0;
-    size_t linenb = 1;
-    Str *content = &civ->config_content;
-    TRYC(file_str_read(path, content));
-    for(RStr line = {0}; line.first < content->last; line.s ? ++linenb : linenb, line = str_splice(*content, &line, '\n'), line = rstr_trim(line)) {
-        if(!rstr_length(line) || !line.s) continue;
-        if(rstr_get_front(&line) == '#') continue;
-        size_t argnb = 0;
-        //printff(">> LINE %zu : '%.*s'", linenb, RSTR_F(line));
-        CivConfigList id = CIV_NONE;
-        for(RStr arg = {0}; arg.first < line.last; arg.s ? ++argnb : argnb, arg = rstr_splice(line, &arg, '='), arg = rstr_trim(arg)) {
-            if(!arg.s) continue;
-            //printff(">> ARG %zu : '%.*s'", argnb, RSTR_F(arg));
-            if(argnb == 0) {
-                /* check which id we could possibly deal with */
-                for(size_t j = 1; j < CIV__COUNT; ++j) {
-                    RStr cmp = civ_config_list(j);
-                    if(rstr_cmp(&cmp, &arg)) continue;
-                    id = j;
-                    break;
-                }
-            } else if(argnb == 1) {
-                switch(id) {
-                    case CIV_FONT_PATH: {
-                        civ->defaults.font_path = arg;
-                    } break;
-                    case CIV_FONT_SIZE: {
-                        TRYC(rstr_as_int(arg, &civ->defaults.font_size));
-                    } break;
-                    case CIV_SHOW_DESCRIPTION: {
-                        TRYC(rstr_as_bool(arg, &civ->defaults.show_description, true));
-                    } break;
-                    case CIV_SHOW_LOADED: {
-                        TRYC(rstr_as_bool(arg, &civ->defaults.show_loaded, true));
-                    } break;
-                    case CIV_JOBS: {
-                        TRYC(rstr_as_int(arg, &civ->defaults.jobs));
-                    } break;
-                    case CIV_QAFL: {
-                        TRYC(rstr_as_bool(arg, &civ->defaults.qafl, true));
-                    } break;
-                    default: ABORT("unhandled id: %u", id);
-                }
-            }
-            if(!id && !argnb) THROW("invalid config: " F("'%.*s'", BOLD) " in file '%.*s' at line %zu", RSTR_F(arg), STR_F(*path), linenb);
-            //printff(">> id %u, %zu", id, argnb)
-        }
-        if(argnb < 2) THROW("missing value for: " F("'%.*s'", BOLD) " in file '%.*s' at line %zu", RSTR_F(line), STR_F(*path), linenb);
-    }
-
-    return 0;
-error:
-    return -1;
-}
-
-[[nodiscard]] int civ_defaults(Civ *civ) {
-    int err = 0;
-    CivConfig *defaults = &civ->defaults;
-    defaults->font_path = RSTR("/usr/share/fonts/MonoLisa/ttf/MonoLisa-Regular.ttf");
-    defaults->font_size = 18;
-    defaults->show_description = false;
-    defaults->show_loaded = true;
-    defaults->jobs = sysconf(_SC_NPROCESSORS_ONLN);
-
-    /* finally, do defaults here */
-    civ->config = *defaults;
-
-    /* load config */
-    Str path = {0};
-    TRYC(civ_config_path(civ, &path));
-    TRYC(civ_config_load(civ, &path));
-    //printff("PATH: '%.*s'", STR_F(path));
-
-clean:
-    str_free(&path);
-    return err;
-error:
-    ERR_CLEAN;
-}
-
 void civ_arg(Civ *civ, const char *name) {
     Arg *arg = &civ->arg;
     arg_allow_rest(arg, RSTR("images"));
@@ -508,6 +431,9 @@ void civ_arg(Civ *civ, const char *name) {
     ArgOpt *filter = arg_option(argopt_new(arg, &arg->options, 's', RSTR("--filter"), RSTR("set filter")), (ssize_t *)&civ->filter);
     arg_enum(argopt_new(arg, filter->options, 0, RSTR("nearest"), RSTR("set nearest")), false, ARG_NO_CALLBACK, FILTER_NEAREST);
     arg_enum(argopt_new(arg, filter->options, 0, RSTR("linear"), RSTR("set linear")), false, ARG_NO_CALLBACK, FILTER_LINEAR);
+
+    arg_bool(argopt_new(arg, &arg->options, 'S', RSTR("--shuffle"), RSTR("shuffle images before loading")), &config->shuffle, &defaults->shuffle, false, ARG_NO_CALLBACK);
+    arg_int(argopt_new(arg, &arg->options, 'C', RSTR("--image-cap"), RSTR("limit number of images to be loaded")), &config->image_cap, &defaults->image_cap, false, ARG_NO_CALLBACK, 0, 0);
 
 error:
     /* TODO: fix ugly code */

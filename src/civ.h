@@ -6,6 +6,7 @@
 #include <pthread.h>
 #include <GLFW/glfw3.h>
 #include "arg.h"
+#include "civ_config.h"
 
 typedef enum {
     FILTER_NONE,
@@ -26,7 +27,7 @@ typedef enum {
 } FitList;
 
 typedef struct Image {
-    RStr filename;
+    Str filename;
     unsigned char *data;
     bool freed_from_cpu;
     int width;
@@ -50,6 +51,7 @@ VEC_INCLUDE(VImage, vimage, Image, BY_REF, BASE);
         struct X **q; \
         long jobs; \
         size_t *done; \
+        size_t *failed; \
     } X##ThreadQueue;
 
 typedef struct VImage VImage;
@@ -65,6 +67,7 @@ typedef struct ImageLoad {
     VImage *images;
     pthread_mutex_t *mutex;
     GlContext *context;
+    ssize_t image_cap;
   ImageLoadThreadQueue *queue;
 } ImageLoad;
 
@@ -78,6 +81,7 @@ typedef struct ImageLoadArgs {
     long jobs;
     size_t done;
     GlContext *context;
+    CivConfig *config;
 } ImageLoadArgs;
 
 typedef enum {
@@ -91,28 +95,6 @@ typedef enum {
     /* above */
     POPUP__COUNT
 } PopupList;
-
-typedef struct CivConfig {
-    RStr font_path;
-    ssize_t font_size;
-    bool show_description;
-    bool show_loaded;
-    ssize_t jobs;
-    bool qafl;
-} CivConfig;
-
-typedef enum {
-    CIV_NONE,
-    /* below */
-    CIV_FONT_PATH,
-    CIV_FONT_SIZE,
-    CIV_SHOW_DESCRIPTION,
-    CIV_SHOW_LOADED,
-    CIV_JOBS,
-    CIV_QAFL,
-    /* above */
-    CIV__COUNT
-} CivConfigList;
 
 
 typedef struct Civ {
@@ -134,8 +116,8 @@ typedef struct Civ {
         Timer timer;
         PopupList active;
     } popup;
-    CivConfig config;
-    CivConfig defaults;
+    struct CivConfig config;
+    struct CivConfig defaults;
     Arg arg;
     Str config_content;
 } Civ;

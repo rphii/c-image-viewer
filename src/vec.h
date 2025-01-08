@@ -78,10 +78,6 @@ SOFTWARE. */
 #define VEC_KEEP_ZERO_END 0
 #endif
 
-#define ERR_VEC_PUSH_BACK "failed pushing value to vector"
-#define ERR_VEC_RESIZE "failed resizing vector"
-#define ERR_VEC_RESERVE "failed reserving memory in vector"
-
 #ifndef VEC_H
 
 #define VEC_CAST_FREE(X)        ((void *)(X))
@@ -188,6 +184,7 @@ typedef enum {
     size_t A##_reserved(const N *vec); \
     int A##_reserve(N *vec, size_t cap); \
     int A##_copy(N *dst, const N *src); \
+    int r##A##_copy(N *dst, const R##N *src); \
     /* referenced */\
     R##N r##A##_r##A(const R##N vec); \
     R##N A##_r##A(const N vec); \
@@ -213,6 +210,8 @@ typedef enum {
 #define VEC_INCLUDE_ERR(N, A, T, M) \
     /* error strings for certain fail cases */ \
     char *ERR_##A##_push_back(void *x, ...); \
+    char *ERR_##A##_copy(void *x, ...); \
+    char *ERR_r##A##_copy(void *x, ...); \
     /****************************************/
 
 #define VEC_INCLUDE_SORT(N, A, T, M)                void A##_sort(N *vec);
@@ -294,11 +293,14 @@ typedef enum {
     VEC_IMPLEMENT_##M##_RESERVED(N, A, T, F);           \
     VEC_IMPLEMENT_##M##_RESERVE(N, A, T, F);            \
     VEC_IMPLEMENT_##M##_COPY(N, A, T, F);               \
+    VEC_IMPLEMENT_COMMON_RCOPY(N, A, T, F);               \
     /****************************************/
 
 #define VEC_IMPLEMENT_ERR(N, A, T, M) \
     /* error strings for certain fail cases */ \
     char *ERR_##A##_push_back(void *x, ...) { return "failed pushing back item to vector"; } \
+    char *ERR_##A##_copy(void *x, ...) { return "failed copying vector"; } \
+    char *ERR_r##A##_copy(void *x, ...) { return "failed copying vector"; } \
     /****************************************/
 
 /**********************************************************/
@@ -1041,8 +1043,7 @@ typedef enum {
  * @return zero if succes, non-zero if failure
  */
 #define VEC_IMPLEMENT_BY_REF_COPY(N, A, T, F) \
-    inline int A##_copy(N *dst, const N *src) \
-    { \
+    inline int A##_copy(N *dst, const N *src) { \
         VEC_ASSERT_REAL(dst); \
         VEC_ASSERT_REAL(src); \
         VEC_ASSERT_REAL(dst != src); \
@@ -1060,6 +1061,22 @@ typedef enum {
         } \
         return result; \
     }
+
+/**
+ * @brief r##A##_copy [BY_REF] - copy a vector and its items
+ * @param dst - the destination vector
+ * @param src - the source vector
+ * @return zero if succes, non-zero if failure
+ */
+#define VEC_IMPLEMENT_COMMON_RCOPY(N, A, T, F) \
+    inline int r##A##_copy(N *dst, const R##N *src) { \
+        const N copy = { \
+            .VEC_STRUCT_ITEMS = r##A##_iter_begin(*src), \
+            .last = r##A##_length(*src), \
+        }; \
+        return A##_copy(dst, &copy); \
+    }
+
 
 #define VEC_IMPLEMENT_COMMON_EXTEND_FRONT(N, A, T, F, M) \
     int A##_extend_front(N *vec, N *v2) { \
