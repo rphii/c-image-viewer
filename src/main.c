@@ -509,7 +509,7 @@ int main(const int argc, const char **argv) {
 
             if(state.config.show_loaded && state.loader.done < vimage_length(state.images)) {
                 ssize_t loaded = state.loader.done;
-                ssize_t from = state.config.image_cap ? state.config.image_cap : (ssize_t)vimage_length(state.images);
+                ssize_t from = state.config.image_cap && state.config.image_cap < (ssize_t)vimage_length(state.images) ? state.config.image_cap : (ssize_t)vimage_length(state.images);
                 snprintf(str_load, sizeof(str_load), "Loaded %.1f%% (%zu/%zu)", 100.0 * (double)loaded / (double)from, loaded, from);
 
                 vec2 text_pos = { s_state.twidth - 5, s_state.theight - font.height * 1.25 };
