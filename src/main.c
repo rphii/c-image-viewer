@@ -42,6 +42,7 @@ typedef struct ActionMap {
     bool toggle_description;
     bool quit;
     bool select_random;
+    bool print_stdout;
     int select_image;
     double zoom;
     double pan_x;
@@ -181,6 +182,7 @@ void key_callback(GLFWwindow* window, int key, int scancode, int act, int mods)
             case GLFW_KEY_F: { s_action.toggle_fullscreen = true; } break;
             case GLFW_KEY_Q: { s_action.quit = true; } break;
             case GLFW_KEY_D: { s_action.toggle_description = true; } break;
+            case GLFW_KEY_P: { s_action.print_stdout = true; } break;
         }
     }
 }
@@ -194,6 +196,7 @@ void process_action_map(GLFWwindow *window, Civ *state) {
     if(s_action.toggle_fullscreen) {}
 
     civ_cmd_random(state, s_action.select_random);
+    civ_cmd_print_stdout(state, s_action.print_stdout);
     civ_cmd_select(state, s_action.select_image);
     civ_cmd_fit(state, s_action.fit_next);
     civ_cmd_zoom(state, s_action.zoom);
