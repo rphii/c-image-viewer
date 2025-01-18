@@ -335,6 +335,12 @@ void civ_cmd_random(Civ *civ, bool random) {
     civ_cmd_select(civ, rand() % n_img);
 }
 
+void civ_cmd_print_stdout(Civ *civ, bool print_stdout) {
+    if(!print_stdout) return;
+    if(!civ->active) return;
+    printf("%.*s\n", STR_F(civ->active->filename));
+}
+
 void civ_cmd_select(Civ *civ, int change) {
     if(!change) return;
     glm_vec2_zero(civ->pan);
