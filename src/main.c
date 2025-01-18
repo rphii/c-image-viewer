@@ -254,6 +254,7 @@ struct timespec diff(struct timespec start, struct timespec end)
 }
 
 int main(const int argc, const char **argv) {
+    printff("HELLO");
 
     if(argc < 1) return -1;
     if(!argv) return -1;
