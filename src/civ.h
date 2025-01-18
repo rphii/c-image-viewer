@@ -138,6 +138,7 @@ void civ_arg(Civ *civ, const char *name);
 void civ_popup_set(Civ *state, PopupList id);
 
 void civ_cmd_random(Civ *civ, bool random);
+void civ_cmd_print_stdout(Civ *civ, bool print_stdout);
 void civ_cmd_select(Civ *civ, int change);
 void civ_cmd_fit(Civ *civ, bool next);
 void civ_cmd_description(Civ *civ, bool toggle);

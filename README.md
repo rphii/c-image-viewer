@@ -50,6 +50,7 @@ controls:
     I | LEFT_SHIFT + AROW_KEY_UP      : zoom in
     O | LEFT_SHIFT + AROW_KEY_UP      : zoom out
     Q | ESCAPE                        : quit
+    P                                 : print the filename of the active image to stdout
 
 clean with ninja:
 
