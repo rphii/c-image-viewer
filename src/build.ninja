@@ -5,15 +5,13 @@ root     = .
 builddir = build
 cflags   = -Wall -Wextra -pipe -Wno-unused-parameter -fdiagnostics-color=always $
     -I/usr/include/freetype2 $
-    -Og -fsanitize=address -rdynamic -ggdb3
+    -march=native -O2 -Wfatal-errors -Werror
 
-#-march=native -O2 -Wfatal-errors -Werror
+#-Og -fsanitize=address -rdynamic -ggdb3
 #-Og -rdynamic -ggdb3
 
 #-Og -rdynamic -ggdb3
 ldflags  = -lglfw -lm -lcglm -lfreetype -lpthread $
-    -Og -fsanitize=address -rdynamic -ggdb3
-
 
 cc = gcc
 
@@ -43,8 +41,6 @@ build $builddir/gl_image.o: cc $root/gl_image.c
 build $builddir/arg.o: cc $root/arg.c
 build $builddir/uniform.o: cc $root/uniform.c
 build $builddir/main.o: cc $root/main.c
-build $builddir/trace.o: cc $root/trace.c
-build $builddir/mem.o: cc $root/mem.c
 
 build civ.out: link $
     $builddir/main.o $
@@ -61,6 +57,4 @@ build civ.out: link $
     $builddir/arg.o $
     $builddir/str.o $
     $builddir/file.o $
-    $builddir/trace.o $
-    $builddir/mem.o $
 

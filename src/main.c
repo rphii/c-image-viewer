@@ -1,5 +1,4 @@
 #define STB_IMAGE_IMPLEMENTATION
-#include "mem.h"
 
 //#include "sh_rect.h"
 
@@ -12,8 +11,6 @@
  * (glad)
  * (glfw)
  */
-
-#include "trace.h"
 
 #include "stb_image.h"
 #include "text.h"
@@ -600,7 +597,6 @@ clean:
     }
     printf("Done, quitting\n");
 
-    mem_log();
     return err;
 error:
     ERR_CLEAN;
