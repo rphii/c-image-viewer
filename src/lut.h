@@ -130,14 +130,8 @@
             if(!*item) break; \
             if(intend_to_set && (*item)->hash == LUT_EMPTY) break; \
             if((*item)->hash == hash) { \
-                if(C != 0) { \
-                    /*printff(">>> cmp 1 SIZEOF %zu : %p -> %p", sizeof(*LUT_REF(MK)key), key, LUT_REF(MK)key);*/\
-                    if(!LUT_TYPE_CMP(C, (*item)->key, key, TK, MK)) return item; \
-                } \
-                else { \
-                    /*printff(">>> cmp 1 SIZEOF %zu : %p -> %p", sizeof(*LUT_REF(MK)key), key, LUT_REF(MK)key);*/\
-                    if(!memcmp(item, LUT_REF(MK)key, sizeof(*LUT_REF(MK)key))) return item; \
-                } \
+                if(C != 0) { if(!LUT_TYPE_CMP(C, (*item)->key, key, TK, MK)) return item; } \
+                else { if(!memcmp(item, LUT_REF(MK)key, sizeof(*LUT_REF(MK)key))) return item; } \
             } \
             perturb >>= 5; \
             i = mask & (i * 5 + perturb + 1); \
@@ -175,7 +169,7 @@
             /*printff(ERR_STRINGIFY(A) " freeing : %p", item);*/\
             if(FK != 0) { /*printff("  free key %p", item->key);*/ LUT_TYPE_FREE(FK, item->key, TK, MK); } \
             if(FV != 0) { /*printff("  free val %p", item->val);*/ LUT_TYPE_FREE(FV, item->val, TV, MV); } \
-            /*memset(item, 0, sizeof(*item));*/ \
+            memset(item, 0, sizeof(*item)); \
             /*free(item);*/ \
         } \
         for(size_t i = 0; i < LUT_CAP(lut->width); ++i) { \
@@ -299,7 +293,7 @@
             /* free old key */ \
             if(FK != 0) LUT_TYPE_FREE(FK, (*item)->key, TK, MK); \
             if(FV != 0) LUT_TYPE_FREE(FV, (*item)->val, TV, MV); \
-            /*memset(*item, 0, sizeof(**item));*/ \
+            memset(*item, 0, sizeof(**item)); \
         } else { \
             size_t req = sizeof(**item); \
             if(LUT_IS_BY_REF(MK)) { \
@@ -309,16 +303,15 @@
                 req += sizeof(*LUT_REF(MV)(*item)->val); \
             } \
             *item = malloc(req); \
-            printff(">>> MALLOC'd %p / sizeof %zu", item, req);\
             memset(*item, 0, req); \
             if(!*item) return -1; \
             if(LUT_IS_BY_REF(MK)) { \
-                void *p = (uint8_t *)*item + sizeof(**item) + 0; \
+                void *p = (void *)(uint8_t *)*item + sizeof(**item) + 0; \
                 memset(p, 0, sizeof((*item)->key)); \
                 memcpy(&(*item)->key, &p, sizeof((*item)->key)); \
             } \
             if(LUT_IS_BY_REF(MV)) { \
-                void *p = (uint8_t *)*item + sizeof(**item) + sizeof(*LUT_REF(MK)(*item)->key); \
+                void *p = (void *)(uint8_t *)*item + sizeof(**item) + sizeof(*LUT_REF(MK)(*item)->key); \
                 memset(p, 0, sizeof((*item)->val)); \
                 memcpy(&(*item)->val, &p, sizeof((*item)->val)); \
             } \
