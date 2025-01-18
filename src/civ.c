@@ -338,7 +338,9 @@ void civ_cmd_random(Civ *civ, bool random) {
 void civ_cmd_print_stdout(Civ *civ, bool print_stdout) {
     if(!print_stdout) return;
     if(!civ->active) return;
+    pthread_mutex_lock(civ->loader.mutex);
     printf("%.*s\n", STR_F(civ->active->filename));
+    pthread_mutex_unlock(civ->loader.mutex);
 }
 
 void civ_cmd_select(Civ *civ, int change) {
