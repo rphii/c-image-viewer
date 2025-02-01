@@ -341,6 +341,7 @@ void civ_cmd_print_stdout(Civ *civ, bool print_stdout) {
     pthread_mutex_lock(civ->loader.mutex);
     printf("%.*s\n", STR_F(civ->active->filename));
     pthread_mutex_unlock(civ->loader.mutex);
+    civ_popup_set(civ, POPUP_PRINT_STDOUT);
 }
 
 void civ_cmd_select(Civ *civ, int change) {

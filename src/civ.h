@@ -92,6 +92,7 @@ typedef enum {
     POPUP_ZOOM,
     POPUP_FILTER,
     POPUP_PAN,
+    POPUP_PRINT_STDOUT,
     /* above */
     POPUP__COUNT
 } PopupList;

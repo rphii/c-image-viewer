@@ -546,6 +546,9 @@ int main(const int argc, const char **argv) {
                 case POPUP_FILTER: {
                     snprintf(str_popup, sizeof(str_popup), "%s", filter_cstr(state.filter));
                 } break;
+                case POPUP_PRINT_STDOUT: {
+                    if(state.active) snprintf(str_popup, sizeof(str_popup), "stdout: %.*s", STR_F(state.active->filename));
+                } break;
                 default: case POPUP__COUNT: case POPUP_NONE: break;
             }
             if(strlen(str_popup)) {
