@@ -12,7 +12,7 @@ cflags   = -Wall -Wextra -pipe -Wno-unused-parameter -fdiagnostics-color=always 
 
 #-Og -rdynamic -ggdb3
 ldflags  = -L/lib64/rphii -Wl,-R/lib64/rphii
-libs = -lglfw -lm -lcglm -lfreetype -lpthread -lstr -lfile
+libs = -lglfw -lm -lcglm -lfreetype -lpthread -lstr -lfile -lutf8
 
 cc = gcc
 
@@ -36,7 +36,6 @@ build $builddir/gl_image.o: cc $root/gl_image.c
 build $builddir/gl_shader.o: cc $root/gl_shader.c
 build $builddir/gl_text.o: cc $root/gl_text.c
 build $builddir/gl_uniform.o: cc $root/gl_uniform.c
-build $builddir/utf8.o: cc $root/utf8.c
 build $builddir/timer.o: cc $root/timer.c
 build $builddir/arg.o: cc $root/arg.c
 build $builddir/main.o: cc $root/main.c
@@ -49,7 +48,6 @@ build civ.out: link $
     $builddir/gl_shader.o $
     $builddir/gl_text.o $
     $builddir/gl_uniform.o $
-    $builddir/utf8.o $
     $builddir/civ.o $
     $builddir/civ_config.o $
     $builddir/timer.o $

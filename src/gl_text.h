@@ -11,7 +11,7 @@
 #include "gl_shader.h"
 #include <rphii/lut.h>
 #include <rphii/str.h>
-#include "utf8.h"
+#include <rphii/utf8.h>
 
 typedef struct Character {
     //unsigned int texture;
