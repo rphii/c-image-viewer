@@ -7,6 +7,8 @@ it will also, once viewed, load them into GPU.
 
 dependencies:
 
+- [rphii/c-file](https://github.com/rphii/c-file)
+- [rphii/c-str](https://github.com/rphii/c-str)
 - pthreads
 - cglm
 - opengl
