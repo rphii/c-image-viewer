@@ -1,4 +1,4 @@
-#include "text.h"
+#include "gl_text.h"
 #include "utf8.h"
 
 static bool text_initialized;

@@ -11,7 +11,8 @@ cflags   = -Wall -Wextra -pipe -Wno-unused-parameter -fdiagnostics-color=always 
 #-Og -rdynamic -ggdb3
 
 #-Og -rdynamic -ggdb3
-ldflags  = -lglfw -lm -lcglm -lfreetype -lpthread $
+ldflags  = -L/lib64/rphii -Wl,-R/lib64/rphii
+libs = -lglfw -lm -lcglm -lfreetype -lpthread -lstr -lfile
 
 cc = gcc
 
@@ -28,33 +29,29 @@ rule link
     command = $cc $ldflags -o $out $in $libs
 
 build $builddir/glad.o: cc $root/glad.c
-build $builddir/str.o: cc $root/str.c
-build $builddir/file.o: cc $root/file.c
 build $builddir/civ.o: cc $root/civ.c
 build $builddir/civ_config.o: cc $root/civ_config.c
-build $builddir/shader.o: cc $root/shader.c
-build $builddir/text.o: cc $root/text.c
-build $builddir/box.o: cc $root/box.c
+build $builddir/gl_box.o: cc $root/gl_box.c
+build $builddir/gl_image.o: cc $root/gl_image.c
+build $builddir/gl_shader.o: cc $root/gl_shader.c
+build $builddir/gl_text.o: cc $root/gl_text.c
+build $builddir/gl_uniform.o: cc $root/gl_uniform.c
 build $builddir/utf8.o: cc $root/utf8.c
 build $builddir/timer.o: cc $root/timer.c
-build $builddir/gl_image.o: cc $root/gl_image.c
 build $builddir/arg.o: cc $root/arg.c
-build $builddir/uniform.o: cc $root/uniform.c
 build $builddir/main.o: cc $root/main.c
 
 build civ.out: link $
     $builddir/main.o $
     $builddir/glad.o $
-    $builddir/uniform.o $
-    $builddir/shader.o $
-    $builddir/text.o $
-    $builddir/box.o $
+    $builddir/gl_box.o $
+    $builddir/gl_image.o $
+    $builddir/gl_shader.o $
+    $builddir/gl_text.o $
+    $builddir/gl_uniform.o $
     $builddir/utf8.o $
     $builddir/civ.o $
     $builddir/civ_config.o $
     $builddir/timer.o $
-    $builddir/gl_image.o $
     $builddir/arg.o $
-    $builddir/str.o $
-    $builddir/file.o $
 

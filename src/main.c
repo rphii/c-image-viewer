@@ -13,12 +13,12 @@
  */
 
 #include "stb_image.h"
-#include "text.h"
-#include "vec.h"
+#include "gl_text.h"
+#include <rphii/vec.h>
 #include "civ.h"
 
-#include "uniform.h"
-#include "box.h"
+#include "gl_uniform.h"
+#include "gl_box.h"
 #include "glad.h"
 #include "gl_image.h"
 #include <pthread.h>

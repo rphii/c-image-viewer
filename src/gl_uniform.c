@@ -1,4 +1,4 @@
-#include "uniform.h"
+#include "gl_uniform.h"
 
 #include <stdio.h>
 #include <assert.h>

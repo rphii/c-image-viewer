@@ -1,4 +1,4 @@
-#include "vec.h"
+#include <rphii/vec.h>
 #include "glad.h"
 #include "timer.h"
 #include <cglm/cglm.h>

@@ -1,5 +1,5 @@
 #include "utf8.h"
-#include "err.h"
+#include <rphii/err.h>
 
 int str_to_u8_point(char *in, U8Point *point)
 {

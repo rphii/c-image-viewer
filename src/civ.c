@@ -1,12 +1,12 @@
 #include <unistd.h>
 #include "civ.h"
 #include "stb_image.h"
-#include "file.h"
+#include <rphii/file.h>
 
 VEC_IMPLEMENT(VImage, vimage, Image, BY_REF, BASE, image_free);
 VEC_IMPLEMENT(VImage, vimage, Image, BY_REF, ERR);
 
-#include "str.h"
+#include <rphii/str.h>
 
 void send_texture_to_gpu(Image *image, FilterList filter, bool *render) {
     if(!image) return;
