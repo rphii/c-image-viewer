@@ -1,7 +1,8 @@
 #include <unistd.h>
-#include "civ.h"
-#include "stb_image.h"
 #include <rphii/file.h>
+#include <stb/stb_image.h>
+
+#include "civ.h"
 
 VEC_IMPLEMENT(VImage, vimage, Image, BY_REF, BASE, image_free);
 VEC_IMPLEMENT(VImage, vimage, Image, BY_REF, ERR);
