@@ -1,7 +1,7 @@
 #include <stdbool.h>
 
 #include "gl_image.h"
-#include "uniform.h"
+#include "gl_uniform.h"
 
 static bool gl_image_initialized;
 static unsigned int VAO, VBO, EBO;

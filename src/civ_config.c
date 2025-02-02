@@ -1,6 +1,6 @@
 #include "civ_config.h"
 #include "civ.h"
-#include "file.h"
+#include <rphii/file.h>
 
 #include <unistd.h>
 #include <wordexp.h>
@@ -27,7 +27,7 @@ RStr civ_config_list(CivConfigList id) {
     if(!str_length(*path)) return 0;
     size_t linenb = 1;
     Str *content = &civ->config_content;
-    TRYC(file_str_read(path, content));
+    TRYC(file_str_read(str_rstr(*path), content));
     for(RStr line = {0}; line.first < content->last; line.s ? ++linenb : linenb, line = str_splice(*content, &line, '\n'), line = rstr_trim(line)) {
         if(!rstr_length(line) || !line.s) continue;
         if(rstr_get_front(&line) == '#') continue;
@@ -41,7 +41,7 @@ RStr civ_config_list(CivConfigList id) {
                 /* check which id we could possibly deal with */
                 for(size_t j = 1; j < CIV__COUNT; ++j) {
                     RStr cmp = civ_config_list(j);
-                    if(rstr_cmp(&cmp, &arg)) continue;
+                    if(rstr_cmp(cmp, arg)) continue;
                     id = j;
                     break;
                 }

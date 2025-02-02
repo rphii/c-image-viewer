@@ -1,4 +1,4 @@
-#include "box.h"
+#include "gl_box.h"
 
 static bool box_initialized;
 static GLuint VAO, VBO, EBO;

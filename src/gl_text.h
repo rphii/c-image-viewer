@@ -8,9 +8,9 @@
 #include <ft2build.h>
 #include FT_FREETYPE_H
 
-#include "shader.h"
-#include "lut.h"
-#include "str.h"
+#include "gl_shader.h"
+#include <rphii/lut.h>
+#include <rphii/str.h>
 #include "utf8.h"
 
 typedef struct Character {

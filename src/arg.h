@@ -1,9 +1,9 @@
 #ifndef ARG_H
 
 #include <stdbool.h>
-#include "str.h"
+#include <rphii/str.h>
 
-#include "vec.h"
+#include <rphii/vec.h>
 VEC_INCLUDE(VBool, vbool, bool, BY_VAL, BASE);
 VEC_INCLUDE(VBool, vbool, bool, BY_VAL, ERR);
 VEC_INCLUDE(VSize, vsize, bool, BY_VAL, BASE);
@@ -11,8 +11,8 @@ VEC_INCLUDE(VSize, vsize, bool, BY_VAL, ERR);
 VEC_INCLUDE(VDouble, vdouble, bool, BY_VAL, BASE);
 VEC_INCLUDE(VDouble, vdouble, bool, BY_VAL, ERR);
 
-#include "err.h"
-#include "lut.h"
+#include <rphii/err.h>
+#include <rphii/lut.h>
 
 /* some characters
  🮮╴╴≎╴┌╴┍ ┬
@@ -132,7 +132,7 @@ typedef struct ArgEnv {
 #endif
 
 typedef struct Arg {
-    TArgOptItem *cs[256];       // single-character options
+    TArgOptKV *cs[256];       // single-character options
     ArgObj options;             // options
     ArgObj positional;          // positional
     size_t positions_used[2];   // need 2 because separate passes for assigning values & running (arg_parse_run)

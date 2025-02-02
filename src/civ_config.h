@@ -1,6 +1,6 @@
 #ifndef CIV_CONFIG_H
 
-#include "str.h"
+#include <rphii/str.h>
 
 struct Civ;
 

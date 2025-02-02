@@ -2,7 +2,7 @@
 
 #include <cglm/cglm.h>
 #include <stdbool.h>
-#include "shader.h"
+#include "gl_shader.h"
 #include "glad.h"
 
 void box_render(Shader shader, mat4 projection, vec4 dim, vec4 color, float border);

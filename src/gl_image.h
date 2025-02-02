@@ -1,6 +1,6 @@
 #ifndef GL_IMAGE_H
 
-#include "shader.h"
+#include "gl_shader.h"
 #include <cglm/cglm.h>
 
 typedef struct GlImage {

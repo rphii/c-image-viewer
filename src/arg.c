@@ -11,7 +11,7 @@ VEC_IMPLEMENT(VSize, vsize, bool, BY_VAL, ERR);
 VEC_IMPLEMENT(VDouble, vdouble, bool, BY_VAL, BASE, 0);
 VEC_IMPLEMENT(VDouble, vdouble, bool, BY_VAL, ERR);
 //LUT_IMPLEMENT(TArgVal, targval, ArgVal, BY_REF, void *, BY_VAL, rstr_hash, rstr_cmp, 0, 0);
-LUT_IMPLEMENT(TArgOpt, targopt, RStr, BY_REF, ArgOpt, BY_REF, rstr_phash, rstr_cmp, 0, argopt_free);
+LUT_IMPLEMENT(TArgOpt, targopt, RStr, BY_REF, ArgOpt, BY_REF, rstr_phash, rstr_pcmp, 0, argopt_free);
 
 VEC_IMPLEMENT(VpArgOpt, vpargopt, ArgOpt *, BY_VAL, BASE, 0);
 VEC_IMPLEMENT(VpArgOpt, vpargopt, ArgOpt *, BY_VAL, ERR);
@@ -566,11 +566,11 @@ ErrDecl arg_parse_run(Arg *arg, size_t argc, const char **argv, bool run) { /*{{
         bool is_long = false;
         bool is_short = false;
         if(!rest_is_positional) {
-            if(rstr_length(arg_base) == 2 && !rstr_cmp(&arg_base, &RSTR("--"))) {
+            if(rstr_length(arg_base) == 2 && !rstr_cmp(arg_base, RSTR("--"))) {
                 rest_is_positional = true;
                 continue;
             } else if(rstr_length(arg_base) >= 2) {
-                if(!rstr_cmp(&RSTR_IE(arg_base, 2), &RSTR("--"))) {
+                if(!rstr_cmp(RSTR_IE(arg_base, 2), RSTR("--"))) {
                     is_long = true;
                 } else if(rstr_get_front(&arg_base) == '-') {
                     is_short = true;
@@ -610,7 +610,7 @@ ErrDecl arg_parse_run(Arg *arg, size_t argc, const char **argv, bool run) { /*{{
             RStr arg_observe = RSTR_I0(arg_base, 1);
             while(rstr_length(arg_observe)) {
                 unsigned char c = rstr_get_front(&arg_observe);
-                TArgOptItem *item = arg->cs[c];
+                TArgOptKV *item = arg->cs[c];
                 if(!item) THROW("INVALID ARGUMENT: '%c'", c);
                 ASSERT(item->val, ERR_UNREACHABLE);
                 TRYC(arg_parse_val(arg, argc, argv, item->val, RSTR(""), &i, 0, run));
@@ -699,7 +699,7 @@ ErrImpl arg_positional(ArgObj *obj, ArgOpt *opt) { /*{{{*/
         ArgOpt *back = vpargopt_get_back(&obj->array);
         if(back->fallback) THROW("optional argument must be after required ones");
     }
-    TArgOptItem *once = targopt_once(&obj->table, &opt->str, opt);
+    TArgOptKV *once = targopt_once(&obj->table, &opt->str, opt);
     TRYG(vpargopt_push_back(&obj->array, once->val));
     if(!once) THROW("positional already exists");
     return 0;
@@ -718,7 +718,7 @@ ErrDecl arg_attach(ArgObj *obj, ArgOpt *opt, Arg *arg_if_c_is_set) { /*{{{*/
     if(opt->id == ARG_NONE && !opt->action.function) THROW("type is NONE but no function provided");
     /* add */
     // TODO: cross-check that there is nothing of equal name in arg_positional!!!
-    TArgOptItem *once = targopt_once(&obj->table, &opt->str, opt);
+    TArgOptKV *once = targopt_once(&obj->table, &opt->str, opt);
     if(!once) THROW("option '%.*s' already exists", RSTR_F(opt->str));
     TRYG(vpargopt_push_back(&obj->array, once->val));
     unsigned char c = opt->c;
@@ -754,14 +754,14 @@ ArgOpt *argopt_new(Arg *arg, ArgObj *obj, unsigned char c, RStr str, RStr help) 
     if(rstr_find_ws(str) < rstr_length(str)) THROW("cannot have whitespace in argument");
     if(rstr_length(str) >= 2 && rstr_get_at(&str, 0) == '-' && rstr_get_at(&str, 0) != '-') THROW("argument begins with '-' but is not followed up with a second '-'");
     if(obj == &arg->options) {
-        if(rstr_length(str) < 2 || (rstr_length(str) > 2 && rstr_cmp(&RSTR_IE(str, 2), &RSTR("--")))) {
+        if(rstr_length(str) < 2 || (rstr_length(str) > 2 && rstr_cmp(RSTR_IE(str, 2), RSTR("--")))) {
             THROW("required for options of first level to start with '--'; have '%.*s'", RSTR_F(str));
         }
     }
 
     /* add */
     // TODO: cross-check that there is nothing of equal name in arg_positional!!!
-    TArgOptItem *once = targopt_once(&obj->table, &str, &(ArgOpt){.c = c, .str = str, .help = help});
+    TArgOptKV *once = targopt_once(&obj->table, &str, &(ArgOpt){.c = c, .str = str, .help = help});
     if(!once) THROW("option '%.*s' already exists", RSTR_F(str));
     once->val->index = vpargopt_length(obj->array);
     TRYG(vpargopt_push_back(&obj->array, once->val));
@@ -781,7 +781,7 @@ ArgVar *argvar_new(Arg *arg, RStr str, RStr help) { /*{{{*/
     ArgEnv *env = &arg->environment;
     if(!rstr_length(str)) THROW("variable has no long option (e.g. --help)");
     if(!rstr_length(help)) THROW("variable has no description");
-    TArgVarItem *once = targvar_once(&env->table, &str, &(ArgVar){.str = str, .help = help});
+    TArgVarKV *once = targvar_once(&env->table, &str, &(ArgVar){.str = str, .help = help});
     if(!once) THROW("variable '%.*s' already exists", RSTR_F(str));
     TRYG(vpargvar_push_back(&env->array, once->val));
     return once->val;
