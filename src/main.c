@@ -12,7 +12,7 @@
  * (glfw)
  */
 
-#include "stb_image.h"
+#include <stb/stb_image.h>
 #include "gl_text.h"
 #include <rphii/vec.h>
 #include "civ.h"
