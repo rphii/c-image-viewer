@@ -9,6 +9,7 @@ dependencies:
 
 - [rphii/c-file](https://github.com/rphii/c-file)
 - [rphii/c-str](https://github.com/rphii/c-str)
+- [rphii/c-lut](https://github.com/rphii/c-lut)
 - pthreads
 - cglm
 - opengl
