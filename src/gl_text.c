@@ -1,5 +1,5 @@
 #include "gl_text.h"
-#include "utf8.h"
+#include <rphii/utf8.h>
 
 static bool text_initialized;
 
@@ -186,7 +186,7 @@ void font_render(Font font, const char *text, mat4 projection, vec2 pos, float s
     unsigned long len = strlen(text);
     for(unsigned long i = 0; i < len; ++i) {
         U8Point u8p = {0};
-        if(str_to_u8_point((char *)&text[i], &u8p)) {
+        if(cstr_to_u8_point((char *)&text[i], &u8p)) {
             u8p.val = 0;
             u8p.bytes = 1;
         }

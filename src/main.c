@@ -400,10 +400,10 @@ int main(const int argc, const char **argv) {
             send_texture_to_gpu(state.active, state.filter, &s_action.gl_update);
             /* also make sure the full character set is available */
             U8Point point;
-            char buf[6];
+            U8Str buf;
             for(size_t i = 0; i < str_length(state.active->filename); ++i) {
-                str_cstr(state.active->filename, buf, 6);
-                str_to_u8_point(buf, &point);
+                str_u8str(buf, state.active->filename);
+                TRYG(cstr_to_u8_point(buf, &point));
                 //font_load_single(&font, point.val);
                 i += (point.bytes - 1);
             }
