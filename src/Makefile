@@ -65,11 +65,13 @@ VERSION_FILE = $(addprefix $(TRG_DIR)/,$(addprefix $(APPNAME),.version))
 all: $(TARGET)
 
 install: $(TARGET)
-	@mkdir -p $(DESTDIR)$(PREFIX)/bin
-	@cp -p $(TARGET) $(DESTDIR)$(PREFIX)/bin/${APPNAME}
+	@mkdir -p $(PREFIX)$(DESTDIR)
+	@cp -p $(TARGET) $(PREFIX)$(DESTDIR)${APPNAME}
+	@cp -pr shaders $(PREFIX)$(DESTDIR)
 
 uninstall:
-	@rm -rf $(DESTDIR)$(PREFIX)/bin/${APPNAME}
+	@rm -rf $(PREFIX)$(DESTDIR)${APPNAME}
+	@rm -rf $(PREFIX)$(DESTDIR)shaders
 
 
 # link all .o files
