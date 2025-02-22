@@ -462,17 +462,17 @@ int main(const int argc, const char **argv) {
                     case FIT_STRETCH_XY: { /* identity is ok */ } break;
 #endif
                     case FIT_XY: {
-                        if(s > r) goto FIT_Y;
-                        else goto FIT_X;
+                        if(s > r) goto FIT__Y;
+                        else goto FIT__X;
                     } break;
-                    case FIT_FILL_XY: {
-                        if(s > r) goto FIT_X;
-                        else goto FIT_Y;
+                    case FIT_FILL: {
+                        if(s > r) goto FIT__X;
+                        else goto FIT__Y;
                     } break;
-                    case FIT_X: FIT_X: {
+                    case FIT__X: FIT__X: {
                         state.zoom.current = x;
                     } goto FIT_PAN;
-                    case FIT_Y: FIT_Y: {
+                    case FIT__Y: FIT__Y: {
                         state.zoom.current = y;
                     } goto FIT_PAN;
                     case FIT_PAN: FIT_PAN: {
