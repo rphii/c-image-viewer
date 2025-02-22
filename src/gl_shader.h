@@ -9,7 +9,8 @@ typedef struct Shader {
     bool loaded;
 } Shader;
 
-Shader shader_load(const char *dir_v, const char *vertex, const char *dir_f, const char *fragment);
+Shader shader_load(const char *vert, int vert_len, const char *frag, int frag_len);
+Shader shader_load_dir(const char *dir_v, const char *vertex, const char *dir_f, const char *fragment);
 void shader_free(Shader shader);
 
 
