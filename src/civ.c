@@ -292,9 +292,7 @@ void image_free(Image *image) {
 const char *fit_cstr(FitList id) {
     switch(id) {
         case FIT_XY: return "XY";
-        case FIT_X: return "X";
-        case FIT_Y: return "Y";
-        case FIT_FILL_XY: return "XY-FILL";
+        case FIT_FILL: return "FILL";
         case FIT_PAN: return "PAN";
         default: return "";
     }
