@@ -67,19 +67,19 @@ typedef struct StateMap {
 static ActionMap s_action;
 static StateMap s_state;
 
-extern char _binary____shaders_box_frag_start[];
-extern char _binary____shaders_box_vert_start[];
-extern char _binary____shaders_rectangle_frag_start[];
-extern char _binary____shaders_rectangle_vert_start[];
-extern char _binary____shaders_text_frag_start[];
-extern char _binary____shaders_text_vert_start[];
+extern char _binary____src_shaders_box_frag_start[];
+extern char _binary____src_shaders_box_vert_start[];
+extern char _binary____src_shaders_rectangle_frag_start[];
+extern char _binary____src_shaders_rectangle_vert_start[];
+extern char _binary____src_shaders_text_frag_start[];
+extern char _binary____src_shaders_text_vert_start[];
 
-extern char _binary____shaders_box_frag_end[];
-extern char _binary____shaders_box_vert_end[];
-extern char _binary____shaders_rectangle_frag_end[];
-extern char _binary____shaders_rectangle_vert_end[];
-extern char _binary____shaders_text_frag_end[];
-extern char _binary____shaders_text_vert_end[];
+extern char _binary____src_shaders_box_frag_end[];
+extern char _binary____src_shaders_box_vert_end[];
+extern char _binary____src_shaders_rectangle_frag_end[];
+extern char _binary____src_shaders_rectangle_vert_end[];
+extern char _binary____src_shaders_text_frag_end[];
+extern char _binary____src_shaders_text_vert_end[];
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 
@@ -352,14 +352,14 @@ int main(const int argc, const char **argv) {
     /* OPENGL START */
 
 #define SHADER_FROM(sh, x) do { \
-        ASSERT(_binary____shaders_##x##_frag_start, "invalid embedded frag shader start"); \
-        ASSERT(_binary____shaders_##x##_vert_start, "invalid embedded vert shader start"); \
-        ASSERT(_binary____shaders_##x##_frag_end, "invalid embedded frag shader end"); \
-        ASSERT(_binary____shaders_##x##_vert_end, "invalid embedded vert shader end"); \
-        const char *sh_f0 = _binary____shaders_##x##_frag_start; \
-        const char *sh_v0 = _binary____shaders_##x##_vert_start; \
-        const char *sh_fE = _binary____shaders_##x##_frag_end; \
-        const char *sh_vE = _binary____shaders_##x##_vert_end; \
+        ASSERT(_binary____src_shaders_##x##_frag_start, "invalid embedded frag shader start"); \
+        ASSERT(_binary____src_shaders_##x##_vert_start, "invalid embedded vert shader start"); \
+        ASSERT(_binary____src_shaders_##x##_frag_end, "invalid embedded frag shader end"); \
+        ASSERT(_binary____src_shaders_##x##_vert_end, "invalid embedded vert shader end"); \
+        const char *sh_f0 = _binary____src_shaders_##x##_frag_start; \
+        const char *sh_v0 = _binary____src_shaders_##x##_vert_start; \
+        const char *sh_fE = _binary____src_shaders_##x##_frag_end; \
+        const char *sh_vE = _binary____src_shaders_##x##_vert_end; \
         sh = shader_load(sh_v0, sh_vE - sh_v0, sh_f0, sh_fE - sh_f0); \
     } while(0)
 
