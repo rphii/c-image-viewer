@@ -28,5 +28,6 @@ civ = executable('civ',
   sources,
   dependencies: [dep_ft2, dep_c_str, dep_c_file, dep_c_utf8, dep_glfw3],
   link_args: '-lm',
+  install: true,
   )
 
