@@ -22,16 +22,16 @@ dependencies:
 
 clone:
 
-    git clone https://github.com/rphii/c-image-viewer/ && cd c-image-viewer/src
+    git clone https://github.com/rphii/c-image-viewer/
 
 build with meson:
-    
+
     meson setup build   # only need to call once
     meson compile -C build
 
 launch program:
 
-    build/civ.out IMAGE-FILES-HERE
+    build/civ IMAGE-FILES-HERE
 
 help: _(defaults shown will be AFTER loading config and AFTER applying arguments, if any are passed)_
 
