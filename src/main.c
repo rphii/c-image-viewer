@@ -426,7 +426,7 @@ int main(const int argc, const char **argv) {
             done_prev = state.loader.done;
             s_action.gl_update = true;
         } else {
-            if(state.config.qafl && state.loader.done) {
+            if(state.config.qafl && state.loader.done >= vimage_length(state.images)) {
                 s_action.quit = true;
             }
         }
