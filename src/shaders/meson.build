@@ -1,4 +1,4 @@
-sources_shaders = [
+shaders = [
   'box.frag',
   'box.vert',
   'rectangle.frag',
@@ -7,10 +7,10 @@ sources_shaders = [
   'text.vert',
   ]
 
-target_shaders = custom_target('shaders',
-  output: 'shaders.o',
-  input: sources_shaders,
-  command: ['ld', '-r', '-b', 'binary', '-o', '@OUTPUT@', '@INPUT@'],
-  )
+foreach shader : shaders
+
+  custom_target(
+    @INPUT@,
 
 
+endforeach
