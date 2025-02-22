@@ -18,22 +18,20 @@ dependencies:
 - freetype
 - glfw
 - (glad - in src)
+- meson (build)
 
 clone:
 
     git clone https://github.com/rphii/c-image-viewer/ && cd c-image-viewer/src
 
-build with ninja:
+build with meson:
     
-    ninja
-
-build with compiler:
-
-    gcc -o civ.out -I/usr/include/freetype2 *.c -lglfw -lm -lfreetype
+    meson setup build   # only need to call once
+    meson compile -C build
 
 launch program:
 
-    ./civ.out IMAGE-FILES-HERE
+    build/civ.out IMAGE-FILES-HERE
 
 help: _(defaults shown will be AFTER loading config and AFTER applying arguments, if any are passed)_
 
