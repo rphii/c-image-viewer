@@ -1,5 +1,8 @@
 
-subdir('shaders')
+#subdir('shaders')
+
+#run_target('shaders_generated',
+#  command: ['shaders/generate.sh'])
 
 sources = [
   'arg.c',
@@ -22,7 +25,7 @@ dep_c_utf8 = dependency('c-utf8', required: true)
 dep_glfw3 = dependency('glfw3', required: true)
 
 civ = executable('civ',
-  sources + [target_shaders],
+  sources,
   dependencies: [dep_ft2, dep_c_str, dep_c_file, dep_c_utf8, dep_glfw3],
   link_args: '-lm',
   )
