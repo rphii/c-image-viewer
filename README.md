@@ -11,7 +11,7 @@ dependencies:
 - [rphii/c-str](https://github.com/rphii/c-str)
 - [rphii/c-lut](https://github.com/rphii/c-lut)
 - [rphii/c-utf8](https://github.com/rphii/c-utf8)
-- `stb_image`
+- stb\_image
 - pthreads
 - cglm
 - opengl
