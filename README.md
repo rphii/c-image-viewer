@@ -29,13 +29,17 @@ build with meson:
     meson setup build   # only need to call once
     meson compile -C build
 
-launch program:
+install with meson:
 
-    build/civ IMAGE-FILES-HERE
+    meson install -C build
+
+usage:
+
+    civ IMAGE-FILES-HERE
 
 help: _(defaults shown will be AFTER loading config and AFTER applying arguments, if any are passed)_
 
-    ./civ.out --help
+    civ --help
 
 controls:
 
@@ -55,17 +59,13 @@ controls:
     Q | ESCAPE                        : quit
     P                                 : print the filename of the active image to stdout
 
-clean with ninja:
-
-    ninja -t clean
-
 ## Config
 
 following paths get checked for a config file:
 
-    "$XDG_CONFIG_HOME/imv/civ.conf",
-    "$HOME/.config/civ/civ.conf",
-    "/etc/civ/civ.conf"
+    $XDG_CONFIG_HOME/imv/civ.conf
+    $HOME/.config/civ/civ.conf
+    /etc/civ/civ.conf
 
 the following options can be set as of now, see also `--help`:
 
