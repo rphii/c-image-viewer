@@ -427,7 +427,7 @@ void civ_arg(Civ *civ, const char *name) {
     struct Arg *arg = civ->arg;
     arg_init(arg, RSTR_L(name), RSTR("image viewer written in C"), RSTR("https://github.com/rphii/c-image-viewer"));
 
-    arg_init_rest(arg, &civ->filenames);
+    arg_init_rest(arg, RSTR("filenames"), &civ->filenames);
 
     //arg_allow_rest(arg, "images");
     CivConfig *defaults = &civ->defaults;
