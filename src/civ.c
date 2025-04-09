@@ -283,6 +283,7 @@ void image_free(Image *image) {
             stbi_image_free(image->data);
         }
     }
+    str_free(&image->filename);
     /* TODO: this SHOULD be freed, I THINK, but if I do that I get double free ... AHHHHHHHHH */
     //str_free(&image->filename);
     memset(image, 0, sizeof(*image));
@@ -307,10 +308,12 @@ const char *filter_cstr(FilterList id) {
 }
 
 void civ_free(Civ *state) {
-    pthread_join(state->loader.thread, 0);
-    pthread_mutex_lock(state->loader.mutex);
-    vimage_free(&state->images);
-    pthread_mutex_unlock(state->loader.mutex);
+    if(state->loader.thread) {
+        pthread_join(state->loader.thread, 0);
+        pthread_mutex_lock(state->loader.mutex);
+        vimage_free(&state->images);
+        pthread_mutex_unlock(state->loader.mutex);
+    }
     str_free(&state->config_content);
     arg_free(&state->arg);
     /* done freeing; set zero */
@@ -420,29 +423,48 @@ void civ_cmd_pan(Civ *civ, vec2 pan) {
 /* commands }}} */
 
 void civ_arg(Civ *civ, const char *name) {
-    Arg *arg = &civ->arg;
-    arg_allow_rest(arg, RSTR("images"));
-    TRYC(arg_attach_help(arg, RSTR("image viewer written in C"), RSTR("https://github.com/rphii/c-image-viewer")));
+    civ->arg = arg_new();
+    struct Arg *arg = civ->arg;
+    arg_init(arg, RSTR_L(name), RSTR("image viewer written in C"), RSTR("https://github.com/rphii/c-image-viewer"));
+
+    arg_init_rest(arg, &civ->filenames);
+
     //arg_allow_rest(arg, "images");
     CivConfig *defaults = &civ->defaults;
     CivConfig *config = &civ->config;
+
+    //arg_allow_rest(arg, RSTR("images"));
+    size_t n_arg = 0;
+    struct ArgX *x = 0;
+    struct ArgXGroup *g = 0;
+    x=argx_init(arg_opt(arg), n_arg++, 'h', RSTR("help"), RSTR("display this help"));
+      argx_help(x, arg);
     /* font */
-    arg_str(argopt_new(arg, &arg->options, 'f', RSTR("--font"), RSTR("specify font")), &config->font_path, &defaults->font_path, false, ARG_NO_CALLBACK);
-    arg_int(argopt_new(arg, &arg->options, 'F', RSTR("--font-size"), RSTR("specify font size")), &config->font_size, &defaults->font_size, false, ARG_NO_CALLBACK, 0, 0);
-    arg_bool(argopt_new(arg, &arg->options, 'd', RSTR("--description"), RSTR("toggle description on/off")), &config->show_description, &defaults->show_description, false, ARG_NO_CALLBACK);
-    arg_bool(argopt_new(arg, &arg->options, '%', RSTR("--loaded"), RSTR("toggle loading info on/off")), &config->show_loaded, &defaults->show_loaded, false, ARG_NO_CALLBACK);
-    arg_bool(argopt_new(arg, &arg->options, 0, RSTR("--quit-after-full-load"), RSTR("quit after fully loading")), &config->qafl, &defaults->qafl, false, ARG_NO_CALLBACK);
-    arg_int(argopt_new(arg, &arg->options, 'j', RSTR("--jobs"), RSTR("set maximum jobs to use when loading")), &config->jobs, &defaults->jobs, false, ARG_NO_CALLBACK, 0, 0);
+    x=argx_init(arg_opt(arg), n_arg++, 'f', RSTR("font"), RSTR("specify font"));
+      argx_str(x, &config->font_path, &defaults->font_path);
+    x=argx_init(arg_opt(arg), n_arg++, 'F', RSTR("font-size"), RSTR("specify font size"));
+      argx_int(x, &config->font_size, &defaults->font_size);
+    x=argx_init(arg_opt(arg), n_arg++, 'd', RSTR("description"), RSTR("toggle description on/off"));
+      argx_bool(x, &config->show_description, &defaults->show_description);
+    x=argx_init(arg_opt(arg), n_arg++, '%', RSTR("loaded"), RSTR("toggle loading info on/off"));
+      argx_bool(x, &config->show_loaded, &defaults->show_loaded);
+    x=argx_init(arg_opt(arg), n_arg++, 0, RSTR("quit-after-full-load"), RSTR("quit after fully loading"));
+      argx_bool(x, &config->qafl, &defaults->qafl);
+    x=argx_init(arg_opt(arg), n_arg++, 'j', RSTR("jobs"), RSTR("set maximum jobs to use when loading"));
+      argx_int(x, &config->jobs, &defaults->jobs);
 
-    ArgOpt *filter = arg_option(argopt_new(arg, &arg->options, 's', RSTR("--filter"), RSTR("set filter")), (ssize_t *)&civ->filter);
-    arg_enum(argopt_new(arg, filter->options, 0, RSTR("nearest"), RSTR("set nearest")), false, ARG_NO_CALLBACK, FILTER_NEAREST);
-    arg_enum(argopt_new(arg, filter->options, 0, RSTR("linear"), RSTR("set linear")), false, ARG_NO_CALLBACK, FILTER_LINEAR);
+    x=argx_init(arg_opt(arg), n_arg++, 's', RSTR("filter"), RSTR("set filter"));
+      g=argx_opt(x, (ssize_t *)&civ->filter, 0);
+        x=argx_init(g, n_arg++, 0, RSTR("nearest"), RSTR("set nearest"));
+          argx_opt_enum(x, FILTER_NEAREST);
+        x=argx_init(g, n_arg++, 0, RSTR("linear"), RSTR("set linear"));
+          argx_opt_enum(x, FILTER_LINEAR);
 
-    arg_bool(argopt_new(arg, &arg->options, 'S', RSTR("--shuffle"), RSTR("shuffle images before loading")), &config->shuffle, &defaults->shuffle, false, ARG_NO_CALLBACK);
-    arg_int(argopt_new(arg, &arg->options, 'C', RSTR("--image-cap"), RSTR("limit number of images to be loaded, 0 to load all")), &config->image_cap, &defaults->image_cap, false, ARG_NO_CALLBACK, 0, 0);
+    x=argx_init(arg_opt(arg), n_arg++, 'S', RSTR("shuffle"), RSTR("shuffle images before loading"));
+      argx_bool(x, &config->shuffle, &defaults->shuffle);
+    x=argx_init(arg_opt(arg), n_arg++, 'C', RSTR("image-cap"), RSTR("limit number of images to be loaded, 0 to load all"));
+      argx_int(x, &config->image_cap, &defaults->image_cap);
 
-error:
-    /* TODO: fix ugly code */
     return;
 }
 
