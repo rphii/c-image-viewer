@@ -5,7 +5,7 @@
 #include <stdbool.h>
 #include <pthread.h>
 #include <GLFW/glfw3.h>
-#include "arg.h"
+#include <rphii/arg.h>
 #include "civ_config.h"
 
 typedef enum {
@@ -53,6 +53,7 @@ VEC_INCLUDE(VImage, vimage, Image, BY_REF, BASE);
         long jobs; \
         size_t *done; \
         size_t *failed; \
+        bool need_free; \
     } X##ThreadQueue;
 
 typedef struct VImage VImage;
@@ -120,8 +121,9 @@ typedef struct Civ {
     } popup;
     struct CivConfig config;
     struct CivConfig defaults;
-    Arg arg;
+    struct Arg *arg;
     Str config_content;
+    VrStr filenames;
 } Civ;
 
 void glcontext_acquire(GlContext *context);

@@ -235,8 +235,6 @@ void scroll_callback(GLFWwindow *window, double xoffset, double yoffset)
     s_action.zoom += yoffset < 0 ? -0.25 : 0.25;
 }
 
-#include "arg.h"
-
 
 struct timespec diff(struct timespec start, struct timespec end)
 {
@@ -259,6 +257,7 @@ int main(const int argc, const char **argv) {
     srand(time(0));
 
     int err = 0;
+    bool quit_early = false;
 
     GLFWwindow *window = 0;
     Shader sh_text = {0};
@@ -271,7 +270,7 @@ int main(const int argc, const char **argv) {
 
     pthread_mutex_t mutex_image;
     pthread_mutex_init(&mutex_image, 0);
-    state.loader.files = &state.arg.rest.vrstr;
+    state.loader.files = &state.filenames;
     state.loader.images = &state.images;
     state.loader.mutex = &mutex_image;
     state.loader.cancel = &s_action.quit;
@@ -279,8 +278,9 @@ int main(const int argc, const char **argv) {
 
     TRYC(civ_config_defaults(&state));
     civ_arg(&state, argv[0]);
-    if(arg_parse(&state.arg, argc, argv)) return -1;
-    if(state.arg.exit_early) return 0;
+    TRYC(arg_parse(state.arg, argc, argv, &quit_early));
+    if(!vrstr_length(state.filenames)) quit_early = true;
+    if(quit_early) goto clean;
 
 
     //return -1;
@@ -609,7 +609,7 @@ clean:
         glfwDestroyWindow(window);
         glfwTerminate();
     }
-    printf("Done, quitting\n");
+    //printf("Done, quitting\n");
 
     return err;
 error:
