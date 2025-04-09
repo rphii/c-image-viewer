@@ -10,10 +10,6 @@ sources = [
   'glad.c',
   'main.c',
   'timer.c',
-  '../../rphiic/src/arg.c',
-  '../../rphiic/src/str.c',
-  '../../rphiic/src/file.c',
-  '../../rphiic/src/utf8.c',
   ]
 
 dep_ft2 = dependency('freetype2', required: true)
