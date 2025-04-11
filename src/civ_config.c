@@ -25,61 +25,9 @@ RStr civ_config_list(CivConfigList id) {
     ASSERT_ARG(civ);
     ASSERT_ARG(path);
     if(!str_length(*path)) return 0;
-    size_t linenb = 1;
     Str *content = &civ->config_content;
     TRYC(file_str_read(str_rstr(*path), content));
-    for(RStr line = {0}; line.first < content->last; line.s ? ++linenb : linenb, line = str_splice(*content, &line, '\n'), line = rstr_trim(line)) {
-        if(!rstr_length(line) || !line.s) continue;
-        if(rstr_get_front(&line) == '#') continue;
-        size_t argnb = 0;
-        //printff(">> LINE %zu : '%.*s'", linenb, RSTR_F(line));
-        CivConfigList id = CIV_NONE;
-        for(RStr arg = {0}; arg.first < line.last; arg.s ? ++argnb : argnb, arg = rstr_splice(line, &arg, '='), arg = rstr_trim(arg)) {
-            if(!arg.s) continue;
-            //printff(">> ARG %zu : '%.*s'", argnb, RSTR_F(arg));
-            if(argnb == 0) {
-                /* check which id we could possibly deal with */
-                for(size_t j = 1; j < CIV__COUNT; ++j) {
-                    RStr cmp = civ_config_list(j);
-                    if(rstr_cmp(cmp, arg)) continue;
-                    id = j;
-                    break;
-                }
-            } else if(argnb == 1) {
-                switch(id) {
-                    case CIV_FONT_PATH: {
-                        civ->defaults.font_path = arg;
-                    } break;
-                    case CIV_FONT_SIZE: {
-                        TRYC(rstr_as_int(arg, &civ->defaults.font_size));
-                    } break;
-                    case CIV_SHOW_DESCRIPTION: {
-                        TRYC(rstr_as_bool(arg, &civ->defaults.show_description, true));
-                    } break;
-                    case CIV_SHOW_LOADED: {
-                        TRYC(rstr_as_bool(arg, &civ->defaults.show_loaded, true));
-                    } break;
-                    case CIV_JOBS: {
-                        TRYC(rstr_as_int(arg, &civ->defaults.jobs));
-                    } break;
-                    case CIV_QAFL: {
-                        TRYC(rstr_as_bool(arg, &civ->defaults.qafl, true));
-                    } break;
-                    case CIV_SHUFFLE: {
-                        TRYC(rstr_as_bool(arg, &civ->defaults.shuffle, true));
-                    } break;
-                    case CIV_IMAGE_CAP: {
-                        TRYC(rstr_as_int(arg, &civ->defaults.image_cap));
-                    } break;
-                    default: ABORT("unhandled id: %u", id);
-                }
-            }
-            if(!id && !argnb) THROW("invalid config: " F("'%.*s'", BOLD) " in file '%.*s' at line %zu", RSTR_F(arg), STR_F(*path), linenb);
-            //printff(">> id %u, %zu", id, argnb)
-        }
-        if(argnb < 2) THROW("missing value for: " F("'%.*s'", BOLD) " in file '%.*s' at line %zu", RSTR_F(line), STR_F(*path), linenb);
-    }
-
+    TRYC(arg_config(civ->arg, str_rstr(*content)));
     return 0;
 error:
     return -1;
