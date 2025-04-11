@@ -20,7 +20,7 @@ RStr civ_config_list(CivConfigList id) {
     }
 }
 
-#define ERR_civ_config_load(...) "error while loading config"
+#define ERR_civ_config_load(civ, path) "error while loading config " F("'%.*s'", BOLD), STR_F(*path)
 [[nodiscard]] int civ_config_load(Civ *civ, Str *path) {
     ASSERT_ARG(civ);
     ASSERT_ARG(path);
