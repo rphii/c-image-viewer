@@ -439,7 +439,7 @@ void civ_arg(Civ *civ, const char *name) {
     x=argx_init(arg_opt(arg), n_arg++, 'h', RSTR("help"), RSTR("display this help"));
       argx_help(x, arg);
     /* font */
-    x=argx_init(arg_opt(arg), n_arg++, 'f', RSTR("font"), RSTR("specify font"));
+    x=argx_init(arg_opt(arg), n_arg++, 'f', RSTR("font-path"), RSTR("specify font path"));
       argx_str(x, &config->font_path, &defaults->font_path);
     x=argx_init(arg_opt(arg), n_arg++, 'F', RSTR("font-size"), RSTR("specify font size"));
       argx_int(x, &config->font_size, &defaults->font_size);
