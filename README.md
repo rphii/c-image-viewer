@@ -74,6 +74,7 @@ the following options can be set as of now, see also `--help`:
     quit-after-full-load = <bool>
     shuffle = <bool>
     image-cap = <int>
+    filter = <nearest|linear>
 
 an example config:
 
@@ -82,6 +83,7 @@ an example config:
     show-loaded = false
     show-description = yes
     jobs = 4
+    filter = linear
 
 ## Wayland
 
