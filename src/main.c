@@ -276,8 +276,8 @@ int main(const int argc, const char **argv) {
     state.loader.cancel = &s_action.quit;
     state.loader.config = &state.config;
 
-    TRYC(civ_config_defaults(&state));
     civ_arg(&state, argv[0]);
+    TRYC(civ_config_defaults(&state));
     TRYC(arg_parse(state.arg, argc, argv, &quit_early));
     if(!vrstr_length(state.filenames)) quit_early = true;
     if(quit_early) goto clean;
