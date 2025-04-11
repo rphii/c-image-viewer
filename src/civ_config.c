@@ -27,7 +27,7 @@ RStr civ_config_list(CivConfigList id) {
     if(!str_length(*path)) return 0;
     Str *content = &civ->config_content;
     TRYC(file_str_read(str_rstr(*path), content));
-    TRYC(arg_config(civ->arg, str_rstr(*content)));
+    arg_config(civ->arg, str_rstr(*content));
     return 0;
 error:
     return -1;
