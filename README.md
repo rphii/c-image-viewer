@@ -64,17 +64,8 @@ following paths get checked for a config file:
     $HOME/.config/civ/civ.conf
     /etc/civ/civ.conf
 
-the following options can be set as of now, see also `--help`:
-
-    font-path = /path/to/font
-    font-size = <int>
-    show-loaded = <bool>
-    show-description = <bool>
-    jobs = <int>
-    quit-after-full-load = <bool>
-    shuffle = <bool>
-    image-cap = <int>
-    filter = <nearest|linear>
+all options (the ones preceeded with `--`) listed in `--help` can be loaded with a config.
+if e.g. `--help` shows an option `--filter`, the equivalent for the config is `filter = <value>`
 
 an example config:
 
