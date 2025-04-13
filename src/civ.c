@@ -442,7 +442,7 @@ void civ_arg(Civ *civ, const char *name) {
     x=argx_init(arg_opt(arg), n_arg++, 'f', RSTR("font-path"), RSTR("specify font path"));
       argx_str(x, &config->font_path, &defaults->font_path);
     x=argx_init(arg_opt(arg), n_arg++, 'F', RSTR("font-size"), RSTR("specify font size"));
-      argx_int(x, &config->font_size, &defaults->font_size);
+      argx_ssz(x, &config->font_size, &defaults->font_size);
     x=argx_init(arg_opt(arg), n_arg++, 'd', RSTR("description"), RSTR("toggle description on/off"));
       argx_bool(x, &config->show_description, &defaults->show_description);
     x=argx_init(arg_opt(arg), n_arg++, '%', RSTR("loaded"), RSTR("toggle loading info on/off"));
@@ -450,10 +450,10 @@ void civ_arg(Civ *civ, const char *name) {
     x=argx_init(arg_opt(arg), n_arg++, 0, RSTR("quit-after-full-load"), RSTR("quit after fully loading"));
       argx_bool(x, &config->qafl, &defaults->qafl);
     x=argx_init(arg_opt(arg), n_arg++, 'j', RSTR("jobs"), RSTR("set maximum jobs to use when loading"));
-      argx_int(x, &config->jobs, &defaults->jobs);
+      argx_ssz(x, &config->jobs, &defaults->jobs);
 
     x=argx_init(arg_opt(arg), n_arg++, 's', RSTR("filter"), RSTR("set filter"));
-      g=argx_opt(x, (ssize_t *)&civ->filter, 0);
+      g=argx_opt(x, (int *)&civ->filter, 0);
         x=argx_init(g, n_arg++, 0, RSTR("nearest"), RSTR("set nearest"));
           argx_opt_enum(x, FILTER_NEAREST);
         x=argx_init(g, n_arg++, 0, RSTR("linear"), RSTR("set linear"));
@@ -462,7 +462,7 @@ void civ_arg(Civ *civ, const char *name) {
     x=argx_init(arg_opt(arg), n_arg++, 'S', RSTR("shuffle"), RSTR("shuffle images before loading"));
       argx_bool(x, &config->shuffle, &defaults->shuffle);
     x=argx_init(arg_opt(arg), n_arg++, 'C', RSTR("image-cap"), RSTR("limit number of images to be loaded, 0 to load all"));
-      argx_int(x, &config->image_cap, &defaults->image_cap);
+      argx_ssz(x, &config->image_cap, &defaults->image_cap);
 
     return;
 }
