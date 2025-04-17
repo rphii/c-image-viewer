@@ -154,19 +154,15 @@ void images_load(VImage *images, VrStr *files, pthread_mutex_t *mutex, bool *can
 
     /* push images to load */
     pthread_mutex_lock(mutex);
-#if 1
     size_t n = vrstr_length(*files);
     for(size_t i = 0; i < n; ++i) {
         RStr *filename = vrstr_get_at(files, i);
         if(!filename) ABORT(ERR_UNREACHABLE);
-        //vstr_push_back(&subdirs, &STR_LL(rstr_iter_begin(*filename), rstr_length(*filename)));
         /* now iterate over all subdirs until there are none */
         TRYC(file_exec(*filename, &subdirs, recursive, image_add_to_queue, images));
         while(vstr_length(subdirs)) {
             vstr_pop_back(&subdirs, &subdirname);
-            //memset(subdirs.items[vstr_length(subdirs)], 0, sizeof(Str)); // TODO: this should probably happen in my vector!
             TRYC(file_exec(str_rstr(subdirname), &subdirs, recursive, image_add_to_queue, images));
-            //str_free(&subdirname);
         }
     }
     vstr_free(&subdirs);
@@ -182,19 +178,6 @@ void images_load(VImage *images, VrStr *files, pthread_mutex_t *mutex, bool *can
         }
     }
 
-#if 0
-    /* remove images if requrested */
-    if(config->image_cap) {
-        images->last = images->first + config->image_cap;
-    }
-#endif
-#else
-    for(size_t i = 0; i < n; ++i) {
-        RStr *filename = vrstr_get_at(files, i);
-        Image push = { .filename = *filename };
-        vimage_push_back(images, &push);
-    }
-#endif
     pthread_mutex_unlock(mutex);
 
     pthread_mutex_init(&queue.mutex, 0);

@@ -9,4 +9,5 @@ src/civ.out
 src/build
 *.cache
 *.*_old
+*.out
 
