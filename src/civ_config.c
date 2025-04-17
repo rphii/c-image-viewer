@@ -6,22 +6,11 @@
 #include <wordexp.h>
 #include <sys/sysmacros.h>
 
-RStr civ_config_list(CivConfigList id) {
-    switch(id) {
-        case CIV_FONT_PATH: return RSTR("font-path");
-        case CIV_FONT_SIZE: return RSTR("font-size");
-        case CIV_SHOW_DESCRIPTION: return RSTR("show-description");
-        case CIV_SHOW_LOADED: return RSTR("show-loaded");
-        case CIV_JOBS: return RSTR("jobs");
-        case CIV_QAFL: return RSTR("quit-after-full-load");
-        case CIV_SHUFFLE: return RSTR("shuffle");
-        case CIV_IMAGE_CAP: return RSTR("image-cap");
-        default: ABORT("unsupported id: '%u'", id);
-    }
-}
+ErrDecl civ_config_load(Civ *civ, Str *path);
+ErrDecl civ_config_path(Civ *civ, Str *path);
 
 #define ERR_civ_config_load(civ, path) "error while loading config " F("'%.*s'", BOLD), STR_F(*path)
-[[nodiscard]] int civ_config_load(Civ *civ, Str *path) {
+ErrImpl civ_config_load(Civ *civ, Str *path) {
     ASSERT_ARG(civ);
     ASSERT_ARG(path);
     if(!str_length(*path)) return 0;
@@ -34,7 +23,7 @@ error:
 }
 
 #define ERR_civ_config_path(...) "error while getting config path"
-[[nodiscard]] int civ_config_path(Civ *civ, Str *path) {
+ErrImpl civ_config_path(Civ *civ, Str *path) {
     ASSERT_ARG(civ);
     ASSERT_ARG(path);
     int err = 0;
@@ -68,7 +57,7 @@ error:
     ERR_CLEAN;
 }
 
-[[nodiscard]] int civ_config_defaults(Civ *civ) {
+ErrImpl civ_config_defaults(Civ *civ) {
     int err = 0;
     CivConfig *defaults = &civ->defaults;
     defaults->font_path = RSTR("/usr/share/fonts/MonoLisa/ttf/MonoLisa-Regular.ttf");
