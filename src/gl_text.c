@@ -48,7 +48,7 @@ void text_init(void) {
     initialized = true;
 }
 
-Font font_init(const RStr *path, int height, float hspace, float vspace, unsigned int glyphs) {
+Font font_init(const Str *path, int height, float hspace, float vspace, unsigned int glyphs) {
     if(!text_initialized) {
         text_init();
         text_initialized = true;
@@ -56,7 +56,7 @@ Font font_init(const RStr *path, int height, float hspace, float vspace, unsigne
     FT_Face face = {0};
     int width = 0;
     char cpath[PATH_MAX];
-    rstr_cstr(*path, cpath, PATH_MAX);
+    str_as_cstr(*path, cpath, PATH_MAX);
     if(FT_New_Face(ft, cpath, 0, &face)) {
         fprintf(stderr, "[FREETYPE] Error! Could not load font: '%s'\n", cpath);
         //assert(0);

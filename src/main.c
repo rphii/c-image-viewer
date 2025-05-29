@@ -279,7 +279,7 @@ int main(const int argc, const char **argv) {
     civ_arg(&state, argv[0]);
     TRYC(civ_config_defaults(&state));
     TRYC(arg_parse(state.arg, argc, argv, &quit_early));
-    if(!vrstr_length(state.filenames)) quit_early = true;
+    if(!array_len(state.filenames)) quit_early = true;
     if(quit_early) goto clean;
 
 
@@ -293,9 +293,9 @@ int main(const int argc, const char **argv) {
     char directory[PATH_MAX] = {0};
     char shaders[PATH_MAX] = {0};
     if(readlink("/proc/self/exe", directory, PATH_MAX) == -1) THROW(ERR_UNREACHABLE);
-    RStr dir = rstr_get_dir(RSTR_LL(directory, strlen(directory)));
-    if(rstr_length(dir) > PATH_MAX - 10) THROW(ERR_UNREACHABLE);
-    snprintf(shaders, PATH_MAX, "%.*s/shaders", RSTR_F(dir));
+    Str dir = str_get_dir(str_ll(directory, strlen(directory)));
+    if(str_len(dir) > PATH_MAX - 10) THROW(ERR_UNREACHABLE);
+    snprintf(shaders, PATH_MAX, "%.*s/shaders", STR_F(dir));
 
     //printf("%zu\n", sizeof(ImageLoadThreadQueue));
     //return 0;
@@ -414,7 +414,7 @@ int main(const int argc, const char **argv) {
             /* also make sure the full character set is available */
             U8Point point;
             U8Str buf;
-            for(size_t i = 0; i < str_length(state.active->filename); ++i) {
+            for(size_t i = 0; i < str_len(state.active->filename); ++i) {
                 str_u8str(buf, state.active->filename);
                 TRYG(cstr_to_u8_point(buf, &point));
                 //font_load_single(&font, point.val);

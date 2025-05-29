@@ -5,7 +5,7 @@
 struct Civ;
 
 typedef struct CivConfig {
-    RStr font_path;
+    Str font_path;
     ssize_t font_size;
     bool show_description;
     bool show_loaded;
