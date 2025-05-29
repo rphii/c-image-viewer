@@ -89,7 +89,7 @@ void *image_load_thread(void *args) {
     if(image->data) goto exit;
 
     char cfilename[PATH_MAX];
-    str_cstr(image->filename, cfilename, PATH_MAX);
+    str_as_cstr(image->filename, cfilename, PATH_MAX);
 
     data = stbi_load(cfilename, &image->width, &image->height, &image->channels, 0);
     //printf(">>> STBI_LOAD '%.*s' %zu / %zu\n", STR_F(image->filename), *image_load->queue->done, image_load->image_cap);
@@ -120,18 +120,18 @@ exit:
     return 0;
 }
 
-int image_add_to_queue(RStr filename, void *data) {
+int image_add_to_queue(Str filename, void *data) {
     VImage *images = data;
     //printff("ADD TO QUEUE: '%.*s'", RSTR_F(filename));
     Image push = {0};
-    TRYG(rstr_copy(&push.filename, &filename));
+    str_copy(&push.filename, filename);
     TRYG(vimage_push_back(images, &push));
     return 0;
 error:
     return -1;
 }
 
-void images_load(VImage *images, VrStr *files, pthread_mutex_t *mutex, bool *cancel, long jobs, size_t *done, CivConfig *config) {
+void images_load(VImage *images, VStr *files, pthread_mutex_t *mutex, bool *cancel, long jobs, size_t *done, CivConfig *config) {
     ASSERT_ARG(images);
     ASSERT_ARG(files);
     ASSERT_ARG(mutex);
@@ -154,18 +154,19 @@ void images_load(VImage *images, VrStr *files, pthread_mutex_t *mutex, bool *can
 
     /* push images to load */
     pthread_mutex_lock(mutex);
-    size_t n = vrstr_length(*files);
+    size_t n = array_len(*files);
     for(size_t i = 0; i < n; ++i) {
-        RStr *filename = vrstr_get_at(files, i);
-        if(!filename) ABORT(ERR_UNREACHABLE);
+        Str filename = array_at(*files, i);
+        //if(!filename) ABORT(ERR_UNREACHABLE);
         /* now iterate over all subdirs until there are none */
-        TRYC(file_exec(*filename, &subdirs, recursive, image_add_to_queue, images));
-        while(vstr_length(subdirs)) {
-            vstr_pop_back(&subdirs, &subdirname);
-            TRYC(file_exec(str_rstr(subdirname), &subdirs, recursive, image_add_to_queue, images));
+        TRYC(file_exec(filename, &subdirs, recursive, true, image_add_to_queue, images));
+        while(array_len(subdirs)) {
+            subdirname = array_pop(subdirs);
+            TRYC(file_exec(subdirname, &subdirs, recursive, true, image_add_to_queue, images));
+            str_free(&subdirname);
         }
     }
-    vstr_free(&subdirs);
+    array_free(subdirs);
 
     /* shuffle if requested */
     if(config->shuffle) {
@@ -408,42 +409,42 @@ void civ_cmd_pan(Civ *civ, vec2 pan) {
 void civ_arg(Civ *civ, const char *name) {
     civ->arg = arg_new();
     struct Arg *arg = civ->arg;
-    arg_init(arg, RSTR_L(name), RSTR("image viewer written in C"), RSTR("https://github.com/rphii/c-image-viewer"));
-    arg_init_rest(arg, RSTR("filenames"), &civ->filenames);
+    arg_init(arg, str_l(name), str("image viewer written in C"), str("https://github.com/rphii/c-image-viewer"));
+    arg_init_rest(arg, str("filenames"), &civ->filenames);
 
     //arg_allow_rest(arg, "images");
     CivConfig *defaults = &civ->defaults;
     CivConfig *config = &civ->config;
 
-    //arg_allow_rest(arg, RSTR("images"));
+    //arg_allow_rest(arg, str("images"));
     struct ArgX *x = 0;
     struct ArgXGroup *g = 0;
-    x=argx_init(arg_opt(arg), 'h', RSTR("help"), RSTR("display this help"));
+    x=argx_init(arg_opt(arg), 'h', str("help"), str("display this help"));
       argx_help(x, arg);
     /* font */
-    x=argx_init(arg_opt(arg), 'f', RSTR("font-path"), RSTR("specify font path"));
+    x=argx_init(arg_opt(arg), 'f', str("font-path"), str("specify font path"));
       argx_str(x, &config->font_path, &defaults->font_path);
-    x=argx_init(arg_opt(arg), 'F', RSTR("font-size"), RSTR("specify font size"));
+    x=argx_init(arg_opt(arg), 'F', str("font-size"), str("specify font size"));
       argx_ssz(x, &config->font_size, &defaults->font_size);
-    x=argx_init(arg_opt(arg), 'd', RSTR("description"), RSTR("toggle description on/off"));
+    x=argx_init(arg_opt(arg), 'd', str("description"), str("toggle description on/off"));
       argx_bool(x, &config->show_description, &defaults->show_description);
-    x=argx_init(arg_opt(arg), '%', RSTR("loaded"), RSTR("toggle loading info on/off"));
+    x=argx_init(arg_opt(arg), '%', str("loaded"), str("toggle loading info on/off"));
       argx_bool(x, &config->show_loaded, &defaults->show_loaded);
-    x=argx_init(arg_opt(arg), 0, RSTR("quit-after-full-load"), RSTR("quit after fully loading"));
+    x=argx_init(arg_opt(arg), 0, str("quit-after-full-load"), str("quit after fully loading"));
       argx_bool(x, &config->qafl, &defaults->qafl);
-    x=argx_init(arg_opt(arg), 'j', RSTR("jobs"), RSTR("set maximum jobs to use when loading"));
+    x=argx_init(arg_opt(arg), 'j', str("jobs"), str("set maximum jobs to use when loading"));
       argx_ssz(x, &config->jobs, &defaults->jobs);
 
-    x=argx_init(arg_opt(arg), 's', RSTR("filter"), RSTR("set filter"));
+    x=argx_init(arg_opt(arg), 's', str("filter"), str("set filter"));
       g=argx_opt(x, (int *)&civ->filter, 0);
-        x=argx_init(g, 0, RSTR("nearest"), RSTR("set nearest"));
+        x=argx_init(g, 0, str("nearest"), str("set nearest"));
           argx_opt_enum(x, FILTER_NEAREST);
-        x=argx_init(g, 0, RSTR("linear"), RSTR("set linear"));
+        x=argx_init(g, 0, str("linear"), str("set linear"));
           argx_opt_enum(x, FILTER_LINEAR);
 
-    x=argx_init(arg_opt(arg), 'S', RSTR("shuffle"), RSTR("shuffle images before loading"));
+    x=argx_init(arg_opt(arg), 'S', str("shuffle"), str("shuffle images before loading"));
       argx_bool(x, &config->shuffle, &defaults->shuffle);
-    x=argx_init(arg_opt(arg), 'C', RSTR("image-cap"), RSTR("limit number of images to be loaded, 0 to load all"));
+    x=argx_init(arg_opt(arg), 'C', str("image-cap"), str("limit number of images to be loaded, 0 to load all"));
       argx_ssz(x, &config->image_cap, &defaults->image_cap);
 
     return;

@@ -75,7 +75,7 @@ typedef struct ImageLoad {
 
 typedef struct ImageLoadArgs {
     VImage *images;
-    VrStr *files;
+    VStr *files;
     //VrStr *files;
     pthread_mutex_t *mutex;
     bool *cancel;
@@ -123,7 +123,7 @@ typedef struct Civ {
     struct CivConfig defaults;
     struct Arg *arg;
     Str config_content;
-    VrStr filenames;
+    VStr filenames;
 } Civ;
 
 void glcontext_acquire(GlContext *context);

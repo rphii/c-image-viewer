@@ -13,10 +13,10 @@ ErrDecl civ_config_path(Civ *civ, Str *path);
 ErrImpl civ_config_load(Civ *civ, Str *path) {
     ASSERT_ARG(civ);
     ASSERT_ARG(path);
-    if(!str_length(*path)) return 0;
+    if(!str_len(*path)) return 0;
     Str *content = &civ->config_content;
-    TRYC(file_str_read(str_rstr(*path), content));
-    arg_config(civ->arg, str_rstr(*content));
+    TRYC(file_str_read(*path, content));
+    arg_config(civ->arg, *content);
     return 0;
 error:
     return -1;
@@ -43,8 +43,8 @@ ErrImpl civ_config_path(Civ *civ, Str *path) {
         if(!word.we_wordv[0]) {
             continue;
         }
-        TRYC(str_fmt(path, "%s", word.we_wordv[0]));
-        str_cstr(*path, cpath, FILE_PATH_MAX);
+        str_fmt(path, "%s", word.we_wordv[0]);
+        str_as_cstr(*path, cpath, FILE_PATH_MAX);
         if(!strlen(cpath) || access(cpath, R_OK) == -1) {
             continue;
         }
@@ -60,7 +60,7 @@ error:
 ErrImpl civ_config_defaults(Civ *civ) {
     int err = 0;
     CivConfig *defaults = &civ->defaults;
-    defaults->font_path = RSTR("/usr/share/fonts/MonoLisa/ttf/MonoLisa-Regular.ttf");
+    defaults->font_path = str("/usr/share/fonts/MonoLisa/ttf/MonoLisa-Regular.ttf");
     defaults->font_size = 18;
     defaults->show_description = false;
     defaults->show_loaded = true;
