@@ -138,7 +138,7 @@ void font_load(Font *font, unsigned long i0, unsigned long iE) {
             fprintf(stderr, "[FONT] Error! Not enough glyphs initialized! '%#lx'\n", font->characters.used + 1);
             assert(0);
         }
-        if(tcharacter_set(&font->characters, i, character)) {
+        if(!tcharacter_set(&font->characters, i, character)) {
             fprintf(stderr, "[FREETYPE] Error! Could not set texture '%#lx'\n", i);
             assert(0);
         }
