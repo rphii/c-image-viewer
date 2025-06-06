@@ -124,6 +124,7 @@ int image_add_to_queue(Str filename, void *data) {
     VImage *images = data;
     //printff("ADD TO QUEUE: '%.*s'", RSTR_F(filename));
     Image push = {0};
+    str_pdyn(&push.filename);
     str_copy(&push.filename, filename);
     TRYG(vimage_push_back(images, &push));
     return 0;
@@ -149,7 +150,7 @@ void images_load(VImage *images, VStr *files, pthread_mutex_t *mutex, bool *canc
     queue.failed = &failed;
     if(!queue.q) ABORT("job count cannot be 0!");
     VStr subdirs = {0};
-    Str subdirname = {0};
+    Str subdirname = STR_DYN();
     bool recursive = true;
 
     /* push images to load */
