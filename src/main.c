@@ -288,8 +288,6 @@ int main(const int argc, const char **argv) {
     s_state.wwidth = 800;
     s_state.wheight = 600;
 
-    printf("raw input: %.*s\n", STR_F(state.filenames[0]));
-
     /* get directory */
     char directory[PATH_MAX] = {0};
     char shaders[PATH_MAX] = {0};
