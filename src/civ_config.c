@@ -15,6 +15,7 @@ ErrImpl civ_config_load(Civ *civ, Str *path) {
     ASSERT_ARG(path);
     if(!str_len(*path)) return 0;
     Str *content = &civ->config_content;
+    str_pdyn(content);
     TRYC(file_str_read(*path, content));
     arg_config(civ->arg, *content);
     return 0;
@@ -72,7 +73,7 @@ ErrImpl civ_config_defaults(Civ *civ) {
     civ->config = *defaults;
 
     /* load config */
-    Str path = {0};
+    Str path = STR_DYN();
     TRYC(civ_config_path(civ, &path));
     TRYC(civ_config_load(civ, &path));
     //printff("PATH: '%.*s'", STR_F(path));
