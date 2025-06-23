@@ -13,7 +13,7 @@ ErrDecl civ_config_path(Civ *civ, Str *path);
 ErrImpl civ_config_load(Civ *civ, Str *path) {
     ASSERT_ARG(civ);
     ASSERT_ARG(path);
-    if(!str_len(*path)) return 0;
+    if(!str_len_raw(*path)) return 0;
     Str *content = &civ->config_content;
     str_pdyn(content);
     TRYC(file_str_read(*path, content));

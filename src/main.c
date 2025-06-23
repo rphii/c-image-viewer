@@ -293,7 +293,7 @@ int main(const int argc, const char **argv) {
     char shaders[PATH_MAX] = {0};
     if(readlink("/proc/self/exe", directory, PATH_MAX) == -1) THROW(ERR_UNREACHABLE);
     Str dir = str_get_dir(str_ll(directory, strlen(directory)));
-    if(str_len(dir) > PATH_MAX - 10) THROW(ERR_UNREACHABLE);
+    if(str_len_raw(dir) > PATH_MAX - 10) THROW(ERR_UNREACHABLE);
     snprintf(shaders, PATH_MAX, "%.*s/shaders", STR_F(dir));
 
     //printf("%zu\n", sizeof(ImageLoadThreadQueue));
@@ -413,7 +413,7 @@ int main(const int argc, const char **argv) {
             /* also make sure the full character set is available */
             U8Point point;
             U8Str buf;
-            for(size_t i = 0; i < str_len(state.active->filename); ++i) {
+            for(size_t i = 0; i < str_len_raw(state.active->filename); ++i) {
                 str_u8str(buf, state.active->filename);
                 TRYG(cstr_to_u8_point(buf, &point));
                 //font_load_single(&font, point.val);
