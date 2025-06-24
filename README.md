@@ -60,7 +60,7 @@ controls:
 
 following paths get checked for a config file:
 
-    $XDG_CONFIG_HOME/imv/civ.conf
+    $XDG_CONFIG_HOME/civ/civ.conf
     $HOME/.config/civ/civ.conf
     /etc/civ/civ.conf
 

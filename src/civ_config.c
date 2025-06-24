@@ -29,7 +29,7 @@ ErrImpl civ_config_path(Civ *civ, Str *path) {
     ASSERT_ARG(path);
     int err = 0;
     const char *paths[] = {
-        "$XDG_CONFIG_HOME/imv/civ.conf",
+        "$XDG_CONFIG_HOME/civ/civ.conf",
         "$HOME/.config/civ/civ.conf",
         "/etc/civ/civ.conf"
     };
