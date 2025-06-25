@@ -82,6 +82,8 @@ Font font_init(const Str *path, int height, float hspace, float vspace, unsigned
     //int h = font.height < 256 ? 256 : font.height; /* height has to be at least 256 */
     font.gl.buf_w = font.height < 256 ? 256 : font.height; /* width has to be at least 16 */
     font.gl.buf_h = font.height < 256 ? 256 : font.height; /* height has to be at least 256 */
+    //font.gl.buf_w = font.height;
+    //font.gl.buf_h = font.height;
     glGenTextures(1, &font.texture_array.id);
     glBindTexture(GL_TEXTURE_2D_ARRAY, font.texture_array.id);
     glActiveTexture(GL_TEXTURE0);
@@ -113,17 +115,35 @@ void font_load(Font *font, unsigned long i0, unsigned long iE) {
             //assert(0);
         }
 #if 1
+        /* fix buf */
+        uint8_t *buf = malloc((size_t)font->gl.buf_h * (size_t)font->gl.buf_w);
+        if(!buf) {
+            fprintf(stderr, "[MALLOC] failed allocating requested size: %zu", (size_t)font->gl.buf_h * (size_t)font->gl.buf_w);
+            return;
+        }
+        memset(buf, 0x00, font->gl.buf_h * font->gl.buf_w);
+        for(size_t i = 0; i < font->face->glyph->bitmap.rows; ++i) {
+            memcpy(&buf[i * font->gl.buf_w], &font->face->glyph->bitmap.buffer[i * (font->face->glyph->bitmap.width)], font->face->glyph->bitmap.width);
+        }
+#endif
+#if 1
+#if 1
+        //printff("BITMAP %u x %u", font->face->glyph->bitmap.width, font->face->glyph->bitmap.rows);
         /* generate texture */
         glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, font->characters.used, 
-                font->face->glyph->bitmap.width,
-                font->face->glyph->bitmap.rows,
-                1, GL_RED, GL_UNSIGNED_BYTE, font->face->glyph->bitmap.buffer
+                font->gl.buf_w, font->gl.buf_h,
+                //font->face->glyph->bitmap.width,
+                //font->face->glyph->bitmap.rows,
+                //1, GL_RED, GL_UNSIGNED_BYTE, font->face->glyph->bitmap.buffer
+                1, GL_RED, GL_UNSIGNED_BYTE, buf
                 );
+#endif
         /* set texture options */
         glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        free(buf);
 #endif
         /* now store character for lager use */
         //printf("width %u rows %u\n", font->face->glyph->bitmap.width, font->face->glyph->bitmap.rows);
