@@ -420,8 +420,8 @@ void civ_arg(Civ *civ, const char *name) {
     //arg_allow_rest(arg, str("images"));
     struct ArgX *x = 0;
     struct ArgXGroup *g = 0;
-    x=argx_init(arg_opt(arg), 'h', str("help"), str("display this help"));
-      argx_help(x, arg);
+    argx_builtin_env_compgen(arg);
+    argx_builtin_opt_help(arg);
     /* font */
     x=argx_init(arg_opt(arg), 'f', str("font-path"), str("specify font path"));
       argx_str(x, &config->font_path, &defaults->font_path);
