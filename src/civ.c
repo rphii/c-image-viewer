@@ -422,7 +422,7 @@ void civ_arg(Civ *civ, const char *name) {
     //arg_allow_rest(arg, str("images"));
     struct ArgX *x = 0;
     struct ArgXGroup *g = 0, *o = 0;
-    o=argx_group(arg, str("Options"));
+    o=argx_group(arg, str("Options"), false);
     argx_builtin_opt_help(o);
     argx_builtin_opt_source(o, str("/etc/civ/civ.conf"));
     argx_builtin_opt_source(o, str("$HOME/.config/rphiic/colors.conf"));
@@ -454,10 +454,10 @@ void civ_arg(Civ *civ, const char *name) {
     x=argx_init(o, 'C', str("image-cap"), str("limit number of images to be loaded, 0 to load all"));
       argx_ssz(x, &config->image_cap, &defaults->image_cap);
 
-    o=argx_group(arg, str("Environment Variables"));
+    o=argx_group(arg, str("Environment Variables"), false);
     argx_builtin_env_compgen(o);
 
-    o=argx_group(arg, str("Color Adjustments"));
+    o=argx_group(arg, str("Color Adjustments"), true);
     argx_builtin_opt_rice(o);
 }
 
