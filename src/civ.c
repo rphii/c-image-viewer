@@ -424,6 +424,10 @@ void civ_arg(Civ *civ, const char *name) {
     struct ArgXGroup *g = 0, *o = 0;
     o=argx_group(arg, str("Options"));
     argx_builtin_opt_help(o);
+    argx_builtin_opt_source(o, str("/etc/civ/civ.conf"));
+    argx_builtin_opt_source(o, str("$HOME/.config/rphiic/colors.conf"));
+    argx_builtin_opt_source(o, str("$HOME/.config/civ/civ.conf"));
+    argx_builtin_opt_source(o, str("$XDG_CONFIG_HOME/civ/civ.conf"));
     /* font */
     x=argx_init(o, 'f', str("font-path"), str("specify font path"));
       argx_str(x, &config->font_path, &defaults->font_path);
@@ -454,6 +458,6 @@ void civ_arg(Civ *civ, const char *name) {
     argx_builtin_env_compgen(o);
 
     o=argx_group(arg, str("Color Adjustments"));
-    argx_builtin_opt_rice(o, arg);
+    argx_builtin_opt_rice(o);
 }
 
