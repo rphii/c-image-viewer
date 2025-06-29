@@ -412,6 +412,8 @@ void civ_arg(Civ *civ, const char *name) {
     struct Arg *arg = civ->arg;
     arg_init(arg, str_l(name), str("image viewer written in C"), str("https://github.com/rphii/c-image-viewer"));
     arg_init_rest(arg, str("filenames"), &civ->filenames);
+    arg_init_width(arg, 100, 45);
+    arg_init_fmt(arg);
 
     //arg_allow_rest(arg, "images");
     CivConfig *defaults = &civ->defaults;
@@ -419,35 +421,39 @@ void civ_arg(Civ *civ, const char *name) {
 
     //arg_allow_rest(arg, str("images"));
     struct ArgX *x = 0;
-    struct ArgXGroup *g = 0;
-    argx_builtin_env_compgen(arg);
-    argx_builtin_opt_help(arg);
+    struct ArgXGroup *g = 0, *o = 0;
+    o=argx_group(arg, str("Options"));
+    argx_builtin_opt_help(o);
     /* font */
-    x=argx_init(arg_opt(arg), 'f', str("font-path"), str("specify font path"));
+    x=argx_init(o, 'f', str("font-path"), str("specify font path"));
       argx_str(x, &config->font_path, &defaults->font_path);
-    x=argx_init(arg_opt(arg), 'F', str("font-size"), str("specify font size"));
+    x=argx_init(o, 'F', str("font-size"), str("specify font size"));
       argx_ssz(x, &config->font_size, &defaults->font_size);
-    x=argx_init(arg_opt(arg), 'd', str("description"), str("toggle description on/off"));
+    x=argx_init(o, 'd', str("description"), str("toggle description on/off"));
       argx_bool(x, &config->show_description, &defaults->show_description);
-    x=argx_init(arg_opt(arg), '%', str("loaded"), str("toggle loading info on/off"));
+    x=argx_init(o, '%', str("loaded"), str("toggle loading info on/off"));
       argx_bool(x, &config->show_loaded, &defaults->show_loaded);
-    x=argx_init(arg_opt(arg), 0, str("quit-after-full-load"), str("quit after fully loading"));
+    x=argx_init(o, 0, str("quit-after-full-load"), str("quit after fully loading"));
       argx_bool(x, &config->qafl, &defaults->qafl);
-    x=argx_init(arg_opt(arg), 'j', str("jobs"), str("set maximum jobs to use when loading"));
+    x=argx_init(o, 'j', str("jobs"), str("set maximum jobs to use when loading"));
       argx_ssz(x, &config->jobs, &defaults->jobs);
 
-    x=argx_init(arg_opt(arg), 's', str("filter"), str("set filter"));
+    x=argx_init(o, 's', str("filter"), str("set filter"));
       g=argx_opt(x, (int *)&civ->filter, 0);
         x=argx_init(g, 0, str("nearest"), str("set nearest"));
           argx_opt_enum(x, FILTER_NEAREST);
         x=argx_init(g, 0, str("linear"), str("set linear"));
           argx_opt_enum(x, FILTER_LINEAR);
 
-    x=argx_init(arg_opt(arg), 'S', str("shuffle"), str("shuffle images before loading"));
+    x=argx_init(o, 'S', str("shuffle"), str("shuffle images before loading"));
       argx_bool(x, &config->shuffle, &defaults->shuffle);
-    x=argx_init(arg_opt(arg), 'C', str("image-cap"), str("limit number of images to be loaded, 0 to load all"));
+    x=argx_init(o, 'C', str("image-cap"), str("limit number of images to be loaded, 0 to load all"));
       argx_ssz(x, &config->image_cap, &defaults->image_cap);
 
-    return;
+    o=argx_group(arg, str("Environment Variables"));
+    argx_builtin_env_compgen(o);
+
+    o=argx_group(arg, str("Color Adjustments"));
+    argx_builtin_opt_rice(o, arg);
 }
 
