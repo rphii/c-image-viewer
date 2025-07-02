@@ -9,20 +9,6 @@
 ErrDecl civ_config_load(Civ *civ, Str *path);
 ErrDecl civ_config_path(Civ *civ, Str *path);
 
-#define ERR_civ_config_load(civ, path) "error while loading config " F("'%.*s'", BOLD), STR_F(*path)
-ErrImpl civ_config_load(Civ *civ, Str *path) {
-    ASSERT_ARG(civ);
-    ASSERT_ARG(path);
-    if(!str_len_raw(*path)) return 0;
-    Str *content = &civ->config_content;
-    str_pdyn(content);
-    TRYC(file_str_read(*path, content));
-    arg_config(civ->arg, *content);
-    return 0;
-error:
-    return -1;
-}
-
 #define ERR_civ_config_path(...) "error while getting config path"
 ErrImpl civ_config_path(Civ *civ, Str *path) {
     ASSERT_ARG(civ);
@@ -74,8 +60,6 @@ ErrImpl civ_config_defaults(Civ *civ) {
 
     /* load config */
     Str path = STR_DYN();
-    TRYC(civ_config_path(civ, &path));
-    TRYC(civ_config_load(civ, &path));
     //printff("PATH: '%.*s'", STR_F(path));
 
 clean:
