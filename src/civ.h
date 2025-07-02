@@ -122,7 +122,6 @@ typedef struct Civ {
     struct CivConfig config;
     struct CivConfig defaults;
     struct Arg *arg;
-    Str config_content;
     VStr filenames;
 } Civ;
 

@@ -299,7 +299,6 @@ void civ_free(Civ *state) {
         vimage_free(&state->images);
         pthread_mutex_unlock(state->loader.mutex);
     }
-    str_free(&state->config_content);
     arg_free(&state->arg);
     /* done freeing; set zero */
     memset(state, 0, sizeof(*state));
