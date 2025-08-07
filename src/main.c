@@ -14,9 +14,9 @@
 
 #include <stb/stb_image.h>
 #include "gl_text.h"
-#include <rl/vec.h>
-#include <rl/array.h>
-#include <rl/err.h>
+#include <rlc/vec.h>
+#include <rlc/array.h>
+#include <rlc/err.h>
 #include "civ.h"
 
 #include "gl_uniform.h"

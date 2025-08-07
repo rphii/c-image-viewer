@@ -6,8 +6,8 @@
 VEC_IMPLEMENT(VImage, vimage, Image, BY_REF, BASE, image_free);
 VEC_IMPLEMENT(VImage, vimage, Image, BY_REF, ERR);
 
-#include <rl/so.h>
-#include <rl/array.h>
+#include <rlso.h>
+#include <rlc/array.h>
 
 void send_texture_to_gpu(Image *image, FilterList filter, bool *render) {
     if(!image) return;

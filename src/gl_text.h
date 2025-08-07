@@ -9,8 +9,8 @@
 #include FT_FREETYPE_H
 
 #include "gl_shader.h"
-#include <rl/lut.h>
-#include <rl/so.h>
+#include <rlc/lut.h>
+#include <rlso.h>
 
 typedef struct Character {
     //unsigned int texture;
