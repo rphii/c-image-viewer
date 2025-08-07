@@ -14,7 +14,9 @@
 
 #include <stb/stb_image.h>
 #include "gl_text.h"
-#include <rphii/vec.h>
+#include <rl/vec.h>
+#include <rl/array.h>
+#include <rl/err.h>
 #include "civ.h"
 
 #include "gl_uniform.h"
@@ -291,10 +293,10 @@ int main(const int argc, const char **argv) {
     /* get directory */
     char directory[PATH_MAX] = {0};
     char shaders[PATH_MAX] = {0};
-    if(readlink("/proc/self/exe", directory, PATH_MAX) == -1) THROW(ERR_UNREACHABLE);
-    Str dir = str_get_dir(str_ll(directory, strlen(directory)));
-    if(str_len_raw(dir) > PATH_MAX - 10) THROW(ERR_UNREACHABLE);
-    snprintf(shaders, PATH_MAX, "%.*s/shaders", STR_F(dir));
+    if(readlink("/proc/self/exe", directory, PATH_MAX) == -1) THROW(ERR_UNREACHABLE("failed reading link"));
+    So dir = so_get_dir(so_ll(directory, strlen(directory)));
+    if(so_len(dir) > PATH_MAX - 10) THROW(ERR_UNREACHABLE("path too long"));
+    snprintf(shaders, PATH_MAX, "%.*s/shaders", SO_F(dir));
 
     //printf("%zu\n", sizeof(ImageLoadThreadQueue));
     //return 0;
@@ -411,11 +413,11 @@ int main(const int argc, const char **argv) {
             state.active = vimage_get_at(&state.images, state.selected);
             send_texture_to_gpu(state.active, state.filter, &s_action.gl_update);
             /* also make sure the full character set is available */
-            U8Point point;
-            U8Str buf;
-            for(size_t i = 0; i < str_len_raw(state.active->filename); ++i) {
-                str_u8str(buf, state.active->filename);
-                TRYG(cstr_to_u8_point(buf, &point));
+            So_Uc_Point point = {0};
+            for(size_t i = 0; i < so_len(state.active->filename); ++i) {
+                if(so_uc_point(so_i0(state.active->filename, i), &point)) {
+                    THROW(ERR_UNREACHABLE("invalid utf8 codepoint"));
+                }
                 //font_load_single(&font, point.val);
                 i += (point.bytes - 1);
             }
@@ -508,9 +510,9 @@ int main(const int argc, const char **argv) {
                 vec4 text_dim;
                 FitList fit = state.fit.current;
                 if(state.pan[0] || state.pan[1]) {
-                    snprintf(str_info, sizeof(str_info), "[%zu/%zu] %.*s (%ux%ux%u) [%.1f%% %s @ %.0f,%.0f]", state.selected + 1, vimage_length(state.images), STR_F(state.active->filename), state.active->width, state.active->height, state.active->channels, 100.0f * state.zoom.current, fit_cstr(fit), -state.pan[0], -state.pan[1]);
+                    snprintf(str_info, sizeof(str_info), "[%zu/%zu] %.*s (%ux%ux%u) [%.1f%% %s @ %.0f,%.0f]", state.selected + 1, vimage_length(state.images), SO_F(state.active->filename), state.active->width, state.active->height, state.active->channels, 100.0f * state.zoom.current, fit_cstr(fit), -state.pan[0], -state.pan[1]);
                 } else {
-                    snprintf(str_info, sizeof(str_info), "[%zu/%zu] %.*s (%ux%ux%u) [%.1f%% %s]", state.selected + 1, vimage_length(state.images), STR_F(state.active->filename), state.active->width, state.active->height, state.active->channels, 100.0f * state.zoom.current, fit_cstr(fit));
+                    snprintf(str_info, sizeof(str_info), "[%zu/%zu] %.*s (%ux%ux%u) [%.1f%% %s]", state.selected + 1, vimage_length(state.images), SO_F(state.active->filename), state.active->width, state.active->height, state.active->channels, 100.0f * state.zoom.current, fit_cstr(fit));
                 }
 
                 font_render(font, str_info, s_state.text_projection, text_pos, 1.0, 1.0, (vec3){1.0f, 1.0f, 1.0f}, text_dim, TEXT_ALIGN_LEFT);
@@ -559,7 +561,7 @@ int main(const int argc, const char **argv) {
                     snprintf(str_popup, sizeof(str_popup), "%s", filter_cstr(state.filter));
                 } break;
                 case POPUP_PRINT_STDOUT: {
-                    if(state.active) snprintf(str_popup, sizeof(str_popup), "stdout: %.*s", STR_F(state.active->filename));
+                    if(state.active) snprintf(str_popup, sizeof(str_popup), "stdout: %.*s", SO_F(state.active->filename));
                 } break;
                 default: case POPUP__COUNT: case POPUP_NONE: break;
             }

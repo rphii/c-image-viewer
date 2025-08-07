@@ -1,11 +1,11 @@
 #ifndef CIV_CONFIG_H
 
-#include <rphii/str.h>
+#include <rl/so.h>
 
 struct Civ;
 
 typedef struct CivConfig {
-    Str font_path;
+    So font_path;
     ssize_t font_size;
     bool show_description;
     bool show_loaded;

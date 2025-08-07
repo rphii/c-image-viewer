@@ -9,9 +9,8 @@
 #include FT_FREETYPE_H
 
 #include "gl_shader.h"
-#include <rphii/lut.h>
-#include <rphii/str.h>
-#include <rphii/utf8.h>
+#include <rl/lut.h>
+#include <rl/so.h>
 
 typedef struct Character {
     //unsigned int texture;
@@ -56,7 +55,7 @@ typedef struct Font {
 } Font;
 
 void text_init(void);
-[[nodiscard("memory leak")]] Font font_init(const Str *path, int height, float hspace, float vspace, unsigned int glyphs);
+[[nodiscard("memory leak")]] Font font_init(const So *path, int height, float hspace, float vspace, unsigned int glyphs);
 void font_load(Font *font, unsigned long i0, unsigned long iE);
 void font_load_single(Font *font, unsigned long i);
 void font_shader(Font *font, Shader shader);
