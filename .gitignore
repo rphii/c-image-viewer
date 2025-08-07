@@ -10,4 +10,6 @@ src/build
 *.cache
 *.*_old
 *.out
+subprojects/*
+!subprojects/*.wrap
 

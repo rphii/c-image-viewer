@@ -1,11 +1,11 @@
-#include <rl/vec.h>
+#include <rlc/vec.h>
 #include "glad.h"
 #include "timer.h"
 #include <cglm/cglm.h>
 #include <stdbool.h>
 #include <pthread.h>
 #include <GLFW/glfw3.h>
-#include <rl/arg.h>
+#include <rlarg.h>
 #include "civ_config.h"
 
 typedef enum {

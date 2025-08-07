@@ -1,6 +1,6 @@
 #ifndef CIV_CONFIG_H
 
-#include <rl/so.h>
+#include <rlso.h>
 
 struct Civ;
 
