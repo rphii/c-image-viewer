@@ -1,11 +1,11 @@
-#include <rphii/vec.h>
+#include <rl/vec.h>
 #include "glad.h"
 #include "timer.h"
 #include <cglm/cglm.h>
 #include <stdbool.h>
 #include <pthread.h>
 #include <GLFW/glfw3.h>
-#include <rphii/arg.h>
+#include <rl/arg.h>
 #include "civ_config.h"
 
 typedef enum {
@@ -28,7 +28,7 @@ typedef enum {
 } FitList;
 
 typedef struct Image {
-    Str filename;
+    So filename;
     unsigned char *data;
     bool freed_from_cpu;
     int width;
@@ -75,8 +75,8 @@ typedef struct ImageLoad {
 
 typedef struct ImageLoadArgs {
     VImage *images;
-    VStr *files;
-    //VrStr *files;
+    VSo *files;
+    //VrSo *files;
     pthread_mutex_t *mutex;
     bool *cancel;
     pthread_t thread;
@@ -122,7 +122,7 @@ typedef struct Civ {
     struct CivConfig config;
     struct CivConfig defaults;
     struct Arg *arg;
-    VStr filenames;
+    VSo filenames;
 } Civ;
 
 void glcontext_acquire(GlContext *context);

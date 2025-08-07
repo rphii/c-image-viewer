@@ -1,5 +1,4 @@
 #include <unistd.h>
-#include <rphii/file.h>
 #include <stb/stb_image.h>
 
 #include "civ.h"
@@ -7,7 +6,8 @@
 VEC_IMPLEMENT(VImage, vimage, Image, BY_REF, BASE, image_free);
 VEC_IMPLEMENT(VImage, vimage, Image, BY_REF, ERR);
 
-#include <rphii/str.h>
+#include <rl/so.h>
+#include <rl/array.h>
 
 void send_texture_to_gpu(Image *image, FilterList filter, bool *render) {
     if(!image) return;
@@ -89,10 +89,10 @@ void *image_load_thread(void *args) {
     if(image->data) goto exit;
 
     char cfilename[PATH_MAX];
-    str_as_cstr(image->filename, cfilename, PATH_MAX);
+    so_as_cstr(image->filename, cfilename, PATH_MAX);
 
     data = stbi_load(cfilename, &image->width, &image->height, &image->channels, 0);
-    //printf(">>> STBI_LOAD '%.*s' %zu / %zu\n", STR_F(image->filename), *image_load->queue->done, image_load->image_cap);
+    //printf(">>> STBI_LOAD '%.*s' %zu / %zu\n", SO_F(image->filename), *image_load->queue->done, image_load->image_cap);
 
 exit:
     /* finished this thread's work */
@@ -100,14 +100,14 @@ exit:
     /* check to only add as many images as we want */
     if(data) {
         if(!image_load->image_cap || (image_load->image_cap && (ssize_t)image_load->index < image_load->image_cap + (ssize_t)*image_load->queue->failed)) {
-            //printf(F(">>> LOADED '%.*s' %zu / %zu\n", FG_GN), STR_F(image->filename), *image_load->queue->done, image_load->image_cap);
+            //printf(F(">>> LOADED '%.*s' %zu / %zu\n", FG_GN), SO_F(image->filename), *image_load->queue->done, image_load->image_cap);
             image->data = data;
             ++(*image_load->queue->done);
         } else {
             stbi_image_free(data);
         }
     } else {
-        printf(">>> Load failed '%.*s'\n", STR_F(image->filename));
+        printf(">>> Load failed '%.*s'\n", SO_F(image->filename));
         ++(*image_load->queue->failed);
     }
     /* make space for next thread */
@@ -120,19 +120,18 @@ exit:
     return 0;
 }
 
-int image_add_to_queue(Str filename, void *data) {
+int image_add_to_queue(So filename, void *data) {
     VImage *images = data;
-    //printff("ADD TO QUEUE: '%.*s'", RSTR_F(filename));
+    //printff("ADD TO QUEUE: '%.*s'", RSO_F(filename));
     Image push = {0};
-    str_pdyn(&push.filename);
-    str_copy(&push.filename, filename);
+    so_copy(&push.filename, filename);
     TRYG(vimage_push_back(images, &push));
     return 0;
 error:
     return -1;
 }
 
-void images_load(VImage *images, VStr *files, pthread_mutex_t *mutex, bool *cancel, long jobs, size_t *done, CivConfig *config) {
+void images_load(VImage *images, VSo *files, pthread_mutex_t *mutex, bool *cancel, long jobs, size_t *done, CivConfig *config) {
     ASSERT_ARG(images);
     ASSERT_ARG(files);
     ASSERT_ARG(mutex);
@@ -149,23 +148,25 @@ void images_load(VImage *images, VStr *files, pthread_mutex_t *mutex, bool *canc
     queue.done = done;
     queue.failed = &failed;
     if(!queue.q) ABORT("job count cannot be 0!");
-    VStr subdirs = {0};
-    Str subdirname = STR_DYN();
+    VSo subdirs = {0};
+    So subdirname = SO;
     bool recursive = true;
 
     /* push images to load */
     pthread_mutex_lock(mutex);
     size_t n = array_len(*files);
     for(size_t i = 0; i < n; ++i) {
-        Str filename = array_at(*files, i);
+        So filename = array_at(*files, i);
         //if(!filename) ABORT(ERR_UNREACHABLE);
         /* now iterate over all subdirs until there are none */
+#if 0
         TRYC(file_exec(filename, &subdirs, recursive, true, image_add_to_queue, images));
         while(array_len(subdirs)) {
             subdirname = array_pop(subdirs);
             TRYC(file_exec(subdirname, &subdirs, recursive, true, image_add_to_queue, images));
             str_free(&subdirname);
         }
+#endif
     }
     array_free(subdirs);
 
@@ -245,7 +246,7 @@ void images_load(VImage *images, VStr *files, pthread_mutex_t *mutex, bool *canc
 
     return;
 
-error: ABORT(ERR_UNREACHABLE);
+error: ABORT(ERR_UNREACHABLE());
 }
 
 void *images_load_voidptr(void *argp) {
@@ -268,9 +269,9 @@ void image_free(Image *image) {
             stbi_image_free(image->data);
         }
     }
-    str_free(&image->filename);
+    so_free(&image->filename);
     /* TODO: this SHOULD be freed, I THINK, but if I do that I get double free ... AHHHHHHHHH */
-    //str_free(&image->filename);
+    //so_free(&image->filename);
     memset(image, 0, sizeof(*image));
 }
 
@@ -325,7 +326,7 @@ void civ_cmd_print_stdout(Civ *civ, bool print_stdout) {
     if(!print_stdout) return;
     if(!civ->active) return;
     pthread_mutex_lock(civ->loader.mutex);
-    printf("%.*s\n", STR_F(civ->active->filename));
+    printf("%.*s\n", SO_F(civ->active->filename));
     pthread_mutex_unlock(civ->loader.mutex);
     civ_popup_set(civ, POPUP_PRINT_STDOUT);
 }
@@ -409,8 +410,8 @@ void civ_cmd_pan(Civ *civ, vec2 pan) {
 void civ_arg(Civ *civ, const char *name) {
     civ->arg = arg_new();
     struct Arg *arg = civ->arg;
-    arg_init(arg, str_l(name), str("image viewer written in C"), str("https://github.com/rphii/c-image-viewer"));
-    arg_init_rest(arg, str("filenames"), &civ->filenames);
+    arg_init(arg, so_l(name), so("image viewer written in C"), so("https://github.com/rphii/c-image-viewer"));
+    arg_init_rest(arg, so("filenames"), &civ->filenames);
     arg_init_width(arg, 100, 45);
     arg_init_fmt(arg);
 
@@ -418,45 +419,45 @@ void civ_arg(Civ *civ, const char *name) {
     CivConfig *defaults = &civ->defaults;
     CivConfig *config = &civ->config;
 
-    //arg_allow_rest(arg, str("images"));
+    //arg_allow_rest(arg, so("images"));
     struct ArgX *x = 0;
     struct ArgXGroup *g = 0, *o = 0;
-    o=argx_group(arg, str("Options"), false);
+    o=argx_group(arg, so("Options"), false);
     argx_builtin_opt_help(o);
-    argx_builtin_opt_source(o, str("/etc/civ/civ.conf"));
-    argx_builtin_opt_source(o, str("$HOME/.config/rphiic/colors.conf"));
-    argx_builtin_opt_source(o, str("$HOME/.config/civ/civ.conf"));
-    argx_builtin_opt_source(o, str("$XDG_CONFIG_HOME/civ/civ.conf"));
+    argx_builtin_opt_source(o, so("/etc/civ/civ.conf"));
+    argx_builtin_opt_source(o, so("$HOME/.config/rphiic/colors.conf"));
+    argx_builtin_opt_source(o, so("$HOME/.config/civ/civ.conf"));
+    argx_builtin_opt_source(o, so("$XDG_CONFIG_HOME/civ/civ.conf"));
     /* font */
-    x=argx_init(o, 'f', str("font-path"), str("specify font path"));
+    x=argx_init(o, 'f', so("font-path"), so("specify font path"));
       argx_str(x, &config->font_path, &defaults->font_path);
-    x=argx_init(o, 'F', str("font-size"), str("specify font size"));
+    x=argx_init(o, 'F', so("font-size"), so("specify font size"));
       argx_ssz(x, &config->font_size, &defaults->font_size);
-    x=argx_init(o, 'd', str("description"), str("toggle description on/off"));
+    x=argx_init(o, 'd', so("description"), so("toggle description on/off"));
       argx_bool(x, &config->show_description, &defaults->show_description);
-    x=argx_init(o, '%', str("loaded"), str("toggle loading info on/off"));
+    x=argx_init(o, '%', so("loaded"), so("toggle loading info on/off"));
       argx_bool(x, &config->show_loaded, &defaults->show_loaded);
-    x=argx_init(o, 0, str("quit-after-full-load"), str("quit after fully loading"));
+    x=argx_init(o, 0, so("quit-after-full-load"), so("quit after fully loading"));
       argx_bool(x, &config->qafl, &defaults->qafl);
-    x=argx_init(o, 'j', str("jobs"), str("set maximum jobs to use when loading"));
+    x=argx_init(o, 'j', so("jobs"), so("set maximum jobs to use when loading"));
       argx_ssz(x, &config->jobs, &defaults->jobs);
 
-    x=argx_init(o, 's', str("filter"), str("set filter"));
+    x=argx_init(o, 's', so("filter"), so("set filter"));
       g=argx_opt(x, (int *)&civ->filter, 0);
-        x=argx_init(g, 0, str("nearest"), str("set nearest"));
+        x=argx_init(g, 0, so("nearest"), so("set nearest"));
           argx_opt_enum(x, FILTER_NEAREST);
-        x=argx_init(g, 0, str("linear"), str("set linear"));
+        x=argx_init(g, 0, so("linear"), so("set linear"));
           argx_opt_enum(x, FILTER_LINEAR);
 
-    x=argx_init(o, 'S', str("shuffle"), str("shuffle images before loading"));
+    x=argx_init(o, 'S', so("shuffle"), so("shuffle images before loading"));
       argx_bool(x, &config->shuffle, &defaults->shuffle);
-    x=argx_init(o, 'C', str("image-cap"), str("limit number of images to be loaded, 0 to load all"));
+    x=argx_init(o, 'C', so("image-cap"), so("limit number of images to be loaded, 0 to load all"));
       argx_ssz(x, &config->image_cap, &defaults->image_cap);
 
-    o=argx_group(arg, str("Environment Variables"), false);
+    o=argx_group(arg, so("Environment Variables"), false);
     argx_builtin_env_compgen(o);
 
-    o=argx_group(arg, str("Color Adjustments"), true);
+    o=argx_group(arg, so("Color Adjustments"), true);
     argx_builtin_opt_rice(o);
 }
 

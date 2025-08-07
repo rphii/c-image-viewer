@@ -1,16 +1,15 @@
 #include "civ_config.h"
 #include "civ.h"
-#include <rphii/file.h>
 
 #include <unistd.h>
 #include <wordexp.h>
 #include <sys/sysmacros.h>
 
-ErrDecl civ_config_load(Civ *civ, Str *path);
-ErrDecl civ_config_path(Civ *civ, Str *path);
+ErrDecl civ_config_load(Civ *civ, So *path);
+ErrDecl civ_config_path(Civ *civ, So *path);
 
 #define ERR_civ_config_path(...) "error while getting config path"
-ErrImpl civ_config_path(Civ *civ, Str *path) {
+ErrImpl civ_config_path(Civ *civ, So *path) {
     ASSERT_ARG(civ);
     ASSERT_ARG(path);
     int err = 0;
@@ -19,9 +18,9 @@ ErrImpl civ_config_path(Civ *civ, Str *path) {
         "$HOME/.config/civ/civ.conf",
         "/etc/civ/civ.conf"
     };
-    char cpath[FILE_PATH_MAX];
+    char cpath[SO_FILE_PATH_MAX];
     wordexp_t word = {0};
-    for(size_t i = 0; i < SIZE_ARRAY(paths); ++i, str_clear(path)) {
+    for(size_t i = 0; i < SIZE_ARRAY(paths); ++i, so_clear(path)) {
         wordfree(&word);
         memset(&word, 0, sizeof(word));
         if(wordexp(paths[i], &word, 0)) {
@@ -30,8 +29,8 @@ ErrImpl civ_config_path(Civ *civ, Str *path) {
         if(!word.we_wordv[0]) {
             continue;
         }
-        str_fmt(path, "%s", word.we_wordv[0]);
-        str_as_cstr(*path, cpath, FILE_PATH_MAX);
+        so_fmt(path, "%s", word.we_wordv[0]);
+        so_as_cstr(*path, cpath, SO_FILE_PATH_MAX);
         if(!strlen(cpath) || access(cpath, R_OK) == -1) {
             continue;
         }
@@ -47,7 +46,7 @@ error:
 ErrImpl civ_config_defaults(Civ *civ) {
     int err = 0;
     CivConfig *defaults = &civ->defaults;
-    defaults->font_path = str("/usr/share/fonts/MonoLisa/ttf/MonoLisa-Regular.ttf");
+    defaults->font_path = so("/usr/share/fonts/MonoLisa/ttf/MonoLisa-Regular.ttf");
     defaults->font_size = 18;
     defaults->show_description = false;
     defaults->show_loaded = true;
@@ -59,11 +58,11 @@ ErrImpl civ_config_defaults(Civ *civ) {
     civ->config = *defaults;
 
     /* load config */
-    Str path = STR_DYN();
-    //printff("PATH: '%.*s'", STR_F(path));
+    So path = SO;
+    //printff("PATH: '%.*s'", SO_F(path));
 
 clean:
-    str_free(&path);
+    so_free(&path);
     return err;
 error:
     ERR_CLEAN;

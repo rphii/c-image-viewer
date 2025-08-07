@@ -1,5 +1,4 @@
 #include "gl_text.h"
-#include <rphii/utf8.h>
 
 static bool text_initialized;
 
@@ -48,7 +47,7 @@ void text_init(void) {
     initialized = true;
 }
 
-Font font_init(const Str *path, int height, float hspace, float vspace, unsigned int glyphs) {
+Font font_init(const So *path, int height, float hspace, float vspace, unsigned int glyphs) {
     if(!text_initialized) {
         text_init();
         text_initialized = true;
@@ -56,7 +55,7 @@ Font font_init(const Str *path, int height, float hspace, float vspace, unsigned
     FT_Face face = {0};
     int width = 0;
     char cpath[PATH_MAX];
-    str_as_cstr(*path, cpath, PATH_MAX);
+    so_as_cstr(*path, cpath, PATH_MAX);
     if(FT_New_Face(ft, cpath, 0, &face)) {
         fprintf(stderr, "[FREETYPE] Error! Could not load font: '%s'\n", cpath);
         //assert(0);
@@ -203,10 +202,10 @@ void font_render(Font font, const char *text, mat4 projection, vec2 pos, float s
     unsigned int i_instance = 0;
     float min_x = 0, min_y = 0, max_x = 0, max_y = 0;
     /* iterate through characters */
-    unsigned long len = strlen(text);
-    for(unsigned long i = 0; i < len; ++i) {
-        U8Point u8p = {0};
-        if(cstr_to_u8_point((char *)&text[i], &u8p)) {
+    So tx = so_l(text);
+    for(unsigned long i = 0; i < tx.len; ++i) {
+        So_Uc_Point u8p = {0};
+        if(so_uc_point(so_i0(tx, i), &u8p)) {
             u8p.val = 0;
             u8p.bytes = 1;
         }
