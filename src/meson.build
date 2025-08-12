@@ -8,6 +8,7 @@ sources = [
   'gl_text.c',
   'gl_uniform.c',
   'glad.c',
+  'queue.c',
   'main.c',
   'timer.c',
   ]
