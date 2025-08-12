@@ -1,3 +1,5 @@
+#ifndef CIV_H
+
 #include <rlc/vec.h>
 #include <rlarg.h>
 #include <rlpw.h>
@@ -67,6 +69,8 @@ typedef enum {
 
 typedef struct Civ {
     VImage images;
+    bool *gl_update;
+    pthread_mutex_t images_mtx;
     Image *active;
     FilterList filter;
     size_t selected;
@@ -79,7 +83,7 @@ typedef struct Civ {
         FitList current;
     } fit;
     vec2 pan;
-    //ImageLoadArgs loader;
+    Pw pw;
     struct {
         Timer timer;
         PopupList active;
@@ -112,3 +116,7 @@ void civ_cmd_description(Civ *civ, bool toggle);
 void civ_cmd_zoom(Civ *civ, double zoom);
 void civ_cmd_filter(Civ *civ, bool next);
 void civ_cmd_pan(Civ *civ, vec2 pan);
+
+#define CIV_H
+#endif
+

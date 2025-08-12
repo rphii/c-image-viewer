@@ -18,6 +18,7 @@
 #include <rlc/array.h>
 #include <rlc/err.h>
 #include "civ.h"
+#include "queue.h"
 
 #include "gl_uniform.h"
 #include "gl_box.h"
@@ -286,19 +287,13 @@ int main(const int argc, const char **argv) {
     if(!array_len(state.filenames)) quit_early = true;
     if(quit_early) goto clean;
 
+    pw_init(&state.pw, state.config.jobs);
+    pw_dispatch(&state.pw);
 
     //return -1;
 
     s_state.wwidth = 800;
     s_state.wheight = 600;
-
-    /* get directory */
-    char directory[PATH_MAX] = {0};
-    char shaders[PATH_MAX] = {0};
-    if(readlink("/proc/self/exe", directory, PATH_MAX) == -1) THROW(ERR_UNREACHABLE("failed reading link"));
-    So dir = so_get_dir(so_ll(directory, strlen(directory)));
-    if(so_len(dir) > PATH_MAX - 10) THROW(ERR_UNREACHABLE("path too long"));
-    snprintf(shaders, PATH_MAX, "%.*s/shaders", SO_F(dir));
 
     //printf("%zu\n", sizeof(ImageLoadThreadQueue));
     //return 0;
@@ -364,6 +359,7 @@ int main(const int argc, const char **argv) {
     //glEnable(GL_DEPTH_TEST);
 
     s_action.gl_update = true;
+    state.gl_update = &s_action.gl_update;
 
     //text_init();
     glm_ortho(0.0f, s_state.wwidth, 0.0f, s_state.wheight, -1.0f, 1.0f, s_state.image_projection);
@@ -392,6 +388,22 @@ int main(const int argc, const char **argv) {
 
     stbi_set_flip_vertically_on_load(true);
 
+    QueueDo qd = {
+        .civ = &state
+    };
+
+    for(size_t i = 0; i < array_len(state.filenames); ++i) {
+        So file_or_dir = array_at(state.filenames, i);
+        queue_walk(file_or_dir, queue_do(&qd, file_or_dir));
+    }
+
+#if 0
+    while(true) {
+        printff("busy: %u", pw_is_busy(&state.pw));
+        sleep(2);
+    }
+#endif
+
     for(;;) {
         if(glfwWindowShouldClose(window)) break;
 
@@ -408,9 +420,8 @@ int main(const int argc, const char **argv) {
 
         /* process */
         process_action_map(window, &state);
-
-#if 0
-        pthread_mutex_lock(&mutex_image);
+#if 1
+        pthread_mutex_lock(&state.images_mtx);
         if(vimage_length(state.images)) {
             if(state.selected > vimage_length(state.images)) state.selected = vimage_length(state.images) - 1;
             state.active = vimage_get_at(&state.images, state.selected);
@@ -425,7 +436,7 @@ int main(const int argc, const char **argv) {
                 i += (point.bytes - 1);
             }
         }
-        pthread_mutex_unlock(&mutex_image);
+        pthread_mutex_unlock(&state.images_mtx);
 #endif
 
 #if 0
@@ -528,7 +539,29 @@ int main(const int argc, const char **argv) {
                 font_render(font, str_info, s_state.text_projection, text_pos, 1.0, 1.0, (vec3){1.0f, 1.0f, 1.0f}, text_dim, TEXT_ALIGN_RENDER);
             }
 
+            {
+                pthread_mutex_lock(&state.images_mtx);
+                bool busy = pw_is_busy(&state.pw);
+                size_t len = vimage_length(state.images);
+                size_t cap = state.config.image_cap;
+                if(state.config.show_loaded && busy) {
+                    if(cap) {
+                        snprintf(str_load, sizeof(str_load), "Loaded %.1f%% (%zu/%zu)", 100.0 * (double)len / (double)cap, len, cap);
+                    } else {
+                        snprintf(str_load, sizeof(str_load), "Loaded %zu..", len);
+                    }
+                    vec2 text_pos = { s_state.twidth - 5, s_state.theight - font.height * 1.25 };
+                    vec4 text_dim;
+                    font_render(font, str_load, s_state.text_projection, text_pos, 1.0, 1.0, (vec3){1.0f, 1.0f, 1.0f}, text_dim, TEXT_ALIGN_RIGHT);
+                    glEnable(GL_BLEND);
+                    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                    box_render(sh_box, s_state.text_projection, text_dim, (vec4){0.0f, 0.0f, 0.0f, 0.7f}, 6);
+                    font_render(font, str_load, s_state.text_projection, text_pos, 1.0, 1.0, (vec3){1.0f, 1.0f, 1.0f}, text_dim, TEXT_ALIGN_RENDER);
+                }
+                pthread_mutex_unlock(&state.images_mtx);
+            }
 #if 0
+
             if(state.config.show_loaded && state.loader.done < vimage_length(state.images)) {
                 ssize_t loaded = state.loader.done;
                 ssize_t from = state.config.image_cap && state.config.image_cap < (ssize_t)vimage_length(state.images) ? state.config.image_cap : (ssize_t)vimage_length(state.images);
