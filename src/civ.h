@@ -1,11 +1,14 @@
 #include <rlc/vec.h>
+#include <rlarg.h>
+#include <rlpw.h>
+
 #include "glad.h"
 #include "timer.h"
+
 #include <cglm/cglm.h>
 #include <stdbool.h>
 #include <pthread.h>
 #include <GLFW/glfw3.h>
-#include <rlarg.h>
 #include "civ_config.h"
 
 typedef enum {
@@ -42,49 +45,12 @@ void image_free(Image *image);
 
 VEC_INCLUDE(VImage, vimage, Image, BY_REF, BASE);
 
-#define ThreadQueue(X) \
-    typedef struct X##ThreadQueue { \
-        pthread_t id; \
-        pthread_attr_t attr; \
-        pthread_mutex_t mutex; \
-        size_t i0; \
-        long len; \
-        struct X **q; \
-        long jobs; \
-        size_t *done; \
-        size_t *failed; \
-        bool need_free; \
-    } X##ThreadQueue;
-
 typedef struct VImage VImage;
 
 typedef struct GlContext {
     GLFWwindow *window;
     pthread_mutex_t mutex;
 } GlContext;
-
-ThreadQueue(ImageLoad);
-typedef struct ImageLoad {
-    size_t index;
-    VImage *images;
-    pthread_mutex_t *mutex;
-    GlContext *context;
-    ssize_t image_cap;
-  ImageLoadThreadQueue *queue;
-} ImageLoad;
-
-typedef struct ImageLoadArgs {
-    VImage *images;
-    VSo *files;
-    //VrSo *files;
-    pthread_mutex_t *mutex;
-    bool *cancel;
-    pthread_t thread;
-    long jobs;
-    size_t done;
-    GlContext *context;
-    CivConfig *config;
-} ImageLoadArgs;
 
 typedef enum {
     POPUP_NONE,
@@ -98,7 +64,6 @@ typedef enum {
     /* above */
     POPUP__COUNT
 } PopupList;
-
 
 typedef struct Civ {
     VImage images;
@@ -132,7 +97,6 @@ const char *fit_cstr(FitList id);
 const char *filter_cstr(FilterList id);
 
 void send_texture_to_gpu(Image *image, FilterList filter, bool *render);
-void images_load_async(ImageLoadArgs *args);
 void civ_free(Civ *state);
 #define ERR_civ_defaults(...) "error while loading defaults"
 int civ_defaults(Civ *civ);
