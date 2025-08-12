@@ -270,6 +270,7 @@ int main(const int argc, const char **argv) {
     state.filter = FILTER_NEAREST;
     state.zoom.current = 1.0;
 
+#if 0
     pthread_mutex_t mutex_image;
     pthread_mutex_init(&mutex_image, 0);
     state.loader.files = &state.filenames;
@@ -277,6 +278,7 @@ int main(const int argc, const char **argv) {
     state.loader.mutex = &mutex_image;
     state.loader.cancel = &s_action.quit;
     state.loader.config = &state.config;
+#endif
 
     civ_arg(&state, argv[0]);
     TRYC(civ_config_defaults(&state));
@@ -319,8 +321,8 @@ int main(const int argc, const char **argv) {
     }
     glfwMakeContextCurrent(window);
 
-    state.loader.jobs = state.config.jobs;
-    images_load_async(&state.loader);
+    //state.loader.jobs = state.config.jobs;
+    //images_load_async(&state.loader);
 
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
         printf("Failed to initialize GLAD\n");
@@ -407,6 +409,7 @@ int main(const int argc, const char **argv) {
         /* process */
         process_action_map(window, &state);
 
+#if 0
         pthread_mutex_lock(&mutex_image);
         if(vimage_length(state.images)) {
             if(state.selected > vimage_length(state.images)) state.selected = vimage_length(state.images) - 1;
@@ -423,8 +426,9 @@ int main(const int argc, const char **argv) {
             }
         }
         pthread_mutex_unlock(&mutex_image);
+#endif
 
-
+#if 0
         if(done_prev != state.loader.done) {
             done_prev = state.loader.done;
             s_action.gl_update = true;
@@ -433,6 +437,7 @@ int main(const int argc, const char **argv) {
                 s_action.quit = true;
             }
         }
+#endif
 
         if(state.popup.active && timer_timedout(&state.popup.timer)) {
             civ_popup_set(&state, POPUP_NONE);
@@ -523,6 +528,7 @@ int main(const int argc, const char **argv) {
                 font_render(font, str_info, s_state.text_projection, text_pos, 1.0, 1.0, (vec3){1.0f, 1.0f, 1.0f}, text_dim, TEXT_ALIGN_RENDER);
             }
 
+#if 0
             if(state.config.show_loaded && state.loader.done < vimage_length(state.images)) {
                 ssize_t loaded = state.loader.done;
                 ssize_t from = state.config.image_cap && state.config.image_cap < (ssize_t)vimage_length(state.images) ? state.config.image_cap : (ssize_t)vimage_length(state.images);
@@ -539,6 +545,7 @@ int main(const int argc, const char **argv) {
                 box_render(sh_box, s_state.text_projection, text_dim, (vec4){0.0f, 0.0f, 0.0f, 0.7f}, 6);
                 font_render(font, str_load, s_state.text_projection, text_pos, 1.0, 1.0, (vec3){1.0f, 1.0f, 1.0f}, text_dim, TEXT_ALIGN_RENDER);
             }
+#endif
 
             str_popup[0] = 0;
             switch(state.popup.active) {

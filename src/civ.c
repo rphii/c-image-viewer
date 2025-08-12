@@ -76,6 +76,7 @@ void send_texture_to_gpu(Image *image, FilterList filter, bool *render) {
 
 #include <limits.h>
 
+#if 0
 void *image_load_thread(void *args) {
     ImageLoad *image_load = args;
     Image *image = 0;
@@ -261,6 +262,7 @@ void images_load_async(ImageLoadArgs *args) {
     pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
     pthread_create(&args->thread, &attr, images_load_voidptr, args);
 }
+#endif
 
 void image_free(Image *image) {
     if(image->data) {
@@ -294,12 +296,14 @@ const char *filter_cstr(FilterList id) {
 }
 
 void civ_free(Civ *state) {
+#if 0
     if(state->loader.thread) {
         pthread_join(state->loader.thread, 0);
         pthread_mutex_lock(state->loader.mutex);
         vimage_free(&state->images);
         pthread_mutex_unlock(state->loader.mutex);
     }
+#endif
     arg_free(&state->arg);
     /* done freeing; set zero */
     memset(state, 0, sizeof(*state));
@@ -325,9 +329,11 @@ void civ_cmd_random(Civ *civ, bool random) {
 void civ_cmd_print_stdout(Civ *civ, bool print_stdout) {
     if(!print_stdout) return;
     if(!civ->active) return;
+#if 0
     pthread_mutex_lock(civ->loader.mutex);
     printf("%.*s\n", SO_F(civ->active->filename));
     pthread_mutex_unlock(civ->loader.mutex);
+#endif
     civ_popup_set(civ, POPUP_PRINT_STDOUT);
 }
 
