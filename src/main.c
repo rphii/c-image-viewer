@@ -373,6 +373,7 @@ int main(const int argc, const char **argv) {
     //Font font = font_init("/usr/share/fonts/MonoLisa/ttf/MonoLisa-Regular.ttf", font_size, 1.0, 1.5, 1024);
 
     Font font = font_init(&state.config.font_path, state.config.font_size, 1.0, 1.5, 2048);
+    state.font = &font;
     font_shader(&font, sh_text);
     font_load(&font, 0, 256);
 

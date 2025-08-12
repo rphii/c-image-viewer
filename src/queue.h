@@ -7,6 +7,7 @@
 typedef struct QueueDo {
     Civ *civ;
     So file_or_dir;
+    Image img;
 } QueueDo;
 
 QueueDo *queue_do(QueueDo *qd, So file_or_dir);
