@@ -18,6 +18,7 @@ m_dep = cc.find_library('m', required: false)
 
 rlc_dep = dependency('rlc', fallback : ['rlc', 'rlc_dep'], default_options: ['default_library=static'])
 rlso_dep = dependency('rlso', fallback : ['rlso', 'rlso_dep'], default_options: ['default_library=static'])
+rlpw_dep = dependency('rlpw', fallback : ['rlpw', 'rlpw_dep'], default_options: ['default_library=static'])
 rlarg_dep = dependency('rlarg', fallback : ['rlarg', 'rlarg_dep'], default_options: ['default_library=static'])
 
 ft2_dep = dependency('freetype2', required: true)
@@ -25,7 +26,7 @@ glfw3_dep = dependency('glfw3', required: true)
 
 civ = executable('civ',
   sources,
-  dependencies: [ft2_dep, rlc_dep, rlso_dep, rlarg_dep, glfw3_dep, m_dep],
+  dependencies: [ft2_dep, rlc_dep, rlso_dep, rlpw_dep, rlarg_dep, glfw3_dep, m_dep],
   install: true,
   )
 

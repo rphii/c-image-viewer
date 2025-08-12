@@ -114,7 +114,7 @@ typedef struct Civ {
         FitList current;
     } fit;
     vec2 pan;
-    ImageLoadArgs loader;
+    //ImageLoadArgs loader;
     struct {
         Timer timer;
         PopupList active;
