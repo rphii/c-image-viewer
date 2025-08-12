@@ -6,6 +6,7 @@
 
 #include "glad.h"
 #include "timer.h"
+#include "gl_text.h"
 
 #include <cglm/cglm.h>
 #include <stdbool.h>
@@ -69,8 +70,10 @@ typedef enum {
 
 typedef struct Civ {
     VImage images;
-    bool *gl_update;
     pthread_mutex_t images_mtx;
+    bool *gl_update;
+    Font *font;
+    pthread_mutex_t font_mtx;
     Image *active;
     FilterList filter;
     size_t selected;
