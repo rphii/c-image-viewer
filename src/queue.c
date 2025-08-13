@@ -55,12 +55,12 @@ void *keep_valid_images(void *void_qd) {
             vimage_push_back(&qd->civ->images, img);
             pthread_mutex_unlock(&qd->civ->images_mtx);
             ++added;
-            *qd->civ->gl_update = true;
-            glfwPostEmptyEvent();
         } else {
             image_free(img);
         }
     }
+    *qd->civ->gl_update = true;
+    glfwPostEmptyEvent();
     free(qd);
     return 0;
 }
@@ -91,6 +91,8 @@ void load_image(QueueDo *qd) {
             qd->img->height = load.height;
             qd->img->data = load.data;
             ++qd->civ->images_loaded;
+            *qd->civ->gl_update = true;
+            glfwPostEmptyEvent();
         } else {
             ++qs->number_of_non_images;
         }
