@@ -546,8 +546,9 @@ int main(const int argc, const char **argv) {
             {
                 pthread_mutex_lock(&state.images_mtx);
                 bool busy = pw_is_busy(&state.pw);
-                size_t len = vimage_length(state.images);
+                size_t len = state.images_loaded;
                 size_t cap = state.config.image_cap;
+                if(cap && len > cap) len = cap;
                 if(state.config.show_loaded && busy) {
                     if(cap) {
                         snprintf(str_load, sizeof(str_load), "Loaded %.1f%% (%zu/%zu)", 100.0 * (double)len / (double)cap, len, cap);
