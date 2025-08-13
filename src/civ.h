@@ -42,11 +42,14 @@ typedef struct Image {
     int channels;
     unsigned int texture;
     FilterList sent;
+    size_t index_pre_loading;
 } Image;
 
+int image_cmp(Image *a, Image *b);
 void image_free(Image *image);
 
 VEC_INCLUDE(VImage, vimage, Image, BY_REF, BASE);
+VEC_INCLUDE(VImage, vimage, Image, BY_REF, SORT);
 
 typedef struct VImage VImage;
 
@@ -68,8 +71,12 @@ typedef enum {
     POPUP__COUNT
 } PopupList;
 
+typedef struct QueueState QueueState;
+
 typedef struct Civ {
     VImage images;
+    VImage images_discover;
+    size_t images_loaded;
     pthread_mutex_t images_mtx;
     bool *gl_update;
     Font *font;
@@ -95,6 +102,7 @@ typedef struct Civ {
     struct CivConfig defaults;
     struct Arg *arg;
     VSo filenames;
+    QueueState *qstate;
 } Civ;
 
 void glcontext_acquire(GlContext *context);
