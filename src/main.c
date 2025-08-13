@@ -402,7 +402,7 @@ int main(const int argc, const char **argv) {
             queue_walk(file_or_dir, queue_do(&qd, file_or_dir));
         } else {
             so_env_get(&pwd, so("PWD"));
-            printff("PWD:%.*s",SO_F(pwd));
+            //printff("PWD:%.*s",SO_F(pwd));
             queue_walk(pwd, queue_do(&qd, pwd));
         }
     }
