@@ -337,11 +337,9 @@ void civ_cmd_random(Civ *civ, bool random) {
 void civ_cmd_print_stdout(Civ *civ, bool print_stdout) {
     if(!print_stdout) return;
     if(!civ->active) return;
-#if 0
-    pthread_mutex_lock(civ->loader.mutex);
+    pthread_mutex_lock(&civ->images_mtx);
     printf("%.*s\n", SO_F(civ->active->filename));
-    pthread_mutex_unlock(civ->loader.mutex);
-#endif
+    pthread_mutex_unlock(&civ->images_mtx);
     civ_popup_set(civ, POPUP_PRINT_STDOUT);
 }
 
