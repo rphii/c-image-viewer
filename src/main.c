@@ -361,7 +361,7 @@ int main(const int argc, const char **argv) {
     s_action.gl_update = true;
     state.gl_update = &s_action.gl_update;
 
-    //text_init();
+    text_init();
     glm_ortho(0.0f, s_state.wwidth, 0.0f, s_state.wheight, -1.0f, 1.0f, s_state.image_projection);
 
     glm_mat4_identity(s_state.image_view);
@@ -443,7 +443,7 @@ int main(const int argc, const char **argv) {
                 if(so_uc_point(so_i0(state.active->filename, i), &point)) {
                     THROW(ERR_UNREACHABLE("invalid utf8 codepoint"));
                 }
-                //font_load_single(&font, point.val);
+                font_load_single(&font, point.val);
                 i += (point.bytes - 1);
             }
         }
