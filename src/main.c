@@ -389,6 +389,8 @@ int main(const int argc, const char **argv) {
 
     stbi_set_flip_vertically_on_load(true);
 
+    QueueState qstate = {0};
+    state.qstate = &qstate;
     QueueDo qd = {
         .civ = &state
     };
@@ -397,6 +399,7 @@ int main(const int argc, const char **argv) {
         So file_or_dir = array_at(state.filenames, i);
         queue_walk(file_or_dir, queue_do(&qd, file_or_dir));
     }
+    pw_when_done(&state.pw, queue_watch_filter_launcher, queue_do(&qd, SO));
 
 #if 0
     while(true) {

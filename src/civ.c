@@ -5,6 +5,7 @@
 
 VEC_IMPLEMENT(VImage, vimage, Image, BY_REF, BASE, image_free);
 VEC_IMPLEMENT(VImage, vimage, Image, BY_REF, ERR);
+VEC_IMPLEMENT(VImage, vimage, Image, BY_REF, SORT, image_cmp);
 
 #include <rlso.h>
 #include <rlc/array.h>
@@ -263,6 +264,13 @@ void images_load_async(ImageLoadArgs *args) {
     pthread_create(&args->thread, &attr, images_load_voidptr, args);
 }
 #endif
+
+int image_cmp(Image *a, Image *b) {
+    //printff("CMP %p-%p",a,b);
+    //so_printdbg(a->filename);
+    //so_printdbg(b->filename);
+    return so_cmp_s(a->filename, b->filename);
+}
 
 void image_free(Image *image) {
     if(image->data) {
