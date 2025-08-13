@@ -399,7 +399,7 @@ int main(const int argc, const char **argv) {
         So file_or_dir = array_at(state.filenames, i);
         queue_walk(file_or_dir, queue_do(&qd, file_or_dir));
     }
-    pw_when_done(&state.pw, queue_watch_filter_launcher, queue_do(&qd, SO));
+    pw_when_done(&state.pw, when_done_gathering, queue_do(&qd, SO));
 
 #if 0
     while(true) {

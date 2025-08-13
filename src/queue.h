@@ -25,7 +25,7 @@ typedef struct QueueDo {
 } QueueDo;
 
 QueueDo *queue_do(QueueDo *qd, So file_or_dir);
-void *queue_watch_filter_launcher(void *void_qd);
+void *when_done_gathering(void *void_qd);
 int queue_walk(So file_or_dir, void *void_qd);
 
 //void queue_walk(Pw *pw, So file_or_dir);
