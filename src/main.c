@@ -395,9 +395,16 @@ int main(const int argc, const char **argv) {
         .civ = &state
     };
 
+    So pwd = SO;
     for(size_t i = 0; i < array_len(state.filenames); ++i) {
         So file_or_dir = array_at(state.filenames, i);
-        queue_walk(file_or_dir, queue_do(&qd, file_or_dir));
+        if(so_cmp(file_or_dir, so("."))) {
+            queue_walk(file_or_dir, queue_do(&qd, file_or_dir));
+        } else {
+            so_env_get(&pwd, so("PWD"));
+            printff("PWD:%.*s",SO_F(pwd));
+            queue_walk(pwd, queue_do(&qd, pwd));
+        }
     }
     pw_when_done(&state.pw, when_done_gathering, queue_do(&qd, SO));
 
