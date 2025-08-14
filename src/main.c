@@ -470,7 +470,7 @@ int main(const int argc, const char **argv) {
         if(s_action.gl_update) {
             rendered = true;
             s_action.gl_update = false;
-            glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+            glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT);
 
             if(state.active && state.active->data) {
@@ -648,7 +648,6 @@ clean:
     //glfwSwapBuffers(window);
 
     s_action.quit = true;
-
 
     shader_free(sh_rect);
     shader_free(sh_text);
