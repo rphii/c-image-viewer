@@ -20,7 +20,10 @@ static unsigned int VBO;
 static mat4 transforms[TEXT_INSTANCE_LIMIT];
 static unsigned int maps[TEXT_INSTANCE_LIMIT];
 
+//#include <fontconfig/fontconfig.h>
+
 void text_init(void) {
+    //FcInit();
     /* initialize freetype */
     if(FT_Init_FreeType(&ft)) {
         fprintf(stderr, "[FREETYPE] Error! Could not initialize library\n");
@@ -316,6 +319,7 @@ void font_render(Font font, const char *text, mat4 projection, vec2 pos, float s
 }
 
 void font_free(Font *font) {
+    if(!font->width) return;
     FT_Done_Face(font->face);
     tcharacter_free(&font->characters);
     //memset(font, 0, sizeof(*font));
