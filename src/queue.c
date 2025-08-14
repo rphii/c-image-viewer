@@ -82,7 +82,7 @@ void *remove_too_many(void *void_qd) {
         current = *vimage_get_at(&qd->civ->images, selected);
     }
     vimage_sort_by_index(&qd->civ->images);
-    for(size_t i = 0; i < len; ++i) {
+    for(size_t i = 0; qd->civ->config.preview_retain && i < len; ++i) {
         Image *check = vimage_get_at(&qd->civ->images, i);
         if(check->index_pre_loading == current.index_pre_loading) {
             qd->civ->selected = i;

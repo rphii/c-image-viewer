@@ -459,6 +459,8 @@ void civ_arg(Civ *civ, const char *name) {
       argx_ssz(x, &config->jobs, &defaults->jobs);
     x=argx_init(o, 'p', so("preview-load"), so("allows to preview while images get loaded in. the order won't be correct (specified by shuffle) until all images are loaded in, when it is fixed"));
       argx_bool(x, &config->preview_load, &defaults->preview_load);
+    x=argx_init(o, 'P', so("preview-retain"), so("retain the index throughout previewing images and until after having fixed the ordering"));
+      argx_bool(x, &config->preview_retain, &defaults->preview_retain);
 
     x=argx_init(o, 's', so("filter"), so("set filter"));
       g=argx_opt(x, (int *)&civ->filter, 0);
