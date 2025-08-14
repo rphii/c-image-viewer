@@ -76,7 +76,7 @@ an example config:
     jobs = 4
     filter = linear
 
-## Wayland
+## Hyprland
 
 Changing from floating to tiling window can be done via:
 
