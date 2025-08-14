@@ -266,6 +266,7 @@ int main(const int argc, const char **argv) {
     Shader sh_text = {0};
     Shader sh_box = {0};
     Shader sh_rect = {0};
+    bool font_loaded = false;
 
     Civ state = {0};
     state.filter = FILTER_NEAREST;
@@ -373,6 +374,7 @@ int main(const int argc, const char **argv) {
     //Font font = font_init("/usr/share/fonts/MonoLisa/ttf/MonoLisa-Regular.ttf", font_size, 1.0, 1.5, 1024);
 
     Font font = font_init(&state.config.font_path, state.config.font_size, 1.0, 1.5, 2048);
+    font_loaded = true;
     state.font = &font;
     font_shader(&font, sh_text);
     font_load(&font, 0, 256);
@@ -652,7 +654,9 @@ clean:
     shader_free(sh_rect);
     shader_free(sh_text);
     shader_free(sh_box);
-    font_free(&font);
+    if(font_loaded) {
+        font_free(&font);
+    }
     text_free();
 
     civ_free(&state);
