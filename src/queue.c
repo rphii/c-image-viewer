@@ -39,23 +39,38 @@ int queue_add(So file_or_dir, void *void_qd) {
 }
 
 
+#include <rlc/vec.h>
+VEC_IMPLEMENT(VImage, vimage, Image, BY_REF, SORT2, image_cmp, by_index);
+VEC_INCLUDE(VImage, vimage, Image, BY_REF, SORT2, by_index);
+
 void *keep_valid_images(void *void_qd) {
     ASSERT_ARG(void_qd);
     QueueDo *qd = void_qd;
     size_t cap = qd->civ->config.image_cap;
     pw_when_done_clear(&qd->civ->pw);
-    size_t len = vimage_length(qd->civ->images_discover);
-    size_t added = 0;
-    for(size_t i = 0; i < len; ++i) {
-        //pthread_mutex_lock(&qd->civ->images_mtx);
-        Image *img = vimage_get_at(&qd->civ->images_discover, i);
-        if(img->data && (!cap || added < cap)) {
+    pthread_mutex_lock(&qd->civ->images_mtx);
+    vimage_sort_by_index(&qd->civ->images);
+    size_t len = vimage_length(qd->civ->images);
+    pthread_mutex_unlock(&qd->civ->images_mtx);
+    if(cap) {
+        for(size_t i = cap; i < len; ++i) {
             pthread_mutex_lock(&qd->civ->images_mtx);
-            vimage_push_back(&qd->civ->images, img);
+            Image img = {0};
+            vimage_pop_back(&qd->civ->images, &img);
             pthread_mutex_unlock(&qd->civ->images_mtx);
-            ++added;
-        } else {
-            image_free(img);
+            image_free(&img);
+
+#if 0
+            Image *img = vimage_get_at(&qd->civ->images_discover, i);
+            if(img->data && (!cap || added < cap)) {
+                pthread_mutex_lock(&qd->civ->images_mtx);
+                vimage_push_back(&qd->civ->images, img);
+                pthread_mutex_unlock(&qd->civ->images_mtx);
+                ++added;
+            } else {
+                image_free(img);
+            }
+#endif
         }
     }
     *qd->civ->gl_update = true;
@@ -77,6 +92,10 @@ void *queue_do_add(void *void_qd) {
     return 0;
 }
 
+int image_cmp_by_index(Image *a, Image *b) {
+    return a->index_pre_loading - b->index_pre_loading;
+}
+
 void load_image(QueueDo *qd) {
     Image load = {0};
     FILE *fp = so_file_fp(qd->img->filename, "r");
@@ -90,6 +109,8 @@ void load_image(QueueDo *qd) {
             qd->img->height = load.height;
             qd->img->data = load.data;
             ++qd->civ->images_loaded;
+            vimage_push_back(&qd->civ->images, qd->img);
+            //memset(qd->img, 0, sizeof(*qd->img));
             *qd->civ->gl_update = true;
             glfwPostEmptyEvent();
         } else {
