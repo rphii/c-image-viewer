@@ -457,6 +457,8 @@ void civ_arg(Civ *civ, const char *name) {
       argx_bool(x, &config->qafl, &defaults->qafl);
     x=argx_init(o, 'j', so("jobs"), so("set maximum jobs to use when loading"));
       argx_ssz(x, &config->jobs, &defaults->jobs);
+    x=argx_init(o, 'p', so("preview-load"), so("allows to preview while images get loaded in. the order won't be correct (specified by shuffle) until all images are loaded in, when it is fixed"));
+      argx_bool(x, &config->preview_load, &defaults->preview_load);
 
     x=argx_init(o, 's', so("filter"), so("set filter"));
       g=argx_opt(x, (int *)&civ->filter, 0);
