@@ -331,7 +331,9 @@ void civ_cmd_random(Civ *civ, bool random) {
     if(!random) return;
     size_t n_img = vimage_length(civ->images);
     if(!n_img) return;
+    pthread_mutex_lock(&civ->images_mtx);
     civ_cmd_select(civ, rand() % n_img);
+    pthread_mutex_unlock(&civ->images_mtx);
 }
 
 void civ_cmd_print_stdout(Civ *civ, bool print_stdout) {
@@ -348,6 +350,7 @@ void civ_cmd_select(Civ *civ, int change) {
     glm_vec2_zero(civ->pan);
     civ->zoom.initial = 0.0f;
     civ->zoom.current = 1.0f;
+    pthread_mutex_lock(&civ->images_mtx);
     size_t n_img = vimage_length(civ->images);
     /* cap index, in case size changd */
     if(civ->selected > n_img) civ->selected = n_img ? n_img - 1 : 0;
@@ -362,6 +365,7 @@ void civ_cmd_select(Civ *civ, int change) {
         civ->selected %= n_img;
         civ->fit.current = civ->fit.initial;
     }
+    pthread_mutex_unlock(&civ->images_mtx);
     civ_popup_set(civ, POPUP_SELECT);
 }
 
