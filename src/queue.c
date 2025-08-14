@@ -49,6 +49,32 @@ void *keep_valid_images(void *void_qd) {
     size_t cap = qd->civ->config.image_cap;
     pw_when_done_clear(&qd->civ->pw);
     pthread_mutex_lock(&qd->civ->images_mtx);
+    size_t len = vimage_length(qd->civ->images_discover);
+    pthread_mutex_unlock(&qd->civ->images_mtx);
+    size_t added = 0;
+    for(size_t i = 0; i < len; ++i) {
+        Image *img = vimage_get_at(&qd->civ->images_discover, i);
+        if(img->data && (!cap || added < cap)) {
+            pthread_mutex_lock(&qd->civ->images_mtx);
+            vimage_push_back(&qd->civ->images, img);
+            pthread_mutex_unlock(&qd->civ->images_mtx);
+            ++added;
+        } else {
+            image_free(img);
+        }
+    }
+    *qd->civ->gl_update = true;
+    glfwPostEmptyEvent();
+    free(qd);
+    return 0;
+}
+
+void *remove_too_many(void *void_qd) {
+    ASSERT_ARG(void_qd);
+    QueueDo *qd = void_qd;
+    size_t cap = qd->civ->config.image_cap;
+    pw_when_done_clear(&qd->civ->pw);
+    pthread_mutex_lock(&qd->civ->images_mtx);
     size_t len = vimage_length(qd->civ->images);
     size_t selected = qd->civ->selected;
     Image current = {0};
@@ -72,17 +98,6 @@ void *keep_valid_images(void *void_qd) {
             pthread_mutex_unlock(&qd->civ->images_mtx);
             image_free(&img);
 
-#if 0
-            Image *img = vimage_get_at(&qd->civ->images_discover, i);
-            if(img->data && (!cap || added < cap)) {
-                pthread_mutex_lock(&qd->civ->images_mtx);
-                vimage_push_back(&qd->civ->images, img);
-                pthread_mutex_unlock(&qd->civ->images_mtx);
-                ++added;
-            } else {
-                image_free(img);
-            }
-#endif
         }
     }
     *qd->civ->gl_update = true;
@@ -121,7 +136,9 @@ void load_image(QueueDo *qd) {
             qd->img->height = load.height;
             qd->img->data = load.data;
             ++qd->civ->images_loaded;
-            vimage_push_back(&qd->civ->images, qd->img);
+            if(qd->civ->config.preview_load) {
+                vimage_push_back(&qd->civ->images, qd->img);
+            }
             //memset(qd->img, 0, sizeof(*qd->img));
             *qd->civ->gl_update = true;
             glfwPostEmptyEvent();
@@ -180,7 +197,12 @@ void *when_done_gathering(void *void_qd) {
         //printff("sorted...");
     }
 
-    pw_when_done(&qd->civ->pw, keep_valid_images, qd);
+    if(qd->civ->config.preview_load) {
+        pw_when_done(&qd->civ->pw, remove_too_many, qd);
+    } else {
+        pw_when_done(&qd->civ->pw, keep_valid_images, qd);
+    }
+
     for(size_t i = 0; i < len; ++i) {
         Image *img = vimage_get_at(&qd->civ->images_discover, i);
         img->index_pre_loading = i;

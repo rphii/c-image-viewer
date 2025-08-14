@@ -53,6 +53,7 @@ ErrImpl civ_config_defaults(Civ *civ) {
     defaults->jobs = sysconf(_SC_NPROCESSORS_ONLN);
     defaults->shuffle = false;
     defaults->image_cap = 0;
+    defaults->preview_load = true;
 
     /* finally, do defaults here */
     civ->config = *defaults;
