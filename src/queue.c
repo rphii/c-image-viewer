@@ -49,8 +49,20 @@ void *keep_valid_images(void *void_qd) {
     size_t cap = qd->civ->config.image_cap;
     pw_when_done_clear(&qd->civ->pw);
     pthread_mutex_lock(&qd->civ->images_mtx);
-    vimage_sort_by_index(&qd->civ->images);
     size_t len = vimage_length(qd->civ->images);
+    size_t selected = qd->civ->selected;
+    Image current = {0};
+    if(selected < len) {
+        current = *vimage_get_at(&qd->civ->images, selected);
+    }
+    vimage_sort_by_index(&qd->civ->images);
+    for(size_t i = 0; i < len; ++i) {
+        Image *check = vimage_get_at(&qd->civ->images, i);
+        if(check->index_pre_loading == current.index_pre_loading) {
+            qd->civ->selected = i;
+            break;
+        }
+    }
     pthread_mutex_unlock(&qd->civ->images_mtx);
     if(cap) {
         for(size_t i = cap; i < len; ++i) {
