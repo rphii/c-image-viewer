@@ -13,6 +13,7 @@ typedef struct CivConfig {
     bool qafl;
     bool shuffle;
     bool preview_load;
+    bool preview_retain;
     ssize_t image_cap;
 } CivConfig;
 
