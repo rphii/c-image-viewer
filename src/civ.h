@@ -94,6 +94,7 @@ typedef struct Civ {
     } fit;
     vec2 pan;
     Pw pw;
+    Pw pipe_observer;
     struct {
         Timer timer;
         PopupList active;

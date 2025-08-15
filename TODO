@@ -1,0 +1,14 @@
+
+- rotate images
+- flip images
+- screenshot of current display (save as)
+- help/shortkey menu/display
+- load from stdin / pipe
+- zoom to cursor (option)
+- multi image view
+- basic editing?
+  - invert
+  - apply shaders? maybe same method as mpv does it?
+- if specified font is not available, find another suitable one
+- don't load the same image twice ??
+
