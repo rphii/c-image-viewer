@@ -28,6 +28,8 @@ QueueDo *queue_do(QueueDo *qd, So file_or_dir);
 void *when_done_gathering(void *void_qd);
 int queue_walk(So file_or_dir, void *void_qd);
 
+void *observe_pipe(void *void_data);
+
 //void queue_walk(Pw *pw, So file_or_dir);
 //void queue_load(Pw *pw, So file_or_dir);
 

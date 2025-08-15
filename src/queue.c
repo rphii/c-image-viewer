@@ -9,7 +9,7 @@ QueueDo *queue_do(QueueDo *qd, So file_or_dir) {
     NEW(QueueDo, q);
     ASSERT_ARG(q);
     memcpy(q, qd, sizeof(*q));
-    q->file_or_dir = file_or_dir;
+    q->file_or_dir = so_clone(file_or_dir);
     //q->ref = 0;
     //pthread_mutex_init(&q->ref_mtx, 0);
     return q;
@@ -26,6 +26,7 @@ void *queue_do_add(void *void_qd);
 
 int queue_walk(So file_or_dir, void *void_qd) {
     ASSERT_ARG(void_qd);
+    if(!so_len(file_or_dir)) return 0;
     QueueDo *qd = queue_do(void_qd, file_or_dir);
     pw_queue(&qd->civ->pw, queue_do_walk, qd);
     return 0;
@@ -223,4 +224,19 @@ void *queue_do_walk(void *void_qd) {
     return 0;
 }
 
+#include <unistd.h>
+void *observe_pipe(void *void_data) {
+    QueueDo *qd = void_data;
+    So input = SO;
+    while(true) {
+        so_clear(&input);
+        so_input(&input);
+        if(!so_len(input) && getchar() == EOF) break;
+        //so_printdbg(input);
+        //usleep(1e6);
+        queue_walk(input, qd);
+    }
+    free(qd);
+    return 0;
+}
 

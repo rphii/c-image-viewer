@@ -291,6 +291,9 @@ int main(const int argc, const char **argv) {
     pw_init(&state.pw, state.config.jobs);
     pw_dispatch(&state.pw);
 
+    pw_init(&state.pipe_observer, 1);
+    pw_dispatch(&state.pipe_observer);
+
     //return -1;
 
     s_state.wwidth = 800;
@@ -409,6 +412,7 @@ int main(const int argc, const char **argv) {
         }
     }
     pw_when_done(&state.pw, when_done_gathering, queue_do(&qd, SO));
+    pw_queue(&state.pipe_observer, observe_pipe, queue_do(&qd, SO));
 
 #if 0
     while(true) {
