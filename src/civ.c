@@ -437,6 +437,9 @@ void civ_arg(Civ *civ, const char *name) {
     struct ArgXGroup *g = 0, *o = 0;
     o=argx_group(arg, so("Options"), false);
     argx_builtin_opt_help(o);
+#if defined(VERSION)
+    argx_builtin_opt_version(o, so(VERSION));
+#endif
     argx_builtin_opt_source(o, so("/etc/civ/civ.conf"));
     argx_builtin_opt_source(o, so("$HOME/.config/rphiic/colors.conf"));
     argx_builtin_opt_source(o, so("$HOME/.config/civ/civ.conf"));
