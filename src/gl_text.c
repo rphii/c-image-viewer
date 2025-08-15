@@ -268,9 +268,11 @@ void font_render(Font font, const char *text, mat4 projection, vec2 pos, float s
 
         //if(i_instance >= TEXT_INSTANCE_LIMIT && align == TEXT_ALIGN_RENDER) {
         if(i_instance >= TEXT_INSTANCE_LIMIT) {
-            glUniformMatrix4fv(font.shader.loc_transforms, i_instance, GL_FALSE, (float *)transforms);
-            glUniform1iv(font.shader.loc_map, i_instance, (int *)maps);
-            glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, i_instance);
+            if(align == TEXT_ALIGN_RENDER) {
+                glUniformMatrix4fv(font.shader.loc_transforms, i_instance, GL_FALSE, (float *)transforms);
+                glUniform1iv(font.shader.loc_map, i_instance, (int *)maps);
+                glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, i_instance);
+            }
             i_instance = 0;
         }
 

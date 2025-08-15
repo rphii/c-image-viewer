@@ -330,10 +330,7 @@ void civ_popup_set(Civ *state, PopupList id) {
 void civ_cmd_random(Civ *civ, bool random) {
     if(!random) return;
     size_t n_img = vimage_length(civ->images);
-    if(!n_img) return;
-    pthread_mutex_lock(&civ->images_mtx);
-    civ_cmd_select(civ, rand() % n_img);
-    pthread_mutex_unlock(&civ->images_mtx);
+    if(n_img) civ_cmd_select(civ, rand() % n_img);
 }
 
 void civ_cmd_print_stdout(Civ *civ, bool print_stdout) {
