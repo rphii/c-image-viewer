@@ -362,6 +362,7 @@ void civ_cmd_select(Civ *civ, int change) {
         civ->selected %= n_img;
         civ->fit.current = civ->fit.initial;
     }
+    // glfwSetWindowTitle(civ->window, "New Title");
     pthread_mutex_unlock(&civ->images_mtx);
     civ_popup_set(civ, POPUP_SELECT);
 }
@@ -425,7 +426,7 @@ void civ_arg(Civ *civ, const char *name) {
     struct Arg *arg = civ->arg;
     arg_init(arg, so_l(name), so("image viewer written in C"), so("https://github.com/rphii/c-image-viewer"));
     arg_init_rest(arg, so("filenames"), &civ->filenames);
-    arg_init_width(arg, 100, 45);
+    //arg_init_width(arg, 100, 45);
     arg_init_fmt(arg);
 
     //arg_allow_rest(arg, "images");

@@ -11,4 +11,7 @@
   - apply shaders? maybe same method as mpv does it?
 - if specified font is not available, find another suitable one
 - don't load the same image twice ??
+- set window title to currently selected image
+  - hyprctl clients
+- don't always load all images..
 
