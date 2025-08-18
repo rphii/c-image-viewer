@@ -108,6 +108,7 @@ typedef struct StateMap {
 typedef struct Civ_Queues {
     Pw file_loader;
     Pw pipe_observer;
+    bool pipe_pending;
 } Civ_Queues;
 
 typedef struct Civ {
@@ -139,7 +140,6 @@ typedef struct Civ {
     struct Arg *arg;
     VSo filenames;
     QueueState *qstate;
-    bool pending_pipe;
     Civ_Queues queues;
 } Civ;
 
