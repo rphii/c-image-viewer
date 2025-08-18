@@ -337,32 +337,32 @@ void civ_cmd_random(Civ *civ, bool random) {
 
 void civ_cmd_print_stdout(Civ *civ, bool print_stdout) {
     if(!print_stdout) return;
-    if(!civ->active) return;
+    if(!civ->view.image) return;
     pthread_mutex_lock(&civ->images_mtx);
-    printf("%.*s\n", SO_F(civ->active->filename));
+    printf("%.*s\n", SO_F(civ->view.image->filename));
     pthread_mutex_unlock(&civ->images_mtx);
     civ_popup_set(civ, POPUP_PRINT_STDOUT);
 }
 
 void civ_cmd_select(Civ *civ, int change) {
     if(!change) return;
-    glm_vec2_zero(civ->pan);
-    civ->zoom.initial = 0.0f;
-    civ->zoom.current = 1.0f;
+    glm_vec2_zero(civ->view.pan);
+    civ->view.zoom.initial = 0.0f;
+    civ->view.zoom.current = 1.0f;
     pthread_mutex_lock(&civ->images_mtx);
     size_t n_img = vimage_length(civ->images);
     /* cap index, in case size changd */
-    if(civ->selected > n_img) civ->selected = n_img ? n_img - 1 : 0;
+    if(civ->view.selected > n_img) civ->view.selected = n_img ? n_img - 1 : 0;
     /* adjust */
     if(n_img) {
         if(change < 0) {
             size_t sel = (-change) % n_img;
-            civ->selected += n_img - sel;
+            civ->view.selected += n_img - sel;
         } else {
-            civ->selected += change;
+            civ->view.selected += change;
         }
-        civ->selected %= n_img;
-        civ->fit.current = civ->fit.initial;
+        civ->view.selected %= n_img;
+        civ->view.fit.current = civ->view.fit.initial;
     }
     // glfwSetWindowTitle(civ->window, "New Title");
     pthread_mutex_unlock(&civ->images_mtx);
@@ -372,14 +372,14 @@ void civ_cmd_select(Civ *civ, int change) {
 void civ_cmd_fit(Civ *civ, bool next) {
     if(!next) return;
     /* if we're zoomed in, don't go next, but re-set the current to initial */
-    if(!civ->zoom.initial) {
-        ++civ->fit.initial;
-        civ->fit.initial %= FIT__COUNT;
+    if(!civ->view.zoom.initial) {
+        ++civ->view.fit.initial;
+        civ->view.fit.initial %= FIT__COUNT;
     }
-    civ->fit.current = civ->fit.initial;
-    civ->zoom.initial = 0.0f;
-    civ->zoom.current = 1.0f;
-    glm_vec2_zero(civ->pan);
+    civ->view.fit.current = civ->view.fit.initial;
+    civ->view.zoom.initial = 0.0f;
+    civ->view.zoom.current = 1.0f;
+    glm_vec2_zero(civ->view.pan);
     civ_popup_set(civ, POPUP_FIT);
 }
 
@@ -391,33 +391,33 @@ void civ_cmd_description(Civ *civ, bool toggle) {
 
 void civ_cmd_zoom(Civ *civ, double zoom) {
     if(!zoom) return;
-    if(!civ->active) return;
+    if(!civ->view.image) return;
     /* TODO: make zoom dependant on image-to-window ratio ... */
-    civ->zoom.initial = civ->zoom.current;
+    civ->view.zoom.initial = civ->view.zoom.current;
     if(zoom < 0) {
-        civ->zoom.current *= (1.0 + zoom);
+        civ->view.zoom.current *= (1.0 + zoom);
     } else if(zoom > 0) {
-        civ->zoom.current /= (1.0 - zoom);
+        civ->view.zoom.current /= (1.0 - zoom);
     }
-    //printf("ZOOM : %f\n", civ->zoom);
-    civ->fit.current = FIT_PAN;
+    //printf("ZOOM : %f\n", civ->view.zoom);
+    civ->view.fit.current = FIT_PAN;
     civ_popup_set(civ, POPUP_ZOOM);
 }
 
 void civ_cmd_filter(Civ *civ, bool next) {
     if(!next) return;
-    ++civ->filter;
-    civ->filter %= FILTER__COUNT;
-    if(civ->filter == 0) ++civ->filter;
+    ++civ->view.filter;
+    civ->view.filter %= FILTER__COUNT;
+    if(civ->view.filter == 0) ++civ->view.filter;
     civ_popup_set(civ, POPUP_FILTER);
 }
 
 void civ_cmd_pan(Civ *civ, vec2 pan) {
     if(!pan[0] && !pan[1]) return;
-    civ->zoom.initial = civ->zoom.current;
-    civ->pan[0] += pan[0] / civ->zoom.current; //s_action.pan_x / s_civ.wwidth * civ->zoom;
-    civ->pan[1] -= pan[1] / civ->zoom.current; //s_action.pan_y / s_civ.wheight * civ->zoom;
-    civ->fit.current = FIT_PAN;
+    civ->view.zoom.initial = civ->view.zoom.current;
+    civ->view.pan[0] += pan[0] / civ->view.zoom.current; //s_action.pan_x / s_civ.wwidth * civ->view.zoom;
+    civ->view.pan[1] -= pan[1] / civ->view.zoom.current; //s_action.pan_y / s_civ.wheight * civ->view.zoom;
+    civ->view.fit.current = FIT_PAN;
     civ_popup_set(civ, POPUP_PAN);
 }
 
@@ -469,7 +469,7 @@ void civ_arg(Civ *civ, const char *name) {
       argx_bool(x, &config->pipe_and_args, &defaults->pipe_and_args);
 
     x=argx_init(o, 's', so("filter"), so("set filter"));
-      g=argx_opt(x, (int *)&civ->filter, 0);
+      g=argx_opt(x, (int *)&civ->view.filter, 0);
         x=argx_init(g, 0, so("nearest"), so("set nearest"));
           argx_opt_enum(x, FILTER_NEAREST);
         x=argx_init(g, 0, so("linear"), so("set linear"));

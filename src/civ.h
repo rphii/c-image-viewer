@@ -116,16 +116,10 @@ typedef struct Civ_Popup {
     PopupList active;
 } Civ_Popup;
 
-typedef struct Civ {
-    ActionMap action_map;
-    StateMap state_map;
-    VImage images;
-    VImage images_discover;
-    size_t images_loaded;
-    pthread_mutex_t images_mtx;
-    Font *font;
-    Image *active;
+typedef struct Civ_View {
     FilterList filter;
+    Image *image;
+    vec2 pan;
     size_t selected;
     struct {
         float initial;
@@ -135,10 +129,20 @@ typedef struct Civ {
         FitList initial;
         FitList current;
     } fit;
-    vec2 pan;
+} Civ_View;
+
+typedef struct Civ {
+    ActionMap action_map;
+    StateMap state_map;
+    VImage images;
+    VImage images_discover;
+    size_t images_loaded;
+    pthread_mutex_t images_mtx;
+    Font *font;
     struct Civ_Config config;
     struct Civ_Config defaults;
     struct Arg *arg;
+    Civ_View view;
     VSo filenames;
     QueueState *qstate;
     Civ_Popup popup;
