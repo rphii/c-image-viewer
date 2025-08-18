@@ -252,7 +252,7 @@ int main(const int argc, const char **argv) {
     TRYC(civ_config_defaults(&civ));
     TRYC(arg_parse(civ.arg, argc, argv, &quit_early));
     if(quit_early) goto clean;
-    if(!civ.pending_pipe && !array_len(civ.filenames)) quit_early = true;
+    if(!civ.queues.pipe_pending && !array_len(civ.filenames)) quit_early = true;
 
     pw_init(&civ.queues.file_loader, civ.config.jobs);
     pw_dispatch(&civ.queues.file_loader);
@@ -357,7 +357,7 @@ int main(const int argc, const char **argv) {
         }
     }
     pw_when_done(&civ.queues.file_loader, when_done_gathering, queue_do(&qd, SO));
-    if(civ.pending_pipe) {
+    if(civ.queues.pipe_pending) {
         if(civ.config.pipe_and_args || !(!civ.config.pipe_and_args && array_len(civ.filenames))) {
             pw_init(&civ.queues.pipe_observer, 1);
             pw_dispatch(&civ.queues.pipe_observer);
