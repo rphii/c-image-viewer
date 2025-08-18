@@ -35,51 +35,20 @@
 #include <unistd.h>
 //#include <magic.h>
 
-typedef struct ActionMap {
-    bool gl_update;
-    bool fit_next;
-    bool resized;
-    bool filter_next;
-    bool toggle_fullscreen;
-    bool toggle_description;
-    bool quit;
-    bool select_random;
-    bool print_stdout;
-    int select_image;
-    double zoom;
-    double pan_x;
-    double pan_y;
-} ActionMap;
+//static ActionMap s_action_init = {0};
 
-static ActionMap s_action_init = {0};
-
-typedef struct StateMap {
-    int wwidth;
-    int wheight;
-    int twidth;
-    int theight;
-    mat4 text_projection;
-    mat4 image_projection;
-    mat4 image_transform;
-    mat4 image_view;
-    double mouse_down_x;
-    double mouse_down_y;
-    double mouse_x;
-    double mouse_y;
-    Timer t_global;
-} StateMap;
-
-static ActionMap s_action;
-static StateMap s_state;
+//static ActionMap civ->action_map;
+//static StateMap s_state;
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
-    s_action.resized = true;
-    s_state.wwidth = width;
-    s_state.wheight = height;
+    Civ *civ = glfwGetWindowUserPointer(window);
+    civ->action_map.resized = true;
+    civ->state_map.wwidth = width;
+    civ->state_map.wheight = height;
     glViewport(0, 0, width, height);
-    glm_perspective(glm_rad(45), (float)width / (float)height, 0.1, 100, s_state.image_projection);
+    glm_perspective(glm_rad(45), (float)width / (float)height, 0.1, 100, civ->state_map.image_projection);
 
 #if 0
     /* update text projection */
@@ -87,56 +56,57 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
     double ratio_have = (double)width / (double)height;
     double ratio2 = ratio_have / ratio_want;
 
-    s_state.twidth = 2560; // get monitor dimensions here ...
-    s_state.theight = 1920;
+    civ->state_map.twidth = 2560; // get monitor dimensions here ...
+    civ->state_map.theight = 1920;
     if(ratio_have > ratio_want) {
-        s_state.twidth = round(s_state.twidth * ratio2);
+        civ->state_map.twidth = round(civ->state_map.twidth * ratio2);
     } else if(ratio_have < ratio_want) {
-        s_state.theight = round(s_state.theight / ratio2);
+        civ->state_map.theight = round(civ->state_map.theight / ratio2);
     }
 #endif
 
-    s_state.twidth = s_state.wwidth;
-    s_state.theight = s_state.wheight;
+    civ->state_map.twidth = civ->state_map.wwidth;
+    civ->state_map.theight = civ->state_map.wheight;
 
-    glm_ortho(0.0f, s_state.twidth, 0.0f, s_state.theight, -1.0f, 1.0f, s_state.text_projection);
+    glm_ortho(0.0f, civ->state_map.twidth, 0.0f, civ->state_map.theight, -1.0f, 1.0f, civ->state_map.text_projection);
 
-    s_action.gl_update = true;
+    civ->action_map.gl_update = true;
 }
 
 void process_input(GLFWwindow *window, double t_delta, bool *run_timer) {
+    Civ *civ = glfwGetWindowUserPointer(window);
     bool t_run = false;
     if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
-        s_action.quit = true;
+        civ->action_map.quit = true;
     }
     if((glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS /*&& glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) != GLFW_PRESS*/) ||
        (glfwGetKey(window, GLFW_KEY_H) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)) {
-        s_action.pan_x += t_delta * 500;
+        civ->action_map.pan_x += t_delta * 500;
         t_run = true;
     };
     if((glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) != GLFW_PRESS) ||
        (glfwGetKey(window, GLFW_KEY_J) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)) {
-        s_action.pan_y -= t_delta * 500;
+        civ->action_map.pan_y -= t_delta * 500;
         t_run = true;
     };
     if((glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) != GLFW_PRESS) ||
        (glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)) {
-        s_action.pan_y += t_delta * 500;
+        civ->action_map.pan_y += t_delta * 500;
         t_run = true;
     };
     if((glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS /*&& glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) != GLFW_PRESS*/) ||
        (glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)) {
-        s_action.pan_x -= t_delta * 500;
+        civ->action_map.pan_x -= t_delta * 500;
         t_run = true;
     };
     if((glfwGetKey(window, GLFW_KEY_I) == GLFW_PRESS) ||
        (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)) {
-        s_action.zoom += t_delta;
+        civ->action_map.zoom += t_delta;
         t_run = true;
     };
     if((glfwGetKey(window, GLFW_KEY_O) == GLFW_PRESS) ||
        (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)) {
-        s_action.zoom -= t_delta;
+        civ->action_map.zoom -= t_delta;
         t_run = true;
     };
     *run_timer = t_run;
@@ -144,30 +114,31 @@ void process_input(GLFWwindow *window, double t_delta, bool *run_timer) {
 
 void key_callback(GLFWwindow* window, int key, int scancode, int act, int mods)
 {
+    Civ *civ = glfwGetWindowUserPointer(window);
     if(act == GLFW_PRESS || act == GLFW_REPEAT) {
         switch(key) {
             case GLFW_KEY_LEFT: {
                 //if(glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) {
-                //    s_action.select_previous = true;
+                //    civ->action_map.select_previous = true;
                 //}
             } break;
             case GLFW_KEY_RIGHT: {
                 //if(glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) {
-                //    s_action.select_next = true;
+                //    civ->action_map.select_next = true;
                 //}
             } break;
             case GLFW_KEY_K: {
                 if(glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) != GLFW_PRESS) {
-                    --s_action.select_image;
+                    --civ->action_map.select_image;
                 }
             } break;
             case GLFW_KEY_J: {
                 if(glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) != GLFW_PRESS) {
-                    ++s_action.select_image;
+                    ++civ->action_map.select_image;
                 }
             } break;
             case GLFW_KEY_R: {
-                s_action.select_random = true;
+                civ->action_map.select_random = true;
             } break;
         }
     }
@@ -175,67 +146,72 @@ void key_callback(GLFWwindow* window, int key, int scancode, int act, int mods)
         switch(key) {
             case GLFW_KEY_S: {
                 if(glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) {
-                    s_action.filter_next = true;
+                    civ->action_map.filter_next = true;
                 } else {
-                    s_action.fit_next = true;
+                    civ->action_map.fit_next = true;
                 }
             } break;
-            case GLFW_KEY_F: { s_action.toggle_fullscreen = true; } break;
-            case GLFW_KEY_Q: { s_action.quit = true; } break;
-            case GLFW_KEY_D: { s_action.toggle_description = true; } break;
-            case GLFW_KEY_P: { s_action.print_stdout = true; } break;
+            case GLFW_KEY_F: { civ->action_map.toggle_fullscreen = true; } break;
+            case GLFW_KEY_Q: { civ->action_map.quit = true; } break;
+            case GLFW_KEY_D: { civ->action_map.toggle_description = true; } break;
+            case GLFW_KEY_P: { civ->action_map.print_stdout = true; } break;
         }
     }
 }
 
-void process_action_map(GLFWwindow *window, Civ *state) {
-    bool update = s_action.gl_update;
-    if(memcmp(&s_action_init, &s_action, sizeof(s_action))) update = true;
+void process_action_map(GLFWwindow *window, Civ *civ) {
 
-    if(s_action.quit) glfwSetWindowShouldClose(window, true);
-    if(s_action.resized) {}
-    if(s_action.toggle_fullscreen) {}
+    bool update = civ->action_map.gl_update;
+    ActionMap action_map_init = {0};
+    if(memcmp(&action_map_init, &civ->action_map, sizeof(civ->action_map))) update = true;
 
-    civ_cmd_random(state, s_action.select_random);
-    civ_cmd_print_stdout(state, s_action.print_stdout);
-    civ_cmd_select(state, s_action.select_image);
-    civ_cmd_fit(state, s_action.fit_next);
-    civ_cmd_zoom(state, s_action.zoom);
-    civ_cmd_filter(state, s_action.filter_next);
-    civ_cmd_description(state, s_action.toggle_description);
-    civ_cmd_pan(state, (vec2){ s_action.pan_x, s_action.pan_y });
+    if(civ->action_map.quit) glfwSetWindowShouldClose(window, true);
+    if(civ->action_map.resized) {}
+    if(civ->action_map.toggle_fullscreen) {}
 
-    s_action = s_action_init;
-    s_action.gl_update = update;
+    civ_cmd_random(civ, civ->action_map.select_random);
+    civ_cmd_print_stdout(civ, civ->action_map.print_stdout);
+    civ_cmd_select(civ, civ->action_map.select_image);
+    civ_cmd_fit(civ, civ->action_map.fit_next);
+    civ_cmd_zoom(civ, civ->action_map.zoom);
+    civ_cmd_filter(civ, civ->action_map.filter_next);
+    civ_cmd_description(civ, civ->action_map.toggle_description);
+    civ_cmd_pan(civ, (vec2){ civ->action_map.pan_x, civ->action_map.pan_y });
+
+    civ->action_map = action_map_init;
+    civ->action_map.gl_update = update;
 
 }
 
 void mouse_callback(GLFWwindow *window, double xpos, double ypos)
 {
-    s_state.mouse_x = xpos;
-    s_state.mouse_y = ypos;
+    Civ *civ = glfwGetWindowUserPointer(window);
+    civ->state_map.mouse_x = xpos;
+    civ->state_map.mouse_y = ypos;
     int state = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT);
     if(state == GLFW_PRESS) {
-        float dx = xpos - s_state.mouse_down_x;
-        float dy = ypos - s_state.mouse_down_y;
+        float dx = xpos - civ->state_map.mouse_down_x;
+        float dy = ypos - civ->state_map.mouse_down_y;
         //printf("delta %f %f @ %f %f\n", dx, dy, xpos, ypos);
-        s_state.mouse_down_x = xpos;
-        s_state.mouse_down_y = ypos;
-        s_action.pan_x += dx;
-        s_action.pan_y += dy;
+        civ->state_map.mouse_down_x = xpos;
+        civ->state_map.mouse_down_y = ypos;
+        civ->action_map.pan_x += dx;
+        civ->action_map.pan_y += dy;
     }
 }
 
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 {
+    Civ *civ = glfwGetWindowUserPointer(window);
     if(button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
-        glfwGetCursorPos(window, &s_state.mouse_down_x, &s_state.mouse_down_y);
+        glfwGetCursorPos(window, &civ->state_map.mouse_down_x, &civ->state_map.mouse_down_y);
     }
 }
 
 void scroll_callback(GLFWwindow *window, double xoffset, double yoffset)
 {
-    s_action.zoom += yoffset < 0 ? -0.25 : 0.25;
+    Civ *civ = glfwGetWindowUserPointer(window);
+    civ->action_map.zoom += yoffset < 0 ? -0.25 : 0.25;
 }
 
 
@@ -268,24 +244,24 @@ int main(const int argc, const char **argv) {
     Shader sh_rect = {0};
     bool font_loaded = false;
 
-    Civ state = {0};
-    state.filter = FILTER_NEAREST;
-    state.zoom.current = 1.0;
+    Civ civ = {0};
+    civ.filter = FILTER_NEAREST;
+    civ.zoom.current = 1.0;
 
-    civ_arg(&state, argv[0]);
-    TRYC(civ_config_defaults(&state));
-    TRYC(arg_parse(state.arg, argc, argv, &quit_early));
+    civ_arg(&civ, argv[0]);
+    TRYC(civ_config_defaults(&civ));
+    TRYC(arg_parse(civ.arg, argc, argv, &quit_early));
     if(quit_early) goto clean;
-    if(!state.pending_pipe && !array_len(state.filenames)) quit_early = true;
+    if(!civ.pending_pipe && !array_len(civ.filenames)) quit_early = true;
 
-    pw_init(&state.pw, state.config.jobs);
-    pw_dispatch(&state.pw);
+    pw_init(&civ.pw, civ.config.jobs);
+    pw_dispatch(&civ.pw);
 
-    pw_init(&state.pipe_observer, 1);
-    pw_dispatch(&state.pipe_observer);
+    pw_init(&civ.pipe_observer, 1);
+    pw_dispatch(&civ.pipe_observer);
 
-    s_state.wwidth = 800;
-    s_state.wheight = 600;
+    civ.state_map.wwidth = 800;
+    civ.state_map.wheight = 600;
 
     /**************/
     /* GLFW BEGIN */
@@ -297,7 +273,8 @@ int main(const int argc, const char **argv) {
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_SAMPLES, 4);
 
-    window = glfwCreateWindow(s_state.wwidth, s_state.wheight, "civ", NULL, NULL);
+    window = glfwCreateWindow(civ.state_map.wwidth, civ.state_map.wheight, "civ", NULL, NULL);
+    glfwSetWindowUserPointer(window, &civ);
     if(window == NULL) {
         printf("Failed to create GLFW window\n");
         glfwTerminate();
@@ -310,7 +287,7 @@ int main(const int argc, const char **argv) {
         return -1;
     }
 
-    framebuffer_size_callback(window, s_state.wwidth, s_state.wheight);
+    framebuffer_size_callback(window, civ.state_map.wwidth, civ.state_map.wheight);
 
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
     glfwSetKeyCallback(window, key_callback);
@@ -340,18 +317,18 @@ int main(const int argc, const char **argv) {
 
     //glEnable(GL_DEPTH_TEST);
 
-    s_action.gl_update = true;
-    state.gl_update = &s_action.gl_update;
+    civ.action_map.gl_update = true;
+    civ.gl_update = &civ.action_map.gl_update;
 
     text_init();
-    glm_ortho(0.0f, s_state.wwidth, 0.0f, s_state.wheight, -1.0f, 1.0f, s_state.image_projection);
+    glm_ortho(0.0f, civ.state_map.wwidth, 0.0f, civ.state_map.wheight, -1.0f, 1.0f, civ.state_map.image_projection);
 
-    glm_mat4_identity(s_state.image_view);
-    glm_translate(s_state.image_view, (vec3){0.0f, 0.0f, 0.0f});
+    glm_mat4_identity(civ.state_map.image_view);
+    glm_translate(civ.state_map.image_view, (vec3){0.0f, 0.0f, 0.0f});
 
-    Font font = font_init(&state.config.font_path, state.config.font_size, 1.0, 1.5, 2048);
+    Font font = font_init(&civ.config.font_path, civ.config.font_size, 1.0, 1.5, 2048);
     font_loaded = true;
-    state.font = &font;
+    civ.font = &font;
     font_shader(&font, sh_text);
     font_load(&font, 0, 256);
 
@@ -360,21 +337,21 @@ int main(const int argc, const char **argv) {
     char str_popup[1024] = {0};
     bool run_timer = true;
 
-    //clock_gettime(CLOCK_REALTIME, &s_state.t_now);
+    //clock_gettime(CLOCK_REALTIME, &civ.state_map.t_now);
     glBindVertexArray(0);
-    timer_start(&s_state.t_global, CLOCK_REALTIME, 0);
+    timer_start(&civ.state_map.t_global, CLOCK_REALTIME, 0);
 
     stbi_set_flip_vertically_on_load(true);
 
     QueueState qstate = {0};
-    state.qstate = &qstate;
+    civ.qstate = &qstate;
     QueueDo qd = {
-        .civ = &state
+        .civ = &civ
     };
 
     So pwd = SO;
-    for(size_t i = 0; i < array_len(state.filenames); ++i) {
-        So file_or_dir = array_at(state.filenames, i);
+    for(size_t i = 0; i < array_len(civ.filenames); ++i) {
+        So file_or_dir = array_at(civ.filenames, i);
         if(so_cmp(file_or_dir, so("."))) {
             queue_walk(file_or_dir, queue_do(&qd, file_or_dir));
         } else {
@@ -383,10 +360,10 @@ int main(const int argc, const char **argv) {
             queue_walk(pwd, queue_do(&qd, pwd));
         }
     }
-    pw_when_done(&state.pw, when_done_gathering, queue_do(&qd, SO));
-    if(state.pending_pipe) {
-        if(state.config.pipe_and_args || !(!state.config.pipe_and_args && array_len(state.filenames))) {
-            pw_queue(&state.pipe_observer, observe_pipe, queue_do(&qd, SO));
+    pw_when_done(&civ.pw, when_done_gathering, queue_do(&qd, SO));
+    if(civ.pending_pipe) {
+        if(civ.config.pipe_and_args || !(!civ.config.pipe_and_args && array_len(civ.filenames))) {
+            pw_queue(&civ.pipe_observer, observe_pipe, queue_do(&qd, SO));
         }
     }
 
@@ -397,72 +374,72 @@ int main(const int argc, const char **argv) {
 
         /* done, timer */
         if(run_timer) {
-            timer_stop(&s_state.t_global);
-            timer_continue(&s_state.t_global);
+            timer_stop(&civ.state_map.t_global);
+            timer_continue(&civ.state_map.t_global);
         }
 
         /* input */
-        process_input(window, s_state.t_global.delta, &run_timer);
+        process_input(window, civ.state_map.t_global.delta, &run_timer);
 
         /* process */
-        process_action_map(window, &state);
+        process_action_map(window, &civ);
 #if 1
-        pthread_mutex_lock(&state.images_mtx);
-        if(vimage_length(state.images)) {
-            if(state.selected > vimage_length(state.images)) state.selected = vimage_length(state.images) - 1;
-            state.active = vimage_get_at(&state.images, state.selected);
-            send_texture_to_gpu(state.active, state.filter, &s_action.gl_update);
+        pthread_mutex_lock(&civ.images_mtx);
+        if(vimage_length(civ.images)) {
+            if(civ.selected > vimage_length(civ.images)) civ.selected = vimage_length(civ.images) - 1;
+            civ.active = vimage_get_at(&civ.images, civ.selected);
+            send_texture_to_gpu(civ.active, civ.filter, &civ.action_map.gl_update);
             /* also make sure the full character set is available */
             So_Uc_Point point = {0};
-            for(size_t i = 0; i < so_len(state.active->filename); ++i) {
-                if(so_uc_point(so_i0(state.active->filename, i), &point)) {
+            for(size_t i = 0; i < so_len(civ.active->filename); ++i) {
+                if(so_uc_point(so_i0(civ.active->filename, i), &point)) {
                     THROW(ERR_UNREACHABLE("invalid utf8 codepoint"));
                 }
                 font_load_single(&font, point.val);
                 i += (point.bytes - 1);
             }
         }
-        pthread_mutex_unlock(&state.images_mtx);
+        pthread_mutex_unlock(&civ.images_mtx);
 #endif
 
 #if 0
-        if(state.config.qafl) {
-            if(!pthread_mutex_trylock(&state.images_mtx)) {
-                if(state.images_loaded >= vimage_length(state.images)) {
-                    s_action.quit = true;
+        if(civ.config.qafl) {
+            if(!pthread_mutex_trylock(&civ.images_mtx)) {
+                if(civ.images_loaded >= vimage_length(civ.images)) {
+                    civ.action_map.quit = true;
                 }
-                pthread_mutex_unlock(&state.images_mtx);
+                pthread_mutex_unlock(&civ.images_mtx);
             }
         }
 #endif
 
-        if(state.popup.active && timer_timedout(&state.popup.timer)) {
-            civ_popup_set(&state, POPUP_NONE);
-            s_action.gl_update = true;
+        if(civ.popup.active && timer_timedout(&civ.popup.timer)) {
+            civ_popup_set(&civ, POPUP_NONE);
+            civ.action_map.gl_update = true;
         }
 
         /* render */
-        if(s_action.gl_update) {
+        if(civ.action_map.gl_update) {
             rendered = true;
-            s_action.gl_update = false;
+            civ.action_map.gl_update = false;
             glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT);
 
-            if(state.active && state.active->data) {
+            if(civ.active && civ.active->data) {
                 glUseProgram(sh_rect.id);
 
-                glm_mat4_identity(s_state.image_view);
-                glm_mat4_identity(s_state.image_transform);
-                glm_mat4_identity(s_state.image_projection);
+                glm_mat4_identity(civ.state_map.image_view);
+                glm_mat4_identity(civ.state_map.image_transform);
+                glm_mat4_identity(civ.state_map.image_projection);
 
                 /* fit */
-                glm_scale(s_state.image_transform, (vec3){ s_state.wwidth, s_state.wheight, 0 });
+                glm_scale(civ.state_map.image_transform, (vec3){ civ.state_map.wwidth, civ.state_map.wheight, 0 });
 
-                float s = (float)s_state.wwidth / (float)s_state.wheight;
-                float r = (float)state.active->width / (float)state.active->height;
-                float x = (float)s_state.wwidth / (float)state.active->width;
-                float y = (float)s_state.wheight / (float)state.active->height;
-                switch(state.fit.current) {
+                float s = (float)civ.state_map.wwidth / (float)civ.state_map.wheight;
+                float r = (float)civ.active->width / (float)civ.active->height;
+                float x = (float)civ.state_map.wwidth / (float)civ.active->width;
+                float y = (float)civ.state_map.wheight / (float)civ.active->height;
+                switch(civ.fit.current) {
                     case FIT_XY: {
                         if(s > r) goto FIT__Y;
                         else goto FIT__X;
@@ -472,113 +449,113 @@ int main(const int argc, const char **argv) {
                         else goto FIT__Y;
                     } break;
                     case FIT__X: FIT__X: {
-                        state.zoom.current = x;
+                        civ.zoom.current = x;
                     } goto FIT_PAN;
                     case FIT__Y: FIT__Y: {
-                        state.zoom.current = y;
+                        civ.zoom.current = y;
                     } goto FIT_PAN;
                     case FIT_PAN: FIT_PAN: {
-                        glm_scale(s_state.image_transform, (vec3){ 1.0f/x, 1.0f/y, 0 });
+                        glm_scale(civ.state_map.image_transform, (vec3){ 1.0f/x, 1.0f/y, 0 });
                     } break;
                     default: break;
                 }
 
                 /* pan */
                 mat4 m_pan;
-                float pan_x = 2 * state.pan[0];
-                float pan_y = 2 * state.pan[1];
+                float pan_x = 2 * civ.pan[0];
+                float pan_y = 2 * civ.pan[1];
                 glm_mat4_identity(m_pan);
                 glm_translate(m_pan, (vec3){ pan_x, pan_y, 0 });
 
                 mat4 m_zoom;
                 glm_mat4_identity(m_zoom);
-                glm_scale(m_zoom, (vec3){ state.zoom.current, state.zoom.current, 0 });
+                glm_scale(m_zoom, (vec3){ civ.zoom.current, civ.zoom.current, 0 });
 
-                glm_mat4_mul(m_zoom, m_pan, s_state.image_view);
+                glm_mat4_mul(m_zoom, m_pan, civ.state_map.image_view);
 
                 /* scale back */
-                glm_scale(s_state.image_projection, (vec3){ 1.0f/s_state.wwidth, 1.0f/s_state.wheight, 0 });
+                glm_scale(civ.state_map.image_projection, (vec3){ 1.0f/civ.state_map.wwidth, 1.0f/civ.state_map.wheight, 0 });
 
                 glDisable(GL_BLEND);
-                gl_image_render(&image, state.active->texture, s_state.image_projection, s_state.image_view, s_state.image_transform);
+                gl_image_render(&image, civ.active->texture, civ.state_map.image_projection, civ.state_map.image_view, civ.state_map.image_transform);
             }
 
-            if(state.active && state.config.show_description) {
-                vec2 text_pos = { 5, s_state.theight - font.height * 1.25 };
+            if(civ.active && civ.config.show_description) {
+                vec2 text_pos = { 5, civ.state_map.theight - font.height * 1.25 };
 
                 vec4 text_dim;
-                FitList fit = state.fit.current;
-                if(state.pan[0] || state.pan[1]) {
-                    snprintf(str_info, sizeof(str_info), "[%zu/%zu] %.*s (%ux%ux%u) [%.1f%% %s @ %.0f,%.0f]", state.selected + 1, vimage_length(state.images), SO_F(state.active->filename), state.active->width, state.active->height, state.active->channels, 100.0f * state.zoom.current, fit_cstr(fit), -state.pan[0], -state.pan[1]);
+                FitList fit = civ.fit.current;
+                if(civ.pan[0] || civ.pan[1]) {
+                    snprintf(str_info, sizeof(str_info), "[%zu/%zu] %.*s (%ux%ux%u) [%.1f%% %s @ %.0f,%.0f]", civ.selected + 1, vimage_length(civ.images), SO_F(civ.active->filename), civ.active->width, civ.active->height, civ.active->channels, 100.0f * civ.zoom.current, fit_cstr(fit), -civ.pan[0], -civ.pan[1]);
                 } else {
-                    snprintf(str_info, sizeof(str_info), "[%zu/%zu] %.*s (%ux%ux%u) [%.1f%% %s]", state.selected + 1, vimage_length(state.images), SO_F(state.active->filename), state.active->width, state.active->height, state.active->channels, 100.0f * state.zoom.current, fit_cstr(fit));
+                    snprintf(str_info, sizeof(str_info), "[%zu/%zu] %.*s (%ux%ux%u) [%.1f%% %s]", civ.selected + 1, vimage_length(civ.images), SO_F(civ.active->filename), civ.active->width, civ.active->height, civ.active->channels, 100.0f * civ.zoom.current, fit_cstr(fit));
                 }
 
-                font_render(font, str_info, s_state.text_projection, text_pos, 1.0, 1.0, (vec3){1.0f, 1.0f, 1.0f}, text_dim, TEXT_ALIGN_LEFT);
+                font_render(font, str_info, civ.state_map.text_projection, text_pos, 1.0, 1.0, (vec3){1.0f, 1.0f, 1.0f}, text_dim, TEXT_ALIGN_LEFT);
 
                 glEnable(GL_BLEND);
                 glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-                box_render(sh_box, s_state.text_projection, text_dim, (vec4){0.0f, 0.0f, 0.0f, 0.7f}, 6);
-                font_render(font, str_info, s_state.text_projection, text_pos, 1.0, 1.0, (vec3){1.0f, 1.0f, 1.0f}, text_dim, TEXT_ALIGN_RENDER);
+                box_render(sh_box, civ.state_map.text_projection, text_dim, (vec4){0.0f, 0.0f, 0.0f, 0.7f}, 6);
+                font_render(font, str_info, civ.state_map.text_projection, text_pos, 1.0, 1.0, (vec3){1.0f, 1.0f, 1.0f}, text_dim, TEXT_ALIGN_RENDER);
             }
 
             {
-                pthread_mutex_lock(&state.images_mtx);
-                bool busy = pw_is_busy(&state.pw);
-                size_t len = state.images_loaded;
-                size_t cap = state.config.image_cap;
+                pthread_mutex_lock(&civ.images_mtx);
+                bool busy = pw_is_busy(&civ.pw);
+                size_t len = civ.images_loaded;
+                size_t cap = civ.config.image_cap;
                 if(cap && len > cap) len = cap;
-                if(state.config.show_loaded && busy) {
+                if(civ.config.show_loaded && busy) {
                     if(cap) {
                         snprintf(str_load, sizeof(str_load), "Loaded %.1f%% (%zu/%zu)", 100.0 * (double)len / (double)cap, len, cap);
                     } else {
                         snprintf(str_load, sizeof(str_load), "Loaded %zu..", len);
                     }
-                    vec2 text_pos = { s_state.twidth - 5, s_state.theight - font.height * 1.25 };
+                    vec2 text_pos = { civ.state_map.twidth - 5, civ.state_map.theight - font.height * 1.25 };
                     vec4 text_dim;
-                    font_render(font, str_load, s_state.text_projection, text_pos, 1.0, 1.0, (vec3){1.0f, 1.0f, 1.0f}, text_dim, TEXT_ALIGN_RIGHT);
+                    font_render(font, str_load, civ.state_map.text_projection, text_pos, 1.0, 1.0, (vec3){1.0f, 1.0f, 1.0f}, text_dim, TEXT_ALIGN_RIGHT);
                     glEnable(GL_BLEND);
                     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-                    box_render(sh_box, s_state.text_projection, text_dim, (vec4){0.0f, 0.0f, 0.0f, 0.7f}, 6);
-                    font_render(font, str_load, s_state.text_projection, text_pos, 1.0, 1.0, (vec3){1.0f, 1.0f, 1.0f}, text_dim, TEXT_ALIGN_RENDER);
+                    box_render(sh_box, civ.state_map.text_projection, text_dim, (vec4){0.0f, 0.0f, 0.0f, 0.7f}, 6);
+                    font_render(font, str_load, civ.state_map.text_projection, text_pos, 1.0, 1.0, (vec3){1.0f, 1.0f, 1.0f}, text_dim, TEXT_ALIGN_RENDER);
                 }
-                pthread_mutex_unlock(&state.images_mtx);
+                pthread_mutex_unlock(&civ.images_mtx);
             }
 
             str_popup[0] = 0;
-            switch(state.popup.active) {
+            switch(civ.popup.active) {
                 case POPUP_DESCRIPTION: {
-                    snprintf(str_popup, sizeof(str_popup), "%s", state.config.show_description ? "show description" : "hide description");
+                    snprintf(str_popup, sizeof(str_popup), "%s", civ.config.show_description ? "show description" : "hide description");
                 } break;
                 case POPUP_SELECT: {
-                    snprintf(str_popup, sizeof(str_popup), "[%zu/%zu] %s", state.selected + 1, vimage_length(state.images), fit_cstr(state.fit.current));
+                    snprintf(str_popup, sizeof(str_popup), "[%zu/%zu] %s", civ.selected + 1, vimage_length(civ.images), fit_cstr(civ.fit.current));
                 } break;
                 case POPUP_FIT: {
-                    snprintf(str_popup, sizeof(str_popup), "[%s]", fit_cstr(state.fit.current));
+                    snprintf(str_popup, sizeof(str_popup), "[%s]", fit_cstr(civ.fit.current));
                 } break;
                 case POPUP_PAN: {
-                    snprintf(str_popup, sizeof(str_popup), "%.0f,%.0f", -state.pan[0], -state.pan[1]);
+                    snprintf(str_popup, sizeof(str_popup), "%.0f,%.0f", -civ.pan[0], -civ.pan[1]);
                 } break;
                 case POPUP_ZOOM: {
-                    snprintf(str_popup, sizeof(str_popup), "%.1f%%", 100 * state.zoom.current);
+                    snprintf(str_popup, sizeof(str_popup), "%.1f%%", 100 * civ.zoom.current);
                 } break;
                 case POPUP_FILTER: {
-                    snprintf(str_popup, sizeof(str_popup), "%s", filter_cstr(state.filter));
+                    snprintf(str_popup, sizeof(str_popup), "%s", filter_cstr(civ.filter));
                 } break;
                 case POPUP_PRINT_STDOUT: {
-                    if(state.active) snprintf(str_popup, sizeof(str_popup), "stdout: %.*s", SO_F(state.active->filename));
+                    if(civ.active) snprintf(str_popup, sizeof(str_popup), "stdout: %.*s", SO_F(civ.active->filename));
                 } break;
                 default: case POPUP__COUNT: case POPUP_NONE: break;
             }
             if(strlen(str_popup)) {
-                vec2 text_pos = { (float)s_state.twidth / 2.0f, (float)s_state.theight / 2.0f };
+                vec2 text_pos = { (float)civ.state_map.twidth / 2.0f, (float)civ.state_map.theight / 2.0f };
                 vec4 text_dim;
 
-                font_render(font, str_popup, s_state.text_projection, text_pos, 1.0, 1.0, (vec3){1.0f, 1.0f, 1.0f}, text_dim, TEXT_ALIGN_CENTER);
+                font_render(font, str_popup, civ.state_map.text_projection, text_pos, 1.0, 1.0, (vec3){1.0f, 1.0f, 1.0f}, text_dim, TEXT_ALIGN_CENTER);
                 glEnable(GL_BLEND);
                 glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-                box_render(sh_box, s_state.text_projection, text_dim, (vec4){0.0f, 0.0f, 0.0f, 0.7f}, 6);
-                font_render(font, str_popup, s_state.text_projection, text_pos, 1.0, 1.0, (vec3){1.0f, 1.0f, 1.0f}, text_dim, TEXT_ALIGN_RENDER);
+                box_render(sh_box, civ.state_map.text_projection, text_dim, (vec4){0.0f, 0.0f, 0.0f, 0.7f}, 6);
+                font_render(font, str_popup, civ.state_map.text_projection, text_pos, 1.0, 1.0, (vec3){1.0f, 1.0f, 1.0f}, text_dim, TEXT_ALIGN_RENDER);
             }
 
             glBindVertexArray(0);
@@ -591,7 +568,7 @@ int main(const int argc, const char **argv) {
             glfwWaitEvents();
         }
         if(!run_timer) {
-            timer_restart(&s_state.t_global);
+            timer_restart(&civ.state_map.t_global);
         }
     }
 
@@ -600,7 +577,7 @@ clean:
     if(window) glfwHideWindow(window);
     //glfwSwapBuffers(window);
 
-    s_action.quit = true;
+    civ.action_map.quit = true;
 
     shader_free(sh_rect);
     shader_free(sh_text);
@@ -610,7 +587,7 @@ clean:
     }
     text_free();
 
-    civ_free(&state);
+    civ_free(&civ);
 
     if(window) {
         glfwDestroyWindow(window);
