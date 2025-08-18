@@ -464,17 +464,15 @@ int main(const int argc, const char **argv) {
         pthread_mutex_unlock(&state.images_mtx);
 #endif
 
-#if 1
-        pthread_mutex_lock(&state.images_mtx);
-        if(done_prev != state.images_loaded) {
-            done_prev = state.images_loaded;
-            s_action.gl_update = true;
-        } else {
-            if(state.config.qafl && state.images_loaded >= vimage_length(state.images)) {
-                s_action.quit = true;
+#if 0
+        if(state.config.qafl) {
+            if(!pthread_mutex_trylock(&state.images_mtx)) {
+                if(state.images_loaded >= vimage_length(state.images)) {
+                    s_action.quit = true;
+                }
+                pthread_mutex_unlock(&state.images_mtx);
             }
         }
-        pthread_mutex_unlock(&state.images_mtx);
 #endif
 
         if(state.popup.active && timer_timedout(&state.popup.timer)) {
