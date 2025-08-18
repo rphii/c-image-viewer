@@ -64,7 +64,7 @@ void *keep_valid_images(void *void_qd) {
             image_free(img);
         }
     }
-    *qd->civ->gl_update = true;
+    qd->civ->action_map.gl_update = true;
     glfwPostEmptyEvent();
     free(qd);
     return 0;
@@ -101,7 +101,7 @@ void *remove_too_many(void *void_qd) {
 
         }
     }
-    *qd->civ->gl_update = true;
+    qd->civ->action_map.gl_update = true;
     glfwPostEmptyEvent();
     free(qd);
     return 0;
@@ -141,7 +141,7 @@ void load_image(QueueDo *qd) {
                 vimage_push_back(&qd->civ->images, qd->img);
             }
             //memset(qd->img, 0, sizeof(*qd->img));
-            *qd->civ->gl_update = true;
+            qd->civ->action_map.gl_update = true;
             glfwPostEmptyEvent();
         } else {
             ++qs->number_of_non_images;
