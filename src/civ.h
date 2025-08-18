@@ -104,6 +104,7 @@ typedef struct Civ {
     struct Arg *arg;
     VSo filenames;
     QueueState *qstate;
+    bool pending_pipe;
 } Civ;
 
 void glcontext_acquire(GlContext *context);

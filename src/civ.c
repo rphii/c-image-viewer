@@ -428,6 +428,7 @@ void civ_arg(Civ *civ, const char *name) {
     arg_init_rest(arg, so("filenames"), &civ->filenames);
     //arg_init_width(arg, 100, 45);
     arg_init_fmt(arg);
+    arg_init_pending_pipe_wont_quit_early(arg, true, &civ->pending_pipe);
 
     //arg_allow_rest(arg, "images");
     CivConfig *defaults = &civ->defaults;
