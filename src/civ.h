@@ -136,8 +136,8 @@ typedef struct Civ {
         FitList current;
     } fit;
     vec2 pan;
-    struct CivConfig config;
-    struct CivConfig defaults;
+    struct Civ_Config config;
+    struct Civ_Config defaults;
     struct Arg *arg;
     VSo filenames;
     QueueState *qstate;
