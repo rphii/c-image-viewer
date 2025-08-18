@@ -249,7 +249,7 @@ int main(const int argc, const char **argv) {
     civ.zoom.current = 1.0;
 
     civ_arg(&civ, argv[0]);
-    TRYC(civ_config_defaults(&civ));
+    civ_config_defaults(&civ);
     TRYC(arg_parse(civ.arg, argc, argv, &quit_early));
     if(quit_early) goto clean;
     if(!civ.queues.pipe_pending && !array_len(civ.filenames)) quit_early = true;

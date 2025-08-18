@@ -18,8 +18,7 @@ typedef struct Civ_Config {
     ssize_t image_cap;
 } Civ_Config;
 
-#define ERR_civ_config_defaults(...) "error while loading config defaults"
-ErrDecl civ_config_defaults(struct Civ *civ);
+void civ_config_defaults(struct Civ *civ);
 
 #define CIV_CONFIG_H
 #endif
