@@ -1,8 +1,6 @@
 #include "queue.h"
 #include <stb/stb_image.h>
 
-static pthread_mutex_t mtx;
-
 QueueDo *queue_do(QueueDo *qd, So file_or_dir) {
     ASSERT_ARG(qd);
     QueueDo *q;
@@ -20,9 +18,9 @@ void queue_done(QueueDo *qd) {
     free(qd);
 }
 
-void *queue_do_walk(void *void_qd);
-void *queue_do_load(void *void_qd);
-void *queue_do_add(void *void_qd);
+void *queue_do_walk(Pw *pw, bool *cancel, void *void_qd);
+void *queue_do_load(Pw *pw, bool *cancel, void *void_qd);
+void *queue_do_add(Pw *pw, bool *cancel, void *void_qd);
 
 int queue_walk(So file_or_dir, void *void_qd) {
     ASSERT_ARG(void_qd);
@@ -44,11 +42,11 @@ int queue_add(So file_or_dir, void *void_qd) {
 VEC_IMPLEMENT(VImage, vimage, Image, BY_REF, SORT2, image_cmp, by_index);
 VEC_INCLUDE(VImage, vimage, Image, BY_REF, SORT2, by_index);
 
-void *keep_valid_images(void *void_qd) {
+void *keep_valid_images(Pw *pw, bool *cancel, void *void_qd) {
     ASSERT_ARG(void_qd);
     QueueDo *qd = void_qd;
     size_t cap = qd->civ->config.image_cap;
-    pw_when_done_clear(&qd->civ->queues.file_loader);
+    pw_when_done_clear(pw);
     pthread_mutex_lock(&qd->civ->images_mtx);
     size_t len = vimage_length(qd->civ->images_discover);
     pthread_mutex_unlock(&qd->civ->images_mtx);
@@ -70,11 +68,11 @@ void *keep_valid_images(void *void_qd) {
     return 0;
 }
 
-void *remove_too_many(void *void_qd) {
+void *remove_too_many(Pw *pw, bool *cancel, void *void_qd) {
     ASSERT_ARG(void_qd);
     QueueDo *qd = void_qd;
     size_t cap = qd->civ->config.image_cap;
-    pw_when_done_clear(&qd->civ->queues.file_loader);
+    pw_when_done_clear(pw);
     pthread_mutex_lock(&qd->civ->images_mtx);
     size_t len = vimage_length(qd->civ->images);
     size_t selected = qd->civ->selected;
@@ -107,7 +105,7 @@ void *remove_too_many(void *void_qd) {
     return 0;
 }
 
-void *queue_do_add(void *void_qd) {
+void *queue_do_add(Pw *pw, bool *cancel, void *void_qd) {
     ASSERT_ARG(void_qd);
     QueueDo *qd = void_qd;
     Image img = {};
@@ -151,7 +149,7 @@ void load_image(QueueDo *qd) {
     }
 }
 
-void *queue_do_load(void *void_qd) {
+void *queue_do_load(Pw *pw, bool *cancel, void *void_qd) {
     ASSERT_ARG(void_qd);
     QueueDo *qd = void_qd;
     QueueState *qs = qd->civ->qstate;
@@ -178,10 +176,10 @@ void *queue_do_load(void *void_qd) {
     return 0;
 }
 
-void *when_done_gathering(void *void_qd) {
+void *when_done_gathering(Pw *pw, bool *cancel, void *void_qd) {
     QueueDo *qd = void_qd;
     QueueState *s = qd->civ->qstate;
-    pw_when_done_clear(&qd->civ->queues.file_loader);
+    pw_when_done_clear(pw);
     size_t len = vimage_length(qd->civ->images_discover);
     //printff("found %zu files...", len);
     if(qd->civ->config.shuffle) {
@@ -199,9 +197,9 @@ void *when_done_gathering(void *void_qd) {
     }
 
     if(qd->civ->config.preview_load) {
-        pw_when_done(&qd->civ->queues.file_loader, remove_too_many, qd);
+        pw_when_done(pw, remove_too_many, qd);
     } else {
-        pw_when_done(&qd->civ->queues.file_loader, keep_valid_images, qd);
+        pw_when_done(pw, keep_valid_images, qd);
     }
 
     for(size_t i = 0; i < len; ++i) {
@@ -211,13 +209,13 @@ void *when_done_gathering(void *void_qd) {
             .img = img,
             .civ = qd->civ,
         };
-        pw_queue(&qd->civ->queues.file_loader, queue_do_load, queue_do(&q, SO));
+        pw_queue(pw, queue_do_load, queue_do(&q, SO));
     }
 
     return 0;
 }
 
-void *queue_do_walk(void *void_qd) {
+void *queue_do_walk(Pw *pw, bool *cancel, void *void_qd) {
     QueueDo *qd = void_qd;
     (void) so_file_exec(qd->file_or_dir, true, true, queue_add, queue_walk, void_qd);
     queue_done(qd);
@@ -225,7 +223,7 @@ void *queue_do_walk(void *void_qd) {
 }
 
 #include <unistd.h>
-void *observe_pipe(void *void_data) {
+void *observe_pipe(Pw *pw, bool *cancel, void *void_data) {
     QueueDo *qd = void_data;
     So input = SO;
     while(true) {
