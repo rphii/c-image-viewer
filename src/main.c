@@ -259,9 +259,6 @@ int main(const int argc, const char **argv) {
 
     srand(time(0));
 
-    //int is = isatty(STDIN_FILENO);
-    //printf("ISATTY? %u\n", is);
-
     int err = 0;
     bool quit_early = false;
 
@@ -275,20 +272,9 @@ int main(const int argc, const char **argv) {
     state.filter = FILTER_NEAREST;
     state.zoom.current = 1.0;
 
-#if 0
-    pthread_mutex_t mutex_image;
-    pthread_mutex_init(&mutex_image, 0);
-    state.loader.files = &state.filenames;
-    state.loader.images = &state.images;
-    state.loader.mutex = &mutex_image;
-    state.loader.cancel = &s_action.quit;
-    state.loader.config = &state.config;
-#endif
-
     civ_arg(&state, argv[0]);
     TRYC(civ_config_defaults(&state));
     TRYC(arg_parse(state.arg, argc, argv, &quit_early));
-    //quit_early = false;
     if(quit_early) goto clean;
     if(!state.pending_pipe && !array_len(state.filenames)) quit_early = true;
 
@@ -298,13 +284,8 @@ int main(const int argc, const char **argv) {
     pw_init(&state.pipe_observer, 1);
     pw_dispatch(&state.pipe_observer);
 
-    //return -1;
-
     s_state.wwidth = 800;
     s_state.wheight = 600;
-
-    //printf("%zu\n", sizeof(ImageLoadThreadQueue));
-    //return 0;
 
     /**************/
     /* GLFW BEGIN */
@@ -324,10 +305,7 @@ int main(const int argc, const char **argv) {
     }
     glfwMakeContextCurrent(window);
 
-    //state.loader.jobs = state.config.jobs;
-    //images_load_async(&state.loader);
-
-    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
+    if(!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
         printf("Failed to initialize GLAD\n");
         return -1;
     }
@@ -357,10 +335,6 @@ int main(const int argc, const char **argv) {
     SHADER_FROM(sh_rect, rectangle);
     SHADER_FROM(sh_text, text);
     
-    //int loc_projection = get_uniform(sh_rect, "projection");
-    //int loc_view = get_uniform(sh_rect, "view");
-    //int loc_transform = get_uniform(sh_rect, "transform");
-
     GlImage image = {0};
     gl_image_shader(&image, sh_rect);
 
@@ -375,11 +349,6 @@ int main(const int argc, const char **argv) {
     glm_mat4_identity(s_state.image_view);
     glm_translate(s_state.image_view, (vec3){0.0f, 0.0f, 0.0f});
 
-    //glUseProgram(0);
-    //Font font = font_init("/usr/share/fonts/mikachan-font-ttf/mikachan.ttf", font_size, 1.0, 1.5, 1024);
-    //Font font = font_init("/usr/share/fonts/lato/Lato-Regular.ttf", font_size, 1.0, 1.5, 1024);
-    //Font font = font_init("/usr/share/fonts/MonoLisa/ttf/MonoLisa-Regular.ttf", font_size, 1.0, 1.5, 1024);
-
     Font font = font_init(&state.config.font_path, state.config.font_size, 1.0, 1.5, 2048);
     font_loaded = true;
     state.font = &font;
@@ -390,7 +359,6 @@ int main(const int argc, const char **argv) {
     char str_load[1024] = {0};
     char str_popup[1024] = {0};
     bool run_timer = true;
-    size_t done_prev = 0;
 
     //clock_gettime(CLOCK_REALTIME, &s_state.t_now);
     glBindVertexArray(0);
@@ -421,13 +389,6 @@ int main(const int argc, const char **argv) {
             pw_queue(&state.pipe_observer, observe_pipe, queue_do(&qd, SO));
         }
     }
-
-#if 0
-    while(true) {
-        printff("busy: %u", pw_is_busy(&state.pw));
-        sleep(2);
-    }
-#endif
 
     for(;;) {
         if(glfwWindowShouldClose(window)) break;
@@ -502,9 +463,6 @@ int main(const int argc, const char **argv) {
                 float x = (float)s_state.wwidth / (float)state.active->width;
                 float y = (float)s_state.wheight / (float)state.active->height;
                 switch(state.fit.current) {
-#if 0
-                    case FIT_STRETCH_XY: { /* identity is ok */ } break;
-#endif
                     case FIT_XY: {
                         if(s > r) goto FIT__Y;
                         else goto FIT__X;
@@ -586,25 +544,6 @@ int main(const int argc, const char **argv) {
                 }
                 pthread_mutex_unlock(&state.images_mtx);
             }
-#if 0
-
-            if(state.config.show_loaded && state.loader.done < vimage_length(state.images)) {
-                ssize_t loaded = state.loader.done;
-                ssize_t from = state.config.image_cap && state.config.image_cap < (ssize_t)vimage_length(state.images) ? state.config.image_cap : (ssize_t)vimage_length(state.images);
-                snprintf(str_load, sizeof(str_load), "Loaded %.1f%% (%zu/%zu)", 100.0 * (double)loaded / (double)from, loaded, from);
-
-                vec2 text_pos = { s_state.twidth - 5, s_state.theight - font.height * 1.25 };
-                //vec2 text_pos = { 5, s_state.theight - font.height * 1.25 * 4 };
-                vec4 text_dim;
-
-                font_render(font, str_load, s_state.text_projection, text_pos, 1.0, 1.0, (vec3){1.0f, 1.0f, 1.0f}, text_dim, TEXT_ALIGN_RIGHT);
-
-                glEnable(GL_BLEND);
-                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-                box_render(sh_box, s_state.text_projection, text_dim, (vec4){0.0f, 0.0f, 0.0f, 0.7f}, 6);
-                font_render(font, str_load, s_state.text_projection, text_pos, 1.0, 1.0, (vec3){1.0f, 1.0f, 1.0f}, text_dim, TEXT_ALIGN_RENDER);
-            }
-#endif
 
             str_popup[0] = 0;
             switch(state.popup.active) {
