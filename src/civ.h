@@ -73,7 +73,41 @@ typedef enum {
 
 typedef struct QueueState QueueState;
 
+typedef struct ActionMap {
+    bool gl_update;
+    bool fit_next;
+    bool resized;
+    bool filter_next;
+    bool toggle_fullscreen;
+    bool toggle_description;
+    bool quit;
+    bool select_random;
+    bool print_stdout;
+    int select_image;
+    double zoom;
+    double pan_x;
+    double pan_y;
+} ActionMap;
+
+typedef struct StateMap {
+    int wwidth;
+    int wheight;
+    int twidth;
+    int theight;
+    mat4 text_projection;
+    mat4 image_projection;
+    mat4 image_transform;
+    mat4 image_view;
+    double mouse_down_x;
+    double mouse_down_y;
+    double mouse_x;
+    double mouse_y;
+    Timer t_global;
+} StateMap;
+
 typedef struct Civ {
+    ActionMap action_map;
+    StateMap state_map;
     VImage images;
     VImage images_discover;
     size_t images_loaded;
