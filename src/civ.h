@@ -113,7 +113,6 @@ typedef struct Civ {
     size_t images_loaded;
     pthread_mutex_t images_mtx;
     Font *font;
-    pthread_mutex_t font_mtx;
     Image *active;
     FilterList filter;
     size_t selected;
