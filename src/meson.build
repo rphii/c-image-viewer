@@ -1,7 +1,7 @@
 
 sources = [
   'civ.c',
-  'civ_config.c',
+  'civ-config.c',
   'gl_box.c',
   'gl_image.c',
   'gl_shader.c',

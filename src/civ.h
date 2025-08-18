@@ -12,7 +12,7 @@
 #include <stdbool.h>
 #include <pthread.h>
 #include <GLFW/glfw3.h>
-#include "civ_config.h"
+#include "civ-config.h"
 
 typedef enum {
     FILTER_NONE,
