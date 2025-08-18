@@ -303,18 +303,20 @@ const char *filter_cstr(FilterList id) {
     }
 }
 
-void civ_free(Civ *state) {
+void civ_free(Civ *civ) {
 #if 0
-    if(state->loader.thread) {
-        pthread_join(state->loader.thread, 0);
-        pthread_mutex_lock(state->loader.mutex);
-        vimage_free(&state->images);
-        pthread_mutex_unlock(state->loader.mutex);
+    if(civ->loader.thread) {
+        pthread_join(civ->loader.thread, 0);
+        pthread_mutex_lock(civ->loader.mutex);
+        vimage_free(&civ->images);
+        pthread_mutex_unlock(civ->loader.mutex);
     }
 #endif
-    arg_free(&state->arg);
+    pw_cancel(&civ->queues.pipe_observer);
+    pw_cancel(&civ->queues.file_loader);
+    arg_free(&civ->arg);
     /* done freeing; set zero */
-    memset(state, 0, sizeof(*state));
+    memset(civ, 0, sizeof(*civ));
 }
 
 void civ_popup_set(Civ *state, PopupList id) {
