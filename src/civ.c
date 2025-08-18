@@ -463,6 +463,8 @@ void civ_arg(Civ *civ, const char *name) {
       argx_bool(x, &config->preview_load, &defaults->preview_load);
     x=argx_init(o, 'P', so("preview-retain"), so("retain the index throughout previewing images and until after having fixed the ordering"));
       argx_bool(x, &config->preview_retain, &defaults->preview_retain);
+    x=argx_init(o, '~', so("pipe-and-args"), so("load images both from piped input and arguments"));
+      argx_bool(x, &config->pipe_and_args, &defaults->pipe_and_args);
 
     x=argx_init(o, 's', so("filter"), so("set filter"));
       g=argx_opt(x, (int *)&civ->filter, 0);
