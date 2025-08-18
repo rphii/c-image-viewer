@@ -318,7 +318,6 @@ int main(const int argc, const char **argv) {
     //glEnable(GL_DEPTH_TEST);
 
     civ.action_map.gl_update = true;
-    civ.gl_update = &civ.action_map.gl_update;
 
     text_init();
     glm_ortho(0.0f, civ.state_map.wwidth, 0.0f, civ.state_map.wheight, -1.0f, 1.0f, civ.state_map.image_projection);

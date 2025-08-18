@@ -112,7 +112,6 @@ typedef struct Civ {
     VImage images_discover;
     size_t images_loaded;
     pthread_mutex_t images_mtx;
-    bool *gl_update;
     Font *font;
     pthread_mutex_t font_mtx;
     Image *active;
