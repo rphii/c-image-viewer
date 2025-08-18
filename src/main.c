@@ -254,11 +254,8 @@ int main(const int argc, const char **argv) {
     if(quit_early) goto clean;
     if(!civ.pending_pipe && !array_len(civ.filenames)) quit_early = true;
 
-    pw_init(&civ.pw, civ.config.jobs);
-    pw_dispatch(&civ.pw);
-
-    pw_init(&civ.pipe_observer, 1);
-    pw_dispatch(&civ.pipe_observer);
+    pw_init(&civ.queues.file_loader, civ.config.jobs);
+    pw_dispatch(&civ.queues.file_loader);
 
     civ.state_map.wwidth = 800;
     civ.state_map.wheight = 600;
@@ -359,10 +356,12 @@ int main(const int argc, const char **argv) {
             queue_walk(pwd, queue_do(&qd, pwd));
         }
     }
-    pw_when_done(&civ.pw, when_done_gathering, queue_do(&qd, SO));
+    pw_when_done(&civ.queues.file_loader, when_done_gathering, queue_do(&qd, SO));
     if(civ.pending_pipe) {
         if(civ.config.pipe_and_args || !(!civ.config.pipe_and_args && array_len(civ.filenames))) {
-            pw_queue(&civ.pipe_observer, observe_pipe, queue_do(&qd, SO));
+            pw_init(&civ.queues.pipe_observer, 1);
+            pw_dispatch(&civ.queues.pipe_observer);
+            pw_queue(&civ.queues.pipe_observer, observe_pipe, queue_do(&qd, SO));
         }
     }
 
@@ -500,7 +499,7 @@ int main(const int argc, const char **argv) {
 
             {
                 pthread_mutex_lock(&civ.images_mtx);
-                bool busy = pw_is_busy(&civ.pw);
+                bool busy = pw_is_busy(&civ.queues.file_loader);
                 size_t len = civ.images_loaded;
                 size_t cap = civ.config.image_cap;
                 if(cap && len > cap) len = cap;

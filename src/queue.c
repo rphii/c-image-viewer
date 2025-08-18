@@ -28,14 +28,14 @@ int queue_walk(So file_or_dir, void *void_qd) {
     ASSERT_ARG(void_qd);
     if(!so_len(file_or_dir)) return 0;
     QueueDo *qd = queue_do(void_qd, file_or_dir);
-    pw_queue(&qd->civ->pw, queue_do_walk, qd);
+    pw_queue(&qd->civ->queues.file_loader, queue_do_walk, qd);
     return 0;
 }
 
 int queue_add(So file_or_dir, void *void_qd) {
     ASSERT_ARG(void_qd);
     QueueDo *qd = queue_do(void_qd, file_or_dir);
-    pw_queue(&qd->civ->pw, queue_do_add, qd);
+    pw_queue(&qd->civ->queues.file_loader, queue_do_add, qd);
     return 0;
 }
 
@@ -48,7 +48,7 @@ void *keep_valid_images(void *void_qd) {
     ASSERT_ARG(void_qd);
     QueueDo *qd = void_qd;
     size_t cap = qd->civ->config.image_cap;
-    pw_when_done_clear(&qd->civ->pw);
+    pw_when_done_clear(&qd->civ->queues.file_loader);
     pthread_mutex_lock(&qd->civ->images_mtx);
     size_t len = vimage_length(qd->civ->images_discover);
     pthread_mutex_unlock(&qd->civ->images_mtx);
@@ -74,7 +74,7 @@ void *remove_too_many(void *void_qd) {
     ASSERT_ARG(void_qd);
     QueueDo *qd = void_qd;
     size_t cap = qd->civ->config.image_cap;
-    pw_when_done_clear(&qd->civ->pw);
+    pw_when_done_clear(&qd->civ->queues.file_loader);
     pthread_mutex_lock(&qd->civ->images_mtx);
     size_t len = vimage_length(qd->civ->images);
     size_t selected = qd->civ->selected;
@@ -181,7 +181,7 @@ void *queue_do_load(void *void_qd) {
 void *when_done_gathering(void *void_qd) {
     QueueDo *qd = void_qd;
     QueueState *s = qd->civ->qstate;
-    pw_when_done_clear(&qd->civ->pw);
+    pw_when_done_clear(&qd->civ->queues.file_loader);
     size_t len = vimage_length(qd->civ->images_discover);
     //printff("found %zu files...", len);
     if(qd->civ->config.shuffle) {
@@ -199,9 +199,9 @@ void *when_done_gathering(void *void_qd) {
     }
 
     if(qd->civ->config.preview_load) {
-        pw_when_done(&qd->civ->pw, remove_too_many, qd);
+        pw_when_done(&qd->civ->queues.file_loader, remove_too_many, qd);
     } else {
-        pw_when_done(&qd->civ->pw, keep_valid_images, qd);
+        pw_when_done(&qd->civ->queues.file_loader, keep_valid_images, qd);
     }
 
     for(size_t i = 0; i < len; ++i) {
@@ -211,7 +211,7 @@ void *when_done_gathering(void *void_qd) {
             .img = img,
             .civ = qd->civ,
         };
-        pw_queue(&qd->civ->pw, queue_do_load, queue_do(&q, SO));
+        pw_queue(&qd->civ->queues.file_loader, queue_do_load, queue_do(&q, SO));
     }
 
     return 0;

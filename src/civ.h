@@ -105,6 +105,11 @@ typedef struct StateMap {
     Timer t_global;
 } StateMap;
 
+typedef struct Civ_Queues {
+    Pw file_loader;
+    Pw pipe_observer;
+} Civ_Queues;
+
 typedef struct Civ {
     ActionMap action_map;
     StateMap state_map;
@@ -125,8 +130,6 @@ typedef struct Civ {
         FitList current;
     } fit;
     vec2 pan;
-    Pw pw;
-    Pw pipe_observer;
     struct {
         Timer timer;
         PopupList active;
@@ -137,6 +140,7 @@ typedef struct Civ {
     VSo filenames;
     QueueState *qstate;
     bool pending_pipe;
+    Civ_Queues queues;
 } Civ;
 
 void glcontext_acquire(GlContext *context);
