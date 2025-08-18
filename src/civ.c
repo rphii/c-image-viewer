@@ -133,7 +133,7 @@ error:
     return -1;
 }
 
-void images_load(VImage *images, VSo *files, pthread_mutex_t *mutex, bool *cancel, long jobs, size_t *done, CivConfig *config) {
+void images_load(VImage *images, VSo *files, pthread_mutex_t *mutex, bool *cancel, long jobs, size_t *done, Civ_Config *config) {
     ASSERT_ARG(images);
     ASSERT_ARG(files);
     ASSERT_ARG(mutex);
@@ -433,8 +433,8 @@ void civ_arg(Civ *civ, const char *name) {
     arg_init_pending_pipe_wont_quit_early(arg, true, &civ->queues.pipe_pending);
 
     //arg_allow_rest(arg, "images");
-    CivConfig *defaults = &civ->defaults;
-    CivConfig *config = &civ->config;
+    Civ_Config *defaults = &civ->defaults;
+    Civ_Config *config = &civ->config;
 
     //arg_allow_rest(arg, so("images"));
     struct ArgX *x = 0;

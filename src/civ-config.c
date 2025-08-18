@@ -7,7 +7,7 @@
 
 ErrImpl civ_config_defaults(Civ *civ) {
     int err = 0;
-    CivConfig *defaults = &civ->defaults;
+    Civ_Config *defaults = &civ->defaults;
     defaults->font_path = so("/usr/share/fonts/MonoLisa/ttf/MonoLisa-Regular.ttf");
     defaults->font_size = 18;
     defaults->show_description = false;
