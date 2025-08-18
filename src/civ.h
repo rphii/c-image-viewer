@@ -111,6 +111,11 @@ typedef struct Civ_Queues {
     bool pipe_pending;
 } Civ_Queues;
 
+typedef struct Civ_Popup {
+    Timer timer;
+    PopupList active;
+} Civ_Popup;
+
 typedef struct Civ {
     ActionMap action_map;
     StateMap state_map;
@@ -131,15 +136,12 @@ typedef struct Civ {
         FitList current;
     } fit;
     vec2 pan;
-    struct {
-        Timer timer;
-        PopupList active;
-    } popup;
     struct CivConfig config;
     struct CivConfig defaults;
     struct Arg *arg;
     VSo filenames;
     QueueState *qstate;
+    Civ_Popup popup;
     Civ_Queues queues;
 } Civ;
 
