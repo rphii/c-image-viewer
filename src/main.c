@@ -245,8 +245,8 @@ int main(const int argc, const char **argv) {
     bool font_loaded = false;
 
     Civ civ = {0};
-    civ.filter = FILTER_NEAREST;
-    civ.zoom.current = 1.0;
+    civ.view.filter = FILTER_NEAREST;
+    civ.view.zoom.current = 1.0;
 
     civ_arg(&civ, argv[0]);
     civ_config_defaults(&civ);
@@ -384,13 +384,13 @@ int main(const int argc, const char **argv) {
 #if 1
         pthread_mutex_lock(&civ.images_mtx);
         if(vimage_length(civ.images)) {
-            if(civ.selected > vimage_length(civ.images)) civ.selected = vimage_length(civ.images) - 1;
-            civ.active = vimage_get_at(&civ.images, civ.selected);
-            send_texture_to_gpu(civ.active, civ.filter, &civ.action_map.gl_update);
+            if(civ.view.selected > vimage_length(civ.images)) civ.view.selected = vimage_length(civ.images) - 1;
+            civ.view.image = vimage_get_at(&civ.images, civ.view.selected);
+            send_texture_to_gpu(civ.view.image, civ.view.filter, &civ.action_map.gl_update);
             /* also make sure the full character set is available */
             So_Uc_Point point = {0};
-            for(size_t i = 0; i < so_len(civ.active->filename); ++i) {
-                if(so_uc_point(so_i0(civ.active->filename, i), &point)) {
+            for(size_t i = 0; i < so_len(civ.view.image->filename); ++i) {
+                if(so_uc_point(so_i0(civ.view.image->filename, i), &point)) {
                     THROW(ERR_UNREACHABLE("invalid utf8 codepoint"));
                 }
                 font_load_single(&font, point.val);
@@ -423,7 +423,7 @@ int main(const int argc, const char **argv) {
             glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT);
 
-            if(civ.active && civ.active->data) {
+            if(civ.view.image && civ.view.image->data) {
                 glUseProgram(sh_rect.id);
 
                 glm_mat4_identity(civ.state_map.image_view);
@@ -434,10 +434,10 @@ int main(const int argc, const char **argv) {
                 glm_scale(civ.state_map.image_transform, (vec3){ civ.state_map.wwidth, civ.state_map.wheight, 0 });
 
                 float s = (float)civ.state_map.wwidth / (float)civ.state_map.wheight;
-                float r = (float)civ.active->width / (float)civ.active->height;
-                float x = (float)civ.state_map.wwidth / (float)civ.active->width;
-                float y = (float)civ.state_map.wheight / (float)civ.active->height;
-                switch(civ.fit.current) {
+                float r = (float)civ.view.image->width / (float)civ.view.image->height;
+                float x = (float)civ.state_map.wwidth / (float)civ.view.image->width;
+                float y = (float)civ.state_map.wheight / (float)civ.view.image->height;
+                switch(civ.view.fit.current) {
                     case FIT_XY: {
                         if(s > r) goto FIT__Y;
                         else goto FIT__X;
@@ -447,10 +447,10 @@ int main(const int argc, const char **argv) {
                         else goto FIT__Y;
                     } break;
                     case FIT__X: FIT__X: {
-                        civ.zoom.current = x;
+                        civ.view.zoom.current = x;
                     } goto FIT_PAN;
                     case FIT__Y: FIT__Y: {
-                        civ.zoom.current = y;
+                        civ.view.zoom.current = y;
                     } goto FIT_PAN;
                     case FIT_PAN: FIT_PAN: {
                         glm_scale(civ.state_map.image_transform, (vec3){ 1.0f/x, 1.0f/y, 0 });
@@ -460,14 +460,14 @@ int main(const int argc, const char **argv) {
 
                 /* pan */
                 mat4 m_pan;
-                float pan_x = 2 * civ.pan[0];
-                float pan_y = 2 * civ.pan[1];
+                float pan_x = 2 * civ.view.pan[0];
+                float pan_y = 2 * civ.view.pan[1];
                 glm_mat4_identity(m_pan);
                 glm_translate(m_pan, (vec3){ pan_x, pan_y, 0 });
 
                 mat4 m_zoom;
                 glm_mat4_identity(m_zoom);
-                glm_scale(m_zoom, (vec3){ civ.zoom.current, civ.zoom.current, 0 });
+                glm_scale(m_zoom, (vec3){ civ.view.zoom.current, civ.view.zoom.current, 0 });
 
                 glm_mat4_mul(m_zoom, m_pan, civ.state_map.image_view);
 
@@ -475,18 +475,18 @@ int main(const int argc, const char **argv) {
                 glm_scale(civ.state_map.image_projection, (vec3){ 1.0f/civ.state_map.wwidth, 1.0f/civ.state_map.wheight, 0 });
 
                 glDisable(GL_BLEND);
-                gl_image_render(&image, civ.active->texture, civ.state_map.image_projection, civ.state_map.image_view, civ.state_map.image_transform);
+                gl_image_render(&image, civ.view.image->texture, civ.state_map.image_projection, civ.state_map.image_view, civ.state_map.image_transform);
             }
 
-            if(civ.active && civ.config.show_description) {
+            if(civ.view.image && civ.config.show_description) {
                 vec2 text_pos = { 5, civ.state_map.theight - font.height * 1.25 };
 
                 vec4 text_dim;
-                FitList fit = civ.fit.current;
-                if(civ.pan[0] || civ.pan[1]) {
-                    snprintf(str_info, sizeof(str_info), "[%zu/%zu] %.*s (%ux%ux%u) [%.1f%% %s @ %.0f,%.0f]", civ.selected + 1, vimage_length(civ.images), SO_F(civ.active->filename), civ.active->width, civ.active->height, civ.active->channels, 100.0f * civ.zoom.current, fit_cstr(fit), -civ.pan[0], -civ.pan[1]);
+                FitList fit = civ.view.fit.current;
+                if(civ.view.pan[0] || civ.view.pan[1]) {
+                    snprintf(str_info, sizeof(str_info), "[%zu/%zu] %.*s (%ux%ux%u) [%.1f%% %s @ %.0f,%.0f]", civ.view.selected + 1, vimage_length(civ.images), SO_F(civ.view.image->filename), civ.view.image->width, civ.view.image->height, civ.view.image->channels, 100.0f * civ.view.zoom.current, fit_cstr(fit), -civ.view.pan[0], -civ.view.pan[1]);
                 } else {
-                    snprintf(str_info, sizeof(str_info), "[%zu/%zu] %.*s (%ux%ux%u) [%.1f%% %s]", civ.selected + 1, vimage_length(civ.images), SO_F(civ.active->filename), civ.active->width, civ.active->height, civ.active->channels, 100.0f * civ.zoom.current, fit_cstr(fit));
+                    snprintf(str_info, sizeof(str_info), "[%zu/%zu] %.*s (%ux%ux%u) [%.1f%% %s]", civ.view.selected + 1, vimage_length(civ.images), SO_F(civ.view.image->filename), civ.view.image->width, civ.view.image->height, civ.view.image->channels, 100.0f * civ.view.zoom.current, fit_cstr(fit));
                 }
 
                 font_render(font, str_info, civ.state_map.text_projection, text_pos, 1.0, 1.0, (vec3){1.0f, 1.0f, 1.0f}, text_dim, TEXT_ALIGN_LEFT);
@@ -526,22 +526,22 @@ int main(const int argc, const char **argv) {
                     snprintf(str_popup, sizeof(str_popup), "%s", civ.config.show_description ? "show description" : "hide description");
                 } break;
                 case POPUP_SELECT: {
-                    snprintf(str_popup, sizeof(str_popup), "[%zu/%zu] %s", civ.selected + 1, vimage_length(civ.images), fit_cstr(civ.fit.current));
+                    snprintf(str_popup, sizeof(str_popup), "[%zu/%zu] %s", civ.view.selected + 1, vimage_length(civ.images), fit_cstr(civ.view.fit.current));
                 } break;
                 case POPUP_FIT: {
-                    snprintf(str_popup, sizeof(str_popup), "[%s]", fit_cstr(civ.fit.current));
+                    snprintf(str_popup, sizeof(str_popup), "[%s]", fit_cstr(civ.view.fit.current));
                 } break;
                 case POPUP_PAN: {
-                    snprintf(str_popup, sizeof(str_popup), "%.0f,%.0f", -civ.pan[0], -civ.pan[1]);
+                    snprintf(str_popup, sizeof(str_popup), "%.0f,%.0f", -civ.view.pan[0], -civ.view.pan[1]);
                 } break;
                 case POPUP_ZOOM: {
-                    snprintf(str_popup, sizeof(str_popup), "%.1f%%", 100 * civ.zoom.current);
+                    snprintf(str_popup, sizeof(str_popup), "%.1f%%", 100 * civ.view.zoom.current);
                 } break;
                 case POPUP_FILTER: {
-                    snprintf(str_popup, sizeof(str_popup), "%s", filter_cstr(civ.filter));
+                    snprintf(str_popup, sizeof(str_popup), "%s", filter_cstr(civ.view.filter));
                 } break;
                 case POPUP_PRINT_STDOUT: {
-                    if(civ.active) snprintf(str_popup, sizeof(str_popup), "stdout: %.*s", SO_F(civ.active->filename));
+                    if(civ.view.image) snprintf(str_popup, sizeof(str_popup), "stdout: %.*s", SO_F(civ.view.image->filename));
                 } break;
                 default: case POPUP__COUNT: case POPUP_NONE: break;
             }

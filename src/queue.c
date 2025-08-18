@@ -75,7 +75,7 @@ void *remove_too_many(Pw *pw, bool *cancel, void *void_qd) {
     pw_when_done_clear(pw);
     pthread_mutex_lock(&qd->civ->images_mtx);
     size_t len = vimage_length(qd->civ->images);
-    size_t selected = qd->civ->selected;
+    size_t selected = qd->civ->view.selected;
     Image current = {0};
     if(selected < len) {
         current = *vimage_get_at(&qd->civ->images, selected);
@@ -84,7 +84,7 @@ void *remove_too_many(Pw *pw, bool *cancel, void *void_qd) {
     for(size_t i = 0; qd->civ->config.preview_retain && i < len; ++i) {
         Image *check = vimage_get_at(&qd->civ->images, i);
         if(check->index_pre_loading == current.index_pre_loading) {
-            qd->civ->selected = i;
+            qd->civ->view.selected = i;
             break;
         }
     }
