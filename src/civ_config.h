@@ -14,6 +14,7 @@ typedef struct CivConfig {
     bool shuffle;
     bool preview_load;
     bool preview_retain;
+    bool pipe_and_args;
     ssize_t image_cap;
 } CivConfig;
 

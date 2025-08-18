@@ -417,7 +417,9 @@ int main(const int argc, const char **argv) {
     }
     pw_when_done(&state.pw, when_done_gathering, queue_do(&qd, SO));
     if(state.pending_pipe) {
-        pw_queue(&state.pipe_observer, observe_pipe, queue_do(&qd, SO));
+        if(state.config.pipe_and_args || !(!state.config.pipe_and_args && array_len(state.filenames))) {
+            pw_queue(&state.pipe_observer, observe_pipe, queue_do(&qd, SO));
+        }
     }
 
 #if 0
