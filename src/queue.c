@@ -232,8 +232,6 @@ void *observe_pipe(void *void_data) {
         so_clear(&input);
         so_input(&input);
         if(!so_len(input) && getchar() == EOF) break;
-        //so_printdbg(input);
-        //usleep(1e6);
         queue_walk(input, qd);
     }
     free(qd);

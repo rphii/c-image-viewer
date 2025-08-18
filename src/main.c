@@ -259,6 +259,9 @@ int main(const int argc, const char **argv) {
 
     srand(time(0));
 
+    //int is = isatty(STDIN_FILENO);
+    //printf("ISATTY? %u\n", is);
+
     int err = 0;
     bool quit_early = false;
 
@@ -285,8 +288,9 @@ int main(const int argc, const char **argv) {
     civ_arg(&state, argv[0]);
     TRYC(civ_config_defaults(&state));
     TRYC(arg_parse(state.arg, argc, argv, &quit_early));
-    if(!array_len(state.filenames)) quit_early = true;
+    //quit_early = false;
     if(quit_early) goto clean;
+    if(!state.pending_pipe && !array_len(state.filenames)) quit_early = true;
 
     pw_init(&state.pw, state.config.jobs);
     pw_dispatch(&state.pw);
@@ -412,7 +416,9 @@ int main(const int argc, const char **argv) {
         }
     }
     pw_when_done(&state.pw, when_done_gathering, queue_do(&qd, SO));
-    pw_queue(&state.pipe_observer, observe_pipe, queue_do(&qd, SO));
+    if(state.pending_pipe) {
+        pw_queue(&state.pipe_observer, observe_pipe, queue_do(&qd, SO));
+    }
 
 #if 0
     while(true) {
