@@ -416,8 +416,8 @@ void civ_cmd_filter(Civ *civ, bool next) {
 void civ_cmd_pan(Civ *civ, vec2 pan) {
     if(!pan[0] && !pan[1]) return;
     civ->view.zoom.initial = civ->view.zoom.current;
-    civ->view.pan[0] += pan[0] / civ->view.zoom.current; //s_action.pan_x / s_civ.wwidth * civ->view.zoom;
-    civ->view.pan[1] -= pan[1] / civ->view.zoom.current; //s_action.pan_y / s_civ.wheight * civ->view.zoom;
+    civ->view.pan[0] += 2 * pan[0] / civ->view.zoom.current; //s_action.pan_x / s_civ.wwidth * civ->view.zoom;
+    civ->view.pan[1] -= 2 * pan[1] / civ->view.zoom.current; //s_action.pan_y / s_civ.wheight * civ->view.zoom;
     civ->view.fit.current = FIT_PAN;
     civ_popup_set(civ, POPUP_PAN);
 }
