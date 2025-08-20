@@ -273,6 +273,7 @@ int image_cmp(Image *a, Image *b) {
 }
 
 void image_free(Image *image) {
+    if(!image) return;
     if(image->data) {
         glDeleteTextures(1, &image->texture);
         if(!image->freed_from_cpu) {
@@ -280,8 +281,6 @@ void image_free(Image *image) {
         }
     }
     so_free(&image->filename);
-    /* TODO: this SHOULD be freed, I THINK, but if I do that I get double free ... AHHHHHHHHH */
-    //so_free(&image->filename);
     memset(image, 0, sizeof(*image));
 }
 
@@ -312,6 +311,8 @@ void civ_free(Civ *civ) {
         pthread_mutex_unlock(civ->loader.mutex);
     }
 #endif
+    vimage_free(&civ->images);
+    vimage_free(&civ->images_discover);
     pw_cancel(&civ->queues.pipe_observer);
     pw_cancel(&civ->queues.file_loader);
     arg_free(&civ->arg);

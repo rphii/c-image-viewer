@@ -321,7 +321,6 @@ void font_render(Font font, const char *text, mat4 projection, vec2 pos, float s
 }
 
 void font_free(Font *font) {
-    if(!font->width) return;
     FT_Done_Face(font->face);
     tcharacter_free(&font->characters);
     //memset(font, 0, sizeof(*font));
