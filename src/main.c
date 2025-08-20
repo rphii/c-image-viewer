@@ -591,7 +591,7 @@ clean:
         glfwDestroyWindow(window);
         glfwTerminate();
     }
-    printf("Done, quitting\n");
+    //printf("Done, quitting\n");
 
     return err;
 error:
