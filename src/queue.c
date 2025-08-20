@@ -46,6 +46,10 @@ void *keep_valid_images(Pw *pw, bool *cancel, void *void_qd) {
     ASSERT_ARG(void_qd);
     QueueDo *qd = void_qd;
     size_t cap = qd->civ->config.image_cap;
+    if(qd->civ->config.qafl) {
+        qd->civ->action_map.quit = true;
+        return 0;
+    }
     pw_when_done_clear(pw);
     pthread_mutex_lock(&qd->civ->images_mtx);
     size_t len = vimage_length(qd->civ->images_discover);
@@ -73,6 +77,10 @@ void *remove_too_many(Pw *pw, bool *cancel, void *void_qd) {
     QueueDo *qd = void_qd;
     size_t cap = qd->civ->config.image_cap;
     pw_when_done_clear(pw);
+    if(qd->civ->config.qafl) {
+        qd->civ->action_map.quit = true;
+        return 0;
+    }
     pthread_mutex_lock(&qd->civ->images_mtx);
     size_t len = vimage_length(qd->civ->images);
     size_t selected = qd->civ->view.selected;
@@ -140,6 +148,8 @@ void load_image(QueueDo *qd) {
             }
             //memset(qd->img, 0, sizeof(*qd->img));
             qd->civ->action_map.gl_update = true;
+            Image **tozero = vimage_iter_at(&qd->civ->images_discover, qd->img->index_pre_loading);
+            memset(tozero, 0, sizeof(*tozero));
             glfwPostEmptyEvent();
         } else {
             ++qs->number_of_non_images;
