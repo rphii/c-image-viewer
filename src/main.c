@@ -279,6 +279,12 @@ int main(const int argc, const char **argv) {
     }
     glfwMakeContextCurrent(window);
 
+    //float dpix, dpiy;
+    //glfwGetWindowContentScale(window, &dpix, &dpiy);
+    //printff("DPI %f/%f",dpix,dpiy);
+
+    //glfwGetMonitorPhysicalSize(pMonitors[1], &width_mm, &height_mm)
+
     if(!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
         printf("Failed to initialize GLAD\n");
         return -1;
@@ -460,8 +466,8 @@ int main(const int argc, const char **argv) {
 
                 /* pan */
                 mat4 m_pan;
-                float pan_x = 2 * civ.view.pan[0];
-                float pan_y = 2 * civ.view.pan[1];
+                float pan_x = civ.view.pan[0];
+                float pan_y = civ.view.pan[1];
                 glm_mat4_identity(m_pan);
                 glm_translate(m_pan, (vec3){ pan_x, pan_y, 0 });
 
