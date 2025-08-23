@@ -68,7 +68,7 @@ void *keep_valid_images(Pw *pw, bool *cancel, void *void_qd) {
     }
     qd->civ->action_map.gl_update = true;
     glfwPostEmptyEvent();
-    free(qd);
+    queue_done(qd);
     return 0;
 }
 
@@ -109,7 +109,7 @@ void *remove_too_many(Pw *pw, bool *cancel, void *void_qd) {
     }
     qd->civ->action_map.gl_update = true;
     glfwPostEmptyEvent();
-    free(qd);
+    queue_done(qd);
     return 0;
 }
 
@@ -207,9 +207,9 @@ void *when_done_gathering(Pw *pw, bool *cancel, void *void_qd) {
     }
 
     if(qd->civ->config.preview_load) {
-        pw_when_done(pw, remove_too_many, qd);
+        pw_when_done(pw, remove_too_many, queue_do(qd, SO));
     } else {
-        pw_when_done(pw, keep_valid_images, qd);
+        pw_when_done(pw, keep_valid_images, queue_do(qd, SO));
     }
 
     for(size_t i = 0; i < len; ++i) {
@@ -222,6 +222,7 @@ void *when_done_gathering(Pw *pw, bool *cancel, void *void_qd) {
         pw_queue(pw, queue_do_load, queue_do(&q, SO));
     }
 
+    queue_done(qd);
     return 0;
 }
 
