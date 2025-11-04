@@ -1,0 +1,8 @@
+[Desktop Entry]
+Categories=Image;
+Exec=/usr/bin/civ
+StartupNotify=false
+Terminal=false
+Type=Application
+Name=C Image Viewer
+
