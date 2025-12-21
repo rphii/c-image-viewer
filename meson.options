@@ -4,4 +4,9 @@ option('completion_dir',
   value: '/usr/share/bash-completion/completions/',
   description: 'Completion directory')
 
+option('desktop_dir',
+  type: 'string',
+  value: '/usr/share/applications/',
+  description: 'Desktop files directory')
+
 
