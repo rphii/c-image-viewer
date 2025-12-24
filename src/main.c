@@ -275,7 +275,7 @@ int main(const int argc, const char **argv) {
         printf("Failed to create GLFW window!\n");
         const char *err_desc;
         int err_code = glfwGetError(&err_desc);
-        printf("Error code %u: %s", err_code, err_desc);
+        printf("Error code %u: %s\n", err_code, err_desc);
         glfwTerminate();
         return -1;
     }
