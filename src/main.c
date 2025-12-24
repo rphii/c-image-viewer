@@ -271,12 +271,15 @@ int main(const int argc, const char **argv) {
     glfwWindowHint(GLFW_SAMPLES, 4);
 
     window = glfwCreateWindow(civ.state_map.wwidth, civ.state_map.wheight, "civ", NULL, NULL);
-    glfwSetWindowUserPointer(window, &civ);
     if(window == NULL) {
-        printf("Failed to create GLFW window\n");
+        printf("Failed to create GLFW window!\n");
+        const char *err_desc;
+        int err_code = glfwGetError(&err_desc);
+        printf("Error code %u: %s", err_code, err_desc);
         glfwTerminate();
         return -1;
     }
+    glfwSetWindowUserPointer(window, &civ);
     glfwMakeContextCurrent(window);
 
     //float dpix, dpiy;
