@@ -250,8 +250,8 @@ int main(const int argc, const char **argv) {
 
     civ_arg(&civ, argv[0]);
     civ_config_defaults(&civ);
-    TRYC(arg_parse(civ.arg, argc, argv, &quit_early));
-    if(quit_early) goto clean;
+    err = arg_parse(civ.arg, argc, argv, &quit_early);
+    if(err || quit_early) goto clean;
     if(!civ.queues.pipe_pending && !array_len(civ.filenames)) quit_early = true;
 
     pw_init(&civ.queues.file_loader, civ.config.jobs);
