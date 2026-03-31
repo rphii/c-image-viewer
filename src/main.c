@@ -254,9 +254,8 @@ int main(const int argc, const char **argv) {
     civ.queues.pipe_pending = !isatty(STDIN_FILENO);
 
     err = arg_parse(civ.arg, argc, argv, &quit_early);
-    if(err || quit_early) goto clean;
-
     if(!civ.queues.pipe_pending && !array_len(civ.filenames)) quit_early = true;
+    if(err || quit_early) goto clean;
 
     pw_init(&civ.queues.file_loader, civ.config.jobs);
     pw_dispatch(&civ.queues.file_loader);
