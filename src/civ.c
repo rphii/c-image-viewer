@@ -34,7 +34,8 @@ void send_texture_to_gpu(Image *image, FilterList filter, bool *render) {
 #if 1
         glBindTexture(GL_TEXTURE_2D, image->texture);
         glTexImage2D(GL_TEXTURE_2D, 0, format, image->width, image->height, 0, format, GL_UNSIGNED_BYTE, image->data);
-#else
+#endif
+#if 0
         //glGenBuffers(1, &image->texture);
         //glGenTextures(1, &image->texture);
         glGenBuffers(1, &image->texture);
@@ -46,8 +47,8 @@ void send_texture_to_gpu(Image *image, FilterList filter, bool *render) {
         glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
 #endif
 
-        stbi_image_free(image->data);
-        image->freed_from_cpu = true;
+        //stbi_image_free(image->data);
+        //image->freed_from_cpu = true;
         //image->data = 0;
     }
     if(image->sent && image->data) {
@@ -425,66 +426,69 @@ void civ_cmd_pan(Civ *civ, vec2 pan) {
 /* commands }}} */
 
 void civ_arg(Civ *civ, const char *name) {
-    civ->arg = arg_new();
+
+    struct Arg_Config *arg_config = arg_config_new();
+    arg_config_set_program(arg_config, so_l(name));
+    arg_config_set_description(arg_config, so("image viewer written in C"));
+    arg_config_set_epilog(arg_config, so("https://github.com/rphii/c-image-viewer"));
+
+    civ->arg = arg_new(arg_config);
     struct Arg *arg = civ->arg;
-    arg_init(arg, so_l(name), so("image viewer written in C"), so("https://github.com/rphii/c-image-viewer"));
-    arg_init_rest(arg, so("filenames"), &civ->filenames);
     //arg_init_width(arg, 100, 45);
-    arg_init_fmt(arg);
-    arg_init_pending_pipe_wont_quit_early(arg, true, &civ->queues.pipe_pending);
+    //arg_init_rest(arg, so("filenames"), &civ->filenames);
+    //arg_init_pending_pipe_wont_quit_early(arg, true, &civ->queues.pipe_pending);
 
     //arg_allow_rest(arg, "images");
     Civ_Config *defaults = &civ->defaults;
     Civ_Config *config = &civ->config;
 
-    //arg_allow_rest(arg, so("images"));
-    struct ArgX *x = 0;
-    struct ArgXGroup *g = 0, *o = 0;
-    o=argx_group(arg, so("Options"), false);
-    argx_builtin_opt_help(o);
+    struct Argx *x = 0;
+    struct Argx_Group *g = 0, *o = 0;
+
+    x=argx_pos(arg, so("images"), so("path to images"));
+      argx_type_rest(x, &civ->filenames);
+
+    o=argx_group(arg, so("options"));
+
+    argx_builtin_opt_help(o, ARGX_BUILTIN_OPT_HELP);
 #if defined(VERSION)
-    argx_builtin_opt_version(o, so(VERSION));
+    argx_builtin_opt_version(o, ARGX_BUILTIN_OPT_VERSION, so(VERSION));
 #endif
-    argx_builtin_opt_source(o, so("/etc/civ/civ.conf"));
-    argx_builtin_opt_source(o, so("$HOME/.config/rphiic/colors.conf"));
-    argx_builtin_opt_source(o, so("$HOME/.config/civ/civ.conf"));
-    argx_builtin_opt_source(o, so("$XDG_CONFIG_HOME/civ/civ.conf"));
+    argx_builtin_opt_source(o, ARGX_BUILTIN_OPT_SOURCE, so("/etc/civ/civ.conf"));
+    argx_builtin_opt_source(o, ARGX_BUILTIN_OPT_SOURCE, so("$HOME/.config/rphiic/colors.conf"));
+    argx_builtin_opt_source(o, ARGX_BUILTIN_OPT_SOURCE, so("$HOME/.config/civ/civ.conf"));
+    argx_builtin_opt_source(o, ARGX_BUILTIN_OPT_SOURCE, so("$XDG_CONFIG_HOME/civ/civ.conf"));
     /* font */
-    x=argx_init(o, 'f', so("font-path"), so("specify font path"));
-      argx_str(x, &config->font_path, &defaults->font_path);
-    x=argx_init(o, 'F', so("font-size"), so("specify font size"));
-      argx_ssz(x, &config->font_size, &defaults->font_size);
-    x=argx_init(o, 'd', so("description"), so("toggle description on/off"));
-      argx_bool(x, &config->show_description, &defaults->show_description);
-    x=argx_init(o, '%', so("loaded"), so("toggle loading info on/off"));
-      argx_bool(x, &config->show_loaded, &defaults->show_loaded);
-    x=argx_init(o, 0, so("quit-after-full-load"), so("quit after fully loading"));
-      argx_bool(x, &config->qafl, &defaults->qafl);
-    x=argx_init(o, 'j', so("jobs"), so("set maximum jobs to use when loading"));
-      argx_ssz(x, &config->jobs, &defaults->jobs);
-    x=argx_init(o, 'p', so("preview-load"), so("allows to preview while images get loaded in. the order won't be correct (specified by shuffle) until all images are loaded in, when it is fixed"));
-      argx_bool(x, &config->preview_load, &defaults->preview_load);
-    x=argx_init(o, 'P', so("preview-retain"), so("retain the index throughout previewing images and until after having fixed the ordering"));
-      argx_bool(x, &config->preview_retain, &defaults->preview_retain);
-    x=argx_init(o, '~', so("pipe-and-args"), so("load images both from piped input and arguments"));
-      argx_bool(x, &config->pipe_and_args, &defaults->pipe_and_args);
+    x=argx_opt(o, 'f', so("font-path"), so("specify font path"));
+      argx_type_so(x, &config->font_path, &defaults->font_path);
+    x=argx_opt(o, 'F', so("font-size"), so("specify font size"));
+      argx_type_size(x, &config->font_size, &defaults->font_size);
+    x=argx_opt(o, 'd', so("description"), so("toggle description on/off"));
+      argx_type_bool(x, &config->show_description, &defaults->show_description);
+    x=argx_opt(o, '%', so("loaded"), so("toggle loading info on/off"));
+      argx_type_bool(x, &config->show_loaded, &defaults->show_loaded);
+    x=argx_opt(o, 0, so("quit-after-full-load"), so("quit after fully loading"));
+      argx_type_bool(x, &config->qafl, &defaults->qafl);
+    x=argx_opt(o, 'j', so("jobs"), so("set maximum jobs to use when loading"));
+      argx_type_size(x, &config->jobs, &defaults->jobs);
+    x=argx_opt(o, 'p', so("preview-load"), so("allows to preview while images get loaded in. the order won't be correct (specified by shuffle) until all images are loaded in, when it is fixed"));
+      argx_type_bool(x, &config->preview_load, &defaults->preview_load);
+    x=argx_opt(o, 'P', so("preview-retain"), so("retain the index throughout previewing images and until after having fixed the ordering"));
+      argx_type_bool(x, &config->preview_retain, &defaults->preview_retain);
+    x=argx_opt(o, '~', so("pipe-and-args"), so("load images both from piped input and arguments"));
+      argx_type_bool(x, &config->pipe_and_args, &defaults->pipe_and_args);
 
-    x=argx_init(o, 's', so("filter"), so("set filter"));
-      g=argx_opt(x, (int *)&civ->view.filter, 0);
-        x=argx_init(g, 0, so("nearest"), so("set nearest"));
-          argx_opt_enum(x, FILTER_NEAREST);
-        x=argx_init(g, 0, so("linear"), so("set linear"));
-          argx_opt_enum(x, FILTER_LINEAR);
+    x=argx_opt(o, 's', so("filter"), so("set filter"));
+      g=argx_group_enum(x, (int *)&civ->view.filter, 0);
+        argx_enum_bind(g, FILTER_NEAREST, so("nearest"), so("set nearest"));
+        argx_enum_bind(g, FILTER_LINEAR, so("linear"), so("set linear"));
 
-    x=argx_init(o, 'S', so("shuffle"), so("shuffle images before loading"));
-      argx_bool(x, &config->shuffle, &defaults->shuffle);
-    x=argx_init(o, 'C', so("image-cap"), so("limit number of images to be loaded, 0 to load all"));
-      argx_ssz(x, &config->image_cap, &defaults->image_cap);
+    x=argx_opt(o, 'S', so("shuffle"), so("shuffle images before loading"));
+      argx_type_bool(x, &config->shuffle, &defaults->shuffle);
+    x=argx_opt(o, 'C', so("image-cap"), so("limit number of images to be loaded, 0 to load all"));
+      argx_type_size(x, &config->image_cap, &defaults->image_cap);
 
-    o=argx_group(arg, so("Environment Variables"), false);
-    argx_builtin_env_compgen(o);
-
-    o=argx_group(arg, so("Color Adjustments"), true);
-    argx_builtin_opt_rice(o);
+    argx_builtin_env_compgen(arg);
+    argx_builtin_rice(arg);
 }
 
